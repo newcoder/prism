@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<title>Chinese Chess UI Example Page</title>
+		<link rel="stylesheet" href="stylesheets/cchess.css" type="text/css" media="all" />
+		<script type="text/javascript" src="javascripts/jquery-1.7.1.min.js"></script>
+		<script type="text/javascript" src="javascripts/jquery-ui-1.8.18.custom.min.js"></script>
+	    <script type="text/javascript" src="javascripts/board.js"></script>		
+		<script>
+	    $(function() {
+		  var boardView = new BoardView($, $("#board"));
+		  boardView.init();	    
+		  var pieceBox = new PieceBox($, $("#box"));
+		  pieceBox.init(boardView.board);	
+          
+		  $("#changefen").click(function(){ 
+		    var input = $("#feninput").val();
+			boardView.board.fen(input);
+			}); 
+          		  
+		});
+
+	    </script>
+	</head>
+
+	<body>
+	    <div id = "panel">
+	        <span text = "Last name:"/><input id = "feninput" type="text" name="lname" size="80" />
+		    <button id = "changefen" type="button">change fen!</button> 		   
+	    </div>
+
+	    <div id = "container">
+		    <div id = "board" class="chessboard">
+		    </div>
+		    <div id = "box" class="piecebox">
+		    </div>
+		</div>
+	</body>
+</html>
+
+

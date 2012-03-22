@@ -1,0 +1,11 @@
+{
+    "name": "testjscex"
+  , "version": "0.0.1"
+  , "private": true
+  , "dependencies": {
+	  "jscex": "0.6.x",
+      "jscex-jit": "0.6.x",
+      "jscex-async": "0.6.x",
+      "jscex-async-powerpack": "0.6.x"
+  }
+}
