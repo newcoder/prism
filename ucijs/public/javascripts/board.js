@@ -1,11 +1,8 @@
-var Board, BoardView, COL_NUM, ROW_NUM, START_POS,
-  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+var Board, BoardView, COL_NUM, ROW_NUM, START_POS;
 
 START_POS = 'rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1';
 ALL_PIECES = 'rnbakabnrccpppppPPPPPCCRNBAKABNR';
-
 ROW_NUM = 10;
-
 COL_NUM = 9;
 
 Board = (function() {
@@ -20,9 +17,11 @@ Board = (function() {
     this.player1Side = 0;
     this.cellWidth = 55;
     this.cellHeight = 55;
+	this.offsetX = 3;
+	this.offsetY = 3;
 	this.view = null;
 	this.box = null;
-	
+	this.isPlacingPiece = true;        // at the stage of placing pieces
     this.init();
   }
   
@@ -103,7 +102,7 @@ Board = (function() {
 	var i, p;
 	for (i = 0; i < this.pieces.length; i++) {
       p = this.pieces[i];
-	  if (p.pt === ch && p.r !== -1 && p.c !== -1) {
+	  if (p.pt === ch && p.r === r && p.c === c) {
         p.r = -1;
         p.c = -1;
 		break;
@@ -112,39 +111,74 @@ Board = (function() {
   };
 
   Board.prototype.toCoordX = function(c) {
-    var offsetX, x;
-    offsetX = 3;
+    var x;
     if (this.player1Side !== 0) c = COL_NUM - 1 - c;
-    return x = offsetX + this.cellWidth * c;
+    return x = this.offsetX + this.cellWidth * c;
   };
 
   Board.prototype.toCoordY = function(r) {
-    var offsetY, y;
-    offsetY = 3;
+    var y;
     if (this.player1Side !== 0) r = ROW_NUM - 1 - r;
-    return y = offsetY + this.cellWidth * r;
+    return y = this.offsetY + this.cellHeight * r;
+  };
+  
+  Board.prototype.toCol = function(x) {
+    var c;
+	x = (x - this.offsetX - this.cellWidth/2)/this.cellWidth;
+	c = Math.round(x);
+	if (this.player1Side !== 0) c = COL_NUM - 1 - c;
+	return c;
+  };
+  
+  Board.prototype.toRow = function(y) {
+    var r;
+	y = (y - this.offsetY - this.cellHeight/2)/this.cellHeight;
+	r = Math.round(y);  
+	if (this.player1Side !== 0) r = ROW_NUM - 1 - r;
+	return r;
   };
 
-  Board.prototype.movePiece = function(move) {
-    var ch, dest_c, dest_r, origin_c, origin_r;
+  // move a piece in gaming
+  Board.prototype.makeMove = function(move) {
+    var pt, dest_c, dest_r, origin_c, origin_r, origin_pt;
     origin_c = move[0] - 'a';
     origin_r = ROW_NUM - 1 - move[1];
+    origin_pt = this.board[origin_r][origin_c];
     dest_c = move[2] - 'a';
     dest_r = ROW_NUM - 1 - move[3];
-    this.moveList.push(move);
-    ch = this.board[dest_r][dest_c];
-    if (ch !== 0) {
+	
+	this.moveList.push(move);
+    pt = this.board[dest_r][dest_c];
+    if (pt !== 0) {
       this.removePiece(dest_r, dest_c);
     }
     this.removePiece(origin_r, origin_c);
-    ch = this.board[origin_r][origin_c];
-    return this.addPiece(dest_r, dest_c, ch);
+    return this.addPiece(dest_r, dest_c, origin_pt);
   };
   
   // check whether a move is legal based on current position
-  Board.prototype.isLegal = function(move) {
+  Board.prototype.isLegalMove = function(move) {
     
-  }
+  };
+  
+  // check the place is legal to kind of piece
+  Board.prototype.isLegalPlace = function(r, c, pt) {
+    var dest_pt = this.board[r][c];
+    if (dest_pt !== 0) {
+	  //there is a piece at this place
+      return false;
+    }
+	
+	return true;
+	// more,to be added
+  };
+  
+  // place a piece on the board, origin_c, origin_r is null when move a piece from piece box
+  Board.prototype.placePiece = function(dest_r, dest_c, pt, origin_r, origin_c) {
+	if (origin_r !== -1 && origin_c !== -1)
+	  this.removePiece(origin_r, origin_c);
+    this.addPiece(dest_r, dest_c, pt);
+  };
 
   return Board;
 
@@ -155,54 +189,74 @@ BoardView = (function() {
   function BoardView($, el) {
     this.$ = $;
     this.el = el;
+	this.lastSelected = null;
   }
 
   BoardView.prototype.init = function() {
-    this.board = new Board;
+ 	var _this = this;
+	var container = this.$(this.el[0]);   
+	this.board = new Board;
 	this.board.view = this;
+	container.on('click', function(e) {
+	  if (!_this.lastSelected)
+	    return;
+	
+      var location = container.offset();
+      var x = e.pageX - location.left;
+      var y = e.pageY - location.top;
+	  var r = _this.board.toRow(y);
+	  var c = _this.board.toCol(x);
+	  var pt = _this.lastSelected.data('piece').pt;
+	  var origin_r = _this.lastSelected.data('piece').r;
+	  var origin_c = _this.lastSelected.data('piece').c;  
+	  
+	  if (_this.board.isPlacingPiece) {
+	  // placing piece
+	    if (_this.board.isLegalPlace(r, c, pt)) {
+		  _this.board.placePiece(r, c, pt, origin_r, origin_c);
+		  _this.updateView();
+		}
+	  } else {
+	  // gaming
+	  
+	  }
+	});
 	this.updateView();
   };
   
   BoardView.prototype.updateView = function() {
     var _this = this;
 	this.$(this.el[0]).empty();
+	this.lastSelected = null;
     this.board.pieces.forEach(function(p) {
 	  if (p.r !== -1 && p.c !== -1) // piece is on board
-	    _this.placePiece(_this.$(_this.el[0]), p);
+	    _this.addPiece(_this.$(_this.el[0]), p);
 	});    
   };
 
   BoardView.prototype.createPiece = function(piece) {
     var $piece_div;
-    $piece_div = this.$('<div class="piece"/>').draggable();
+	var _this = this;
+    $piece_div = this.$('<div class="piece"/>');
     $piece_div.addClass('piece_' + piece.pt);
     $piece_div.css('width', this.board.cellWidth);
     $piece_div.css('height', this.board.cellHeight);
     $piece_div.css('left', this.board.toCoordX(piece.c));
     $piece_div.css('top', this.board.toCoordY(piece.r));
-    $piece_div.bind('dragstart', __bind(onDragStart, this));
-    $piece_div.bind('drag', __bind(onDrag, this));
-    $piece_div.bind('dragstop', __bind(onDragStop, this));
+	$piece_div.data('piece', piece);
+    $piece_div.on('click', function(e){
+	  if (_this.lastSelected)
+	    _this.lastSelected.toggleClass('selected');
+	  $piece_div.toggleClass('selected');
+	  _this.lastSelected = $piece_div;
+	  e.stopPropagation();
+	});
     return piece.el = $piece_div;
   };
 
-  BoardView.prototype.placePiece = function(container, piece) {
+  BoardView.prototype.addPiece = function(container, piece) {
     return container.append(this.createPiece(piece));
   };
-
-  BoardView.prototype.disableDrag = function() {
-    var pieces = this.board.pieces;
-    pieces.forEach(function(p) {  
-	  if (p.el)
-	    p.el.draggable("option", "disabled", true);
-	}); 
-  };
-
-  var onDragStart = function(event, ui) {};
-
-  var onDrag = function(event, ui) {};
-
-  var onDragStop = function(event, ui) {};
 
   return BoardView;
 
@@ -226,7 +280,7 @@ PieceBox = (function() {
 	this.$(this.el[0]).empty();
     this.board.pieces.forEach(function(p) {
 	  if (p.r === -1 && p.c === -1) // piece is not on board, should be appear in the box
-	    _this.placePiece(_this.$(_this.el[0]), p);
+	    _this.addPiece(_this.$(_this.el[0]), p);
 	});    
   };
   
@@ -254,29 +308,22 @@ PieceBox = (function() {
 
   PieceBox.prototype.createPiece = function(piece) {
     var $piece_div;
-    $piece_div = this.$('<div class="piece"/>').draggable();
+    $piece_div = this.$('<div class="piece"/>');
     $piece_div.addClass('piece_' + piece.pt);
     $piece_div.css('width', this.board.cellWidth);
     $piece_div.css('height', this.board.cellHeight);
     $piece_div.css('left', this.piecePosition(piece.pt).x);
     $piece_div.css('top', this.piecePosition(piece.pt).y);
-    $piece_div.bind('drag', __bind(onDrag, this));
+    $piece_div.bind('click', __bind(onClick, this));
     return piece.el = $piece_div;
   };
 
-  PieceBox.prototype.placePiece = function(container, piece) {
+  PieceBox.prototype.addPiece = function(container, piece) {
     return container.append(this.createPiece(piece));
   };
 
-  PieceBox.prototype.disableDrag = function() {
-    var pieces = this.board.pieces;
-    pieces.forEach(function(p) {  
-	  if (p.el)
-	    p.el.draggable("option", "disabled", true);
-	}); 
-  };
 
-  var onDrag = function(event, ui) {};
+  var onClick = function(event, ui) {};
 
   return PieceBox;
 

@@ -23,8 +23,18 @@
 	position: absolute;
 }
 
+.selected {
+    border-color: green;
+    border-style: solid;
+	background-color: yellow;	
+	border-width: 2px;
+}
+
 .piece:hover {
 	cursor:pointer;
+	border-color: yellow;
+    border-style: solid;
+	border-width: 2px;
 }
 
 /* black pieces */
