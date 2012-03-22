@@ -260,9 +260,7 @@ PieceBox = (function() {
     $piece_div.css('height', this.board.cellHeight);
     $piece_div.css('left', this.piecePosition(piece.pt).x);
     $piece_div.css('top', this.piecePosition(piece.pt).y);
-    $piece_div.bind('dragstart', __bind(onDragStart, this));
     $piece_div.bind('drag', __bind(onDrag, this));
-    $piece_div.bind('dragstop', __bind(onDragStop, this));
     return piece.el = $piece_div;
   };
 
@@ -278,11 +276,7 @@ PieceBox = (function() {
 	}); 
   };
 
-  var onDragStart = function(event, ui) {};
-
   var onDrag = function(event, ui) {};
-
-  var onDragStop = function(event, ui) {};
 
   return PieceBox;
 
