@@ -209,6 +209,8 @@ BoardView = (function() {
 	  var pt = _this.lastSelected.data('piece').pt;
 	  var origin_r = _this.lastSelected.data('piece').r;
 	  var origin_c = _this.lastSelected.data('piece').c;  
+	  _this.lastSelected.toggleClass('selected');
+	  _this.lastSelected = null;
 	  
 	  if (_this.board.isPlacingPiece) {
 	  // placing piece
@@ -267,6 +269,7 @@ PieceBox = (function() {
   function PieceBox($, el) {
     this.$ = $;
     this.el = el;
+	this.lastSelected = null;
   }
 
   PieceBox.prototype.init = function(board) {
@@ -301,29 +304,33 @@ PieceBox = (function() {
     'K': {r: 1, c: 5},
     'P': {r: 1, c: 6}
 	};
-	return {x: positionTable[pt].c*this.board.cellWidth,
-	  y: positionTable[pt].r*this.board.cellHeight
+	return {x: positionTable[pt].r*this.board.cellWidth,
+	  y: positionTable[pt].c*this.board.cellHeight
 	}
   };
 
   PieceBox.prototype.createPiece = function(piece) {
     var $piece_div;
+	var _this = this;
     $piece_div = this.$('<div class="piece"/>');
     $piece_div.addClass('piece_' + piece.pt);
     $piece_div.css('width', this.board.cellWidth);
     $piece_div.css('height', this.board.cellHeight);
     $piece_div.css('left', this.piecePosition(piece.pt).x);
     $piece_div.css('top', this.piecePosition(piece.pt).y);
-    $piece_div.bind('click', __bind(onClick, this));
+    $piece_div.bind('click', function(e){
+	  if (_this.lastSelected)
+	    _this.lastSelected.toggleClass('selected');
+	  $piece_div.toggleClass('selected');
+	  _this.lastSelected = $piece_div;
+	  e.stopPropagation();
+	});
     return piece.el = $piece_div;
   };
 
   PieceBox.prototype.addPiece = function(container, piece) {
     return container.append(this.createPiece(piece));
   };
-
-
-  var onClick = function(event, ui) {};
 
   return PieceBox;
 

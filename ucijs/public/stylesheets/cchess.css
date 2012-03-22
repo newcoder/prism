@@ -1,18 +1,27 @@
+#container {
+    float: left;
+	position: relative;
+	width: 610px;
+	height: 556px;
+}
+
 .chessboard{
 	width: 500px;
 	height: 556px;
 	margin-left:auto;
 	margin-right:auto;
 	position: relative;
+	float: left;
 	background: transparent url(chessboard.png) no-repeat;	
 }
 
 .piecebox{
-	width: 385px;
-	height: 110px;
+	width: 110px;
+	height: 385px;
 	margin-left:auto;
 	margin-right:auto;
 	position: relative;
+	float: right;
     background-color:#FAEBD7;
 }
 
