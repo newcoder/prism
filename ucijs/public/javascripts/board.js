@@ -48,7 +48,6 @@ Board = (function() {
 	this.offsetX = 3;
 	this.offsetY = 3;
 	this.view = null;
-	this.box = null;
 	this.isPlacingPiece = true;        // at the stage of placing pieces
     this.init();
   }
@@ -224,23 +223,44 @@ Board = (function() {
 
 BoardView = (function() {
 
-  function BoardView($, el) {
+  function BoardView($, elBoard, elBox) {
     this.$ = $;
-    this.el = el;
+    this.$board = this.$(elBoard);
+	this.$box = this.$(elBox);
+	this.board = null;
 	this.lastSelected = null;
+	this.showBox = true;
 	this.pieceToSelect = null;
   }
 
-  BoardView.prototype.init = function() {
- 	var _this = this;
-	var container = this.$(this.el[0]);   
-	this.board = new Board;
+  BoardView.prototype.init = function(board) {
+  	var _this = this;
+	this.board = board || new Board;
+	this.showBox = this.board.isPlacingPiece;
 	this.board.view = this;
-	container.on('click', function(e) {
+	
+	this.$box.on('click', function(e) {
+	  if (!_this.lastSelected)
+	    return;
+		
+	  if (_this.isFreePiece(_this.lastSelected)) {
+	    _this.lastSelected.toggleClass('selected');
+	    _this.lastSelected = null;
+	  } else {
+	    // remove the selected piece from board, put back to box
+ 	    var r = _this.lastSelected.data('piece').r;
+	    var c = _this.lastSelected.data('piece').c;
+        _this.board.removePiece(r, c);
+        _this.updateView();		
+	  }
+	  e.stopPropagation();
+	});
+
+	this.$board.on('click', function(e) {
 	  if (!_this.lastSelected)
 	    return;
 	
-      var location = container.offset();
+      var location = _this.$board.offset();
       var x = e.pageX - location.left;
       var y = e.pageY - location.top;
 	  var r = _this.board.toRow(y);
@@ -255,26 +275,48 @@ BoardView = (function() {
 	  // placing piece
 	    if (_this.board.isLegalPlace(r, c, pt)) {
 		  _this.board.placePiece(r, c, pt, origin_r, origin_c);
-	      // after the view update, the newly placed piece shall be selected
-		  _this.pieceToSelect = {'pt': pt, 'r': r, 'c': c}; 
+	      // after the view update, select the placed piece if it was on the board
+		  if (origin_r !== -1 && origin_c !== -1) {
+		    _this.pieceToSelect = {'pt': pt, 'r': r, 'c': c};
+          } else {
+		    _this.pieceToSelect = null;
+          } 		  
 		  _this.updateView();
 		}
 	  } else {
-	  // gaming
-	  
+	  // gaming	  
 	  }
 	  e.stopPropagation();
 	});
 	this.updateView();
   };
   
+  BoardView.prototype.isFreePiece = function($piece) {
+	var r = $piece.data('piece').r;
+	var c = $piece.data('piece').c;
+	return r === -1 && c === -1;
+  };
+  
+  BoardView.prototype.showPieceBox = function(show) {
+    if (this.showBox !== show) { 
+	  this.showBox = show;
+	  this.updateView();
+	}
+  };
+  
   BoardView.prototype.updateView = function() {
+    this.updateBoard();
+	if (this.showBox) 
+	  this.updateBox();
+  };
+  
+  BoardView.prototype.updateBoard = function() {
     var _this = this;
-	this.$(this.el[0]).empty();
+	this.$board.empty();
 	this.lastSelected = null;
     this.board.pieces.forEach(function(p) {
 	  if (p.r !== -1 && p.c !== -1) // piece is on board
-	    _this.addPiece(_this.$(_this.el[0]), p);
+	    _this.addPiece(_this.$board, p);
 	});    
   };
 
@@ -313,43 +355,16 @@ BoardView = (function() {
     return container.append(this.createPiece(piece));
   };
 
-  return BoardView;
-
-})();
-
-PieceBox = (function() {
-
-  function PieceBox($, el) {
-    this.$ = $;
-    this.el = el;
-	this.lastSelected = null;
-  }
-
-  PieceBox.prototype.init = function(board) {
-   	var _this = this;
-	var container = this.$(this.el[0]);   
-	this.board = board;
-	this.board.box = this;
-	container.on('click', function(e) {
-	  if (!_this.lastSelected)
-	    return;
-	  _this.lastSelected.toggleClass('selected');
-	  _this.lastSelected = null;
-	  e.stopPropagation();
-	});
-	this.updateView();
-  };
-  
-  PieceBox.prototype.updateView = function() {
+  BoardView.prototype.updateBox = function() {
     var _this = this;
-	this.$(this.el[0]).empty();
+	this.$box.empty();
     this.board.pieces.forEach(function(p) {
 	  if (p.r === -1 && p.c === -1) // piece is not on board, should be appear in the box
-	    _this.addPiece(_this.$(_this.el[0]), p);
+	    _this.addFreePiece(_this.$box, p);
 	});    
   };
   
-  PieceBox.prototype.piecePosition = function(pt) {
+  BoardView.prototype.piecePosition = function(pt) {
     var positionTable = {
     'a': {r: 0, c: 0},
     'c': {r: 0, c: 1},
@@ -371,7 +386,7 @@ PieceBox = (function() {
 	}
   };
 
-  PieceBox.prototype.createPiece = function(piece) {
+  BoardView.prototype.createFreePiece = function(piece) {
     var $piece_div;
 	var _this = this;
     $piece_div = this.$('<div class="piece"/>');
@@ -380,21 +395,37 @@ PieceBox = (function() {
     $piece_div.css('height', this.board.cellHeight);
     $piece_div.css('left', this.piecePosition(piece.pt).x);
     $piece_div.css('top', this.piecePosition(piece.pt).y);
+	$piece_div.data('piece', piece);
     $piece_div.bind('click', function(e){
-	  if (_this.lastSelected)
-	    _this.lastSelected.toggleClass('selected');
-	  $piece_div.toggleClass('selected');
-	  _this.lastSelected = $piece_div;
-	  e.stopPropagation();
+	  if (_this.lastSelected) {	   
+	    if (_this.isFreePiece(_this.lastSelected)) {
+		  _this.lastSelected.toggleClass('selected');
+		  if (_this.lastSelected !== $piece_div) {
+		    $piece_div.toggleClass('selected');
+			_this.lastSelected = $piece_div;
+		  } else {
+		    // click on a free piece again
+			_this.lastSelected = null;
+		  }
+		  s.stopPropagation();
+		} else {
+		  // a piece on board was selected at the time, wanna move the piece to box?
+		  // just bubble up the event, let $box.onclick handle it
+		}
+      } else {	  
+	    $piece_div.toggleClass('selected');
+	    _this.lastSelected = $piece_div;
+	    e.stopPropagation();
+	  }
 	});
     return piece.el = $piece_div;
   };
 
-  PieceBox.prototype.addPiece = function(container, piece) {
-    return container.append(this.createPiece(piece));
+  BoardView.prototype.addFreePiece = function(container, piece) {
+    return container.append(this.createFreePiece(piece));
   };
-
-  return PieceBox;
+  
+  return BoardView;
 
 })();
 

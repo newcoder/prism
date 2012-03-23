@@ -8,10 +8,8 @@
 	    <script type="text/javascript" src="javascripts/board.js"></script>		
 		<script>
 	    $(function() {
-		  var boardView = new BoardView($, $("#board"));
+		  var boardView = new BoardView($, $("#board")[0], $("#box")[0]);
 		  boardView.init();	    
-		  var pieceBox = new PieceBox($, $("#box"));
-		  pieceBox.init(boardView.board);	
           
 		  $("#changefen").click(function(){ 
 		    var input = $("#feninput").val();
