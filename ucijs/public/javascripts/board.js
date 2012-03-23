@@ -65,8 +65,8 @@ Board = (function() {
     var i,j;
     // clear board and initialize the piece array
 	this.initPieces();    
-    for (i = 0; i <= 9; i++) {
-      for (j = 0; j <= 8; j++) {
+    for (i = 0; i <= ROW_NUM - 1; i++) {
+      for (j = 0; j <= COL_NUM - 1; j++) {
         this.board[i][j] = 0;
       }
     }    
@@ -115,6 +115,45 @@ Board = (function() {
         c = c + 1;
       }
     }
+  };
+  
+  Board.prototype.toFen = function() {
+    var i, j, spaces, fen;
+	fen = [];
+	spaces = 0;
+    for (i = 0; i <= ROW_NUM - 1; i++) { 
+	  for (j = 0; j <= COL_NUM - 1; j++) {
+	    if (this.board[i][j] === 0) {
+		  spaces++;
+		} else {
+		  if (spaces > 0) {
+		    fen.push(spaces);
+			spaces = 0;
+			fen.push(this.board[i][j]);
+		  } else {
+		    fen.push(this.board[i][j]);
+		  }
+        }
+
+      }
+	  if (spaces > 0) {
+		fen.push(spaces);
+		spaces = 0;
+	  }      
+	  if (i < ROW_NUM - 1) fen.push('/');	  
+	}
+	
+	if (this.sideToMove === 0)
+	  fen.push(' w');
+	else
+	  fen.push(' b');
+	
+	fen.push(' -');
+	fen.push(' -');
+	fen.push(' 0');
+	fen.push(' 1');
+	
+	return fen.join('');
   };
 
   // add a piece to chess board

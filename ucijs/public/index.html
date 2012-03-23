@@ -14,6 +14,7 @@
 		  $("#changefen").click(function(){ 
 		    var input = $("#feninput").val();
 			boardView.board.fromFen(input);
+			alert(boardView.board.toFen());
 			}); 
           		  
 		});
