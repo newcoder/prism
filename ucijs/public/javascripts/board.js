@@ -53,17 +53,21 @@ Board = (function() {
   Board.prototype.fromFen = function(fen) {
     var arr, fenstr, i, row, rows, _len;
     
-	this.clear();
-	
+	if (!fen) 
+	  return;
+	  
 	// parse the fen string
     arr = fen.split(' ');
-    fenstr = arr[0];
-    this.sideToMove = arr[1] !== 'b'? 0: 1;
-    rows = fenstr.split('/');
-    for (i = 0, _len = rows.length; i < _len; i++) {
-      row = rows[i];
-      this.parseFenRow(i, row);
-    }
+	if (arr.length === 6) { // valid fen string
+	  this.clear();      
+	  fenstr = arr[0];
+      this.sideToMove = arr[1] !== 'b'? 0: 1;
+      rows = fenstr.split('/');
+      for (i = 0, _len = rows.length; i < _len; i++) {
+        row = rows[i];
+        this.parseFenRow(i, row);
+      }
+	}
 	
 	// update views
 	if (this.view)
