@@ -34,29 +34,35 @@ Board = (function() {
 	});	
   };
   
-  Board.prototype.init = function() {
-    if (!this.initFen) this.initFen = START_POS;
-    return this.fen(this.initFen);
-  };
-
-  Board.prototype.fen = function(fen) {
-    var arr, fenstr, i, j, row, rows, _len;
-    // init board and the piece array
+  Board.prototype.clear = function() {
+    var i,j;
+    // clear board and initialize the piece array
 	this.initPieces();    
     for (i = 0; i <= 9; i++) {
       for (j = 0; j <= 8; j++) {
         this.board[i][j] = 0;
       }
-    }
+    }    
+  }
+  
+  Board.prototype.init = function() {
+    if (!this.initFen) this.initFen = START_POS;
+    return this.fromFen(this.initFen);
+  };
+
+  Board.prototype.fromFen = function(fen) {
+    var arr, fenstr, i, row, rows, _len;
+    
+	this.clear();
 	
 	// parse the fen string
     arr = fen.split(' ');
     fenstr = arr[0];
-    this.side = arr[1] !== 'b';
+    this.sideToMove = arr[1] !== 'b'? 0: 1;
     rows = fenstr.split('/');
     for (i = 0, _len = rows.length; i < _len; i++) {
       row = rows[i];
-      this.row2Board(i, row);
+      this.parseFenRow(i, row);
     }
 	
 	// update views
@@ -66,7 +72,7 @@ Board = (function() {
 	  this.box.updateView();
   };
 
-  Board.prototype.row2Board = function(r, row) {
+  Board.prototype.parseFenRow = function(r, row) {
     var c, ch, i, _len;
     c = 0;
     for (i = 0, _len = row.length; i < _len; i++) {
@@ -190,6 +196,7 @@ BoardView = (function() {
     this.$ = $;
     this.el = el;
 	this.lastSelected = null;
+	this.pieceToSelect = null;
   }
 
   BoardView.prototype.init = function() {
@@ -216,12 +223,15 @@ BoardView = (function() {
 	  // placing piece
 	    if (_this.board.isLegalPlace(r, c, pt)) {
 		  _this.board.placePiece(r, c, pt, origin_r, origin_c);
+	      // after the view update, the newly placed piece shall be selected
+		  _this.pieceToSelect = {'pt': pt, 'r': r, 'c': c}; 
 		  _this.updateView();
 		}
 	  } else {
 	  // gaming
 	  
 	  }
+	  e.stopPropagation();
 	});
 	this.updateView();
   };
@@ -249,10 +259,21 @@ BoardView = (function() {
     $piece_div.on('click', function(e){
 	  if (_this.lastSelected)
 	    _this.lastSelected.toggleClass('selected');
-	  $piece_div.toggleClass('selected');
-	  _this.lastSelected = $piece_div;
+	  if (_this.lastSelected !== $piece_div) {
+	    $piece_div.toggleClass('selected');
+	    _this.lastSelected = $piece_div;
+	  } else {
+	    // click on a piece again, de-select it
+	    _this.lastSelected = null;
+	  }
 	  e.stopPropagation();
 	});
+	if (_this.pieceToSelect 
+	&& _this.pieceToSelect.pt === piece.pt
+	&& _this.pieceToSelect.r === piece.r
+	&& _this.pieceToSelect.c === piece.c) {
+	  $piece_div.click();
+	}
     return piece.el = $piece_div;
   };
 
@@ -273,8 +294,17 @@ PieceBox = (function() {
   }
 
   PieceBox.prototype.init = function(board) {
+   	var _this = this;
+	var container = this.$(this.el[0]);   
 	this.board = board;
 	this.board.box = this;
+	container.on('click', function(e) {
+	  if (!_this.lastSelected)
+	    return;
+	  _this.lastSelected.toggleClass('selected');
+	  _this.lastSelected = null;
+	  e.stopPropagation();
+	});
 	this.updateView();
   };
   
@@ -289,14 +319,14 @@ PieceBox = (function() {
   
   PieceBox.prototype.piecePosition = function(pt) {
     var positionTable = {
-	'a': {r: 0, c: 0},
+    'a': {r: 0, c: 0},
     'c': {r: 0, c: 1},
     'r': {r: 0, c: 2},
     'b': {r: 0, c: 3},
     'n': {r: 0, c: 4},
     'k': {r: 0, c: 5},
     'p': {r: 0, c: 6},
- 	'A': {r: 1, c: 0},
+    'A': {r: 1, c: 0},
     'C': {r: 1, c: 1},
     'R': {r: 1, c: 2},
     'B': {r: 1, c: 3},

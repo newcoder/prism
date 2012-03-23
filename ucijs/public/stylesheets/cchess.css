@@ -33,17 +33,14 @@
 }
 
 .selected {
-    border-color: green;
-    border-style: solid;
-	background-color: yellow;	
-	border-width: 2px;
+    background-color: yellow;
 }
 
 .piece:hover {
 	cursor:pointer;
-	border-color: yellow;
     border-style: solid;
 	border-width: 2px;
+	border-color: transparent;
 }
 
 /* black pieces */
