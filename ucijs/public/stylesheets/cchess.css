@@ -34,12 +34,15 @@
 
 .selected {
     background-color: yellow;
+    -moz-border-radius: 50%;
+	-webkit-border-radius: 50%;
+    border-radius: 50%;
 }
 
 .piece:hover {
 	cursor:pointer;
     border-style: solid;
-	border-width: 2px;
+	border-width: 1px;
 	border-color: transparent;
 }
 
