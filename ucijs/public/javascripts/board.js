@@ -2,6 +2,7 @@ var Board, BoardView, COL_NUM, ROW_NUM, START_POS;
 
 START_POS = 'rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1';
 ALL_PIECES = 'rnbakabnrccpppppPPPPPCCRNBAKABNR';
+ALL_PIECETYPES = 'rnbakcpRNBAKCP';
 ROW_NUM = 10;
 COL_NUM = 9;
 
@@ -33,6 +34,86 @@ if ( !Array.prototype.forEach ) {
   };
 }
 
+PlaceChecker = (function() {
+  // legal places of '仕'    
+  var a_legalPlaces = [[0, 3],[0, 5],[1, 4],[2, 3],[2, 5]];
+  // legal places of '象'  
+  var b_legalPlaces = [[0, 2],[0, 6],[2, 0],[2, 4],[2, 8], [4, 2], [4, 6]];
+
+  var placeChecker = function(places, r, c) {
+  	var i, p;
+	for (i = 0; i < places.length; i++) {
+	  p = places[i];
+	  if (r === p[0] && c === p[1]) {
+		return true;
+	  } 
+	}
+	return false;
+  };
+  
+  var a_placeChecker = function(r, c) {
+    return placeChecker(a_legalPlaces, r, c);
+  };
+  
+  var b_placeChecker = function(r, c) {
+    return placeChecker(b_legalPlaces, r, c);
+  };
+  
+  // '将' only could be in the palace
+  var k_placeChecker = function(r, c) {
+    return r >= 0 && r <=2 && c >= 3 && c <= 5;
+  };
+  
+  // '炮，马，车' could be at any place
+  var c_placeChecker = n_placeChecker = r_placeChecker = anyPlace = function(r, c) {
+    return true;
+  };
+  
+  // '卒' could be at any place across the river, only ten places on own side
+  var p_placeChecker = function(r, c) {
+    return (r > 4) || (r > 2 && c%2 === 0);
+  };
+  
+  var makeRedChecker = function(blackChecker) {
+    var redChecker = function(r, c) {
+	  return blackChecker(ROW_NUM - r - 1, COL_NUM - c - 1);
+	}
+	return redChecker;
+  };
+  
+  var A_placeChecker = makeRedChecker(a_placeChecker);
+  var B_placeChecker = makeRedChecker(b_placeChecker);
+  var K_placeChecker = makeRedChecker(k_placeChecker);
+  var P_placeChecker = makeRedChecker(p_placeChecker);
+  var C_placeChecker = N_placeChecker = R_placeChecker = anyPlace;
+    
+  function PlaceChecker() {
+    this.checker = {
+	  'a': a_placeChecker,
+	  'b': b_placeChecker,
+	  'k': k_placeChecker,
+	  'p': p_placeChecker,
+	  'c': c_placeChecker,
+	  'n': n_placeChecker,
+	  'r': r_placeChecker,
+	  'A': A_placeChecker,
+	  'B': B_placeChecker,
+	  'K': K_placeChecker,
+	  'P': P_placeChecker,
+	  'C': C_placeChecker,
+	  'N': N_placeChecker,
+	  'R': R_placeChecker
+	};
+  }
+  
+  PlaceChecker.prototype.check = function(pt, r, c) {
+    return this.checker[pt](r, c);
+  }
+  
+  return PlaceChecker;
+})();
+
+
 Board = (function() {
 
   function Board(option, initFen) {
@@ -42,12 +123,8 @@ Board = (function() {
     this.pieces = [];
     this.moveList = [];
     this.sideToMove = 0;
-    this.player1Side = 0;
-    this.cellWidth = 55;
-    this.cellHeight = 55;
-	this.offsetX = 3;
-	this.offsetY = 3;
 	this.view = null;
+	this.placeChecker = new PlaceChecker();
 	this.isPlacingPiece = true;        // at the stage of placing pieces
     this.init();
   }
@@ -186,35 +263,6 @@ Board = (function() {
 	}
   };
 
-  // to do, move coordinate functions to BoardView
-  Board.prototype.toCoordX = function(c) {
-    var x;
-    if (this.player1Side !== 0) c = COL_NUM - 1 - c;
-    return x = this.offsetX + this.cellWidth * c;
-  };
-
-  Board.prototype.toCoordY = function(r) {
-    var y;
-    if (this.player1Side !== 0) r = ROW_NUM - 1 - r;
-    return y = this.offsetY + this.cellHeight * r;
-  };
-  
-  Board.prototype.toCol = function(x) {
-    var c;
-	x = (x - this.offsetX - this.cellWidth/2)/this.cellWidth;
-	c = Math.round(x);
-	if (this.player1Side !== 0) c = COL_NUM - 1 - c;
-	return c;
-  };
-  
-  Board.prototype.toRow = function(y) {
-    var r;
-	y = (y - this.offsetY - this.cellHeight/2)/this.cellHeight;
-	r = Math.round(y);  
-	if (this.player1Side !== 0) r = ROW_NUM - 1 - r;
-	return r;
-  };
-
   // move a piece in gaming
   Board.prototype.makeMove = function(move) {
     var pt, dest_c, dest_r, origin_c, origin_r, origin_pt;
@@ -238,16 +286,14 @@ Board = (function() {
     
   };
   
-  // check the place is legal to kind of piece
+  // check the place is legal on the board
   Board.prototype.isLegalPlace = function(r, c, pt) {
     var dest_pt = this.board[r][c];
     if (dest_pt !== 0) {
 	  //there is a piece at this place
       return false;
     }
-	
-	return true;
-	// more,to be added
+	return this.placeChecker.check(pt, r, c);
   };
   
   // place a piece on the board, origin_c, origin_r is null when move a piece from piece box
@@ -271,6 +317,11 @@ BoardView = (function() {
 	this.lastSelected = null;
 	this.showBox = true;
 	this.pieceToSelect = null;
+	this.player1Side = 0;
+	this.cellWidth = 55;
+    this.cellHeight = 55;
+	this.offsetX = 3;
+	this.offsetY = 3;
   }
 
   BoardView.prototype.init = function(board) {
@@ -303,8 +354,8 @@ BoardView = (function() {
       var location = _this.$board.offset();
       var x = e.pageX - location.left;
       var y = e.pageY - location.top;
-	  var r = _this.board.toRow(y);
-	  var c = _this.board.toCol(x);
+	  var r = _this.toRow(y);
+	  var c = _this.toCol(x);
 	  var pt = _this.lastSelected.data('piece').pt;
 	  var origin_r = _this.lastSelected.data('piece').r;
 	  var origin_c = _this.lastSelected.data('piece').c;  
@@ -365,10 +416,10 @@ BoardView = (function() {
 	var _this = this;
     $piece_div = this.$('<div class="piece"/>');
     $piece_div.addClass('piece_' + piece.pt);
-    $piece_div.css('width', this.board.cellWidth);
-    $piece_div.css('height', this.board.cellHeight);
-    $piece_div.css('left', this.board.toCoordX(piece.c));
-    $piece_div.css('top', this.board.toCoordY(piece.r));
+    $piece_div.css('width', this.cellWidth);
+    $piece_div.css('height', this.cellHeight);
+    $piece_div.css('left', this.toCoordX(piece.c));
+    $piece_div.css('top', this.toCoordY(piece.r));
 	$piece_div.data('piece', piece);
     $piece_div.on('click', function(e){
 	  if (_this.lastSelected)
@@ -421,8 +472,8 @@ BoardView = (function() {
     'K': {r: 1, c: 5},
     'P': {r: 1, c: 6}
 	};
-	return {x: positionTable[pt].r*this.board.cellWidth,
-	  y: positionTable[pt].c*this.board.cellHeight
+	return {x: positionTable[pt].r*this..celidth,
+	  y: positionTable[pt].c*this.cellHeight
 	}
   };
 
@@ -431,8 +482,8 @@ BoardView = (function() {
 	var _this = this;
     $piece_div = this.$('<div class="piece"/>');
     $piece_div.addClass('piece_' + piece.pt);
-    $piece_div.css('width', this.board.cellWidth);
-    $piece_div.css('height', this.board.cellHeight);
+    $piece_div.css('width', this.cellWidth);
+    $piece_div.css('height', this.cellHeight);
     $piece_div.css('left', this.piecePosition(piece.pt).x);
     $piece_div.css('top', this.piecePosition(piece.pt).y);
 	$piece_div.data('piece', piece);
@@ -463,6 +514,34 @@ BoardView = (function() {
 
   BoardView.prototype.addFreePiece = function(container, piece) {
     return container.append(this.createFreePiece(piece));
+  };
+  
+  BoardView.prototype.toCoordX = function(c) {
+    var x;
+    if (this.player1Side !== 0) c = COL_NUM - 1 - c;
+    return x = this.offsetX + this.cellWidth * c;
+  };
+
+  BoardView.prototype.toCoordY = function(r) {
+    var y;
+    if (this.player1Side !== 0) r = ROW_NUM - 1 - r;
+    return y = this.offsetY + this.cellHeight * r;
+  };
+  
+  BoardView.prototype.toCol = function(x) {
+    var c;
+	x = (x - this.offsetX - this.cellWidth/2)/this.cellWidth;
+	c = Math.round(x);
+	if (this.player1Side !== 0) c = COL_NUM - 1 - c;
+	return c;
+  };
+  
+  BoardView.prototype.toRow = function(y) {
+    var r;
+	y = (y - this.offsetY - this.cellHeight/2)/this.cellHeight;
+	r = Math.round(y);  
+	if (this.player1Side !== 0) r = ROW_NUM - 1 - r;
+	return r;
   };
   
   return BoardView;
