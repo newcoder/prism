@@ -472,7 +472,7 @@ BoardView = (function() {
     'K': {r: 1, c: 5},
     'P': {r: 1, c: 6}
 	};
-	return {x: positionTable[pt].r*this..celidth,
+	return {x: positionTable[pt].r*this.cellWidth,
 	  y: positionTable[pt].c*this.cellHeight
 	}
   };
