@@ -186,6 +186,7 @@ Board = (function() {
 	}
   };
 
+  // to do, move coordinate functions to BoardView
   Board.prototype.toCoordX = function(c) {
     var x;
     if (this.player1Side !== 0) c = COL_NUM - 1 - c;
