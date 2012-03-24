@@ -3,6 +3,7 @@ var Board, BoardView, COL_NUM, ROW_NUM, START_POS;
 START_POS = 'rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1';
 ALL_PIECES = 'rnbakabnrccpppppPPPPPCCRNBAKABNR';
 ALL_PIECETYPES = 'rnbakcpRNBAKCP';
+PIECE_NUM = 32;
 ROW_NUM = 10;
 COL_NUM = 9;
 
@@ -322,13 +323,24 @@ BoardView = (function() {
     this.cellHeight = 55;
 	this.offsetX = 3;
 	this.offsetY = 3;
+	this.checkPiecePlace = true;
+	this.boxCells = [];
   }
+  
+  BoardView.prototype.initPieceBox = function() {
+    var i;
+	for (i = 0; i < PIECE_NUM; i++) {
+	  this.boxCells[i] = null;
+	}
+    this.$box.empty();
+  };
 
   BoardView.prototype.init = function(board) {
   	var _this = this;
 	this.board = board || new Board;
 	this.showBox = this.board.isPlacingPiece;
 	this.board.view = this;
+	this.initPieceBox();
 	
 	this.$box.on('click', function(e) {
 	  if (!_this.lastSelected)
@@ -363,8 +375,8 @@ BoardView = (function() {
 	  _this.lastSelected = null;
 	  
 	  if (_this.board.isPlacingPiece) {
-	  // placing piece
-	    if (_this.board.isLegalPlace(r, c, pt)) {
+	  // user is placing piece
+	    if (!_this.checkPiecePlace || _this.board.isLegalPlace(r, c, pt)) {
 		  _this.board.placePiece(r, c, pt, origin_r, origin_c);
 	      // after the view update, select the placed piece if it was on the board
 		  if (origin_r !== -1 && origin_c !== -1) {
@@ -373,9 +385,11 @@ BoardView = (function() {
 		    _this.pieceToSelect = null;
           } 		  
 		  _this.updateView();
+		} else {
+		  
 		}
 	  } else {
-	  // gaming	  
+	  // user is gaming	  
 	  }
 	  e.stopPropagation();
 	});
@@ -441,6 +455,11 @@ BoardView = (function() {
 	}
     return piece.el = $piece_div;
   };
+  
+  // TODO...move a piece in the board view, instead of updating the whole view
+  BoardView.prototype.movePiece = function(src_r, src_c, dest_r, dest_c) {
+    
+  };
 
   BoardView.prototype.addPiece = function(container, piece) {
     return container.append(this.createPiece(piece));
@@ -448,46 +467,44 @@ BoardView = (function() {
 
   BoardView.prototype.updateBox = function() {
     var _this = this;
-	this.$box.empty();
+	this.initPieceBox();
     this.board.pieces.forEach(function(p) {
 	  if (p.r === -1 && p.c === -1) // piece is not on board, should be appear in the box
 	    _this.addFreePiece(_this.$box, p);
 	});    
   };
   
-  BoardView.prototype.piecePosition = function(pt) {
-    var positionTable = {
-    'a': {r: 0, c: 0},
-    'c': {r: 0, c: 1},
-    'r': {r: 0, c: 2},
-    'b': {r: 0, c: 3},
-    'n': {r: 0, c: 4},
-    'k': {r: 0, c: 5},
-    'p': {r: 0, c: 6},
-    'A': {r: 1, c: 0},
-    'C': {r: 1, c: 1},
-    'R': {r: 1, c: 2},
-    'B': {r: 1, c: 3},
-    'N': {r: 1, c: 4},
-    'K': {r: 1, c: 5},
-    'P': {r: 1, c: 6}
-	};
-	return {x: positionTable[pt].r*this.cellWidth,
-	  y: positionTable[pt].c*this.cellHeight
+  // TODO...don't overlap the pieces in the box, use a 8*4 piece box instead of 7*2 
+  BoardView.prototype.getFreeCell = function() {
+    var i, r, c;
+	for (i = 0; i < PIECE_NUM; i++) {
+      if (!this.boxCells[i]) {
+	    c = i % 4;
+		r = Math.floor(i / 4);
+		break;
+	  }
+	}
+	     
+	return {
+	  'i': i, 
+	  'x': c * this.cellWidth,
+	  'y': r * this.cellHeight
 	}
   };
 
   BoardView.prototype.createFreePiece = function(piece) {
     var $piece_div;
 	var _this = this;
+	var freeCell = this.getFreeCell();
     $piece_div = this.$('<div class="piece"/>');
     $piece_div.addClass('piece_' + piece.pt);
     $piece_div.css('width', this.cellWidth);
     $piece_div.css('height', this.cellHeight);
-    $piece_div.css('left', this.piecePosition(piece.pt).x);
-    $piece_div.css('top', this.piecePosition(piece.pt).y);
+    $piece_div.css('left', freeCell.x);
+    $piece_div.css('top', freeCell.y);
 	$piece_div.data('piece', piece);
-    $piece_div.bind('click', function(e){
+	this.boxCells[freeCell.i] = piece;
+    $piece_div.on('click', function(e){
 	  if (_this.lastSelected) {	   
 	    if (_this.isFreePiece(_this.lastSelected)) {
 		  _this.lastSelected.toggleClass('selected');

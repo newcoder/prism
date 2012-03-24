@@ -1,7 +1,7 @@
 #container {
     float: left;
 	position: relative;
-	width: 610px;
+	width: 720px;
 	height: 556px;
 }
 
@@ -16,8 +16,8 @@
 }
 
 .piecebox{
-	width: 110px;
-	height: 385px;
+	width: 220px;
+	height: 440px;
 	margin-left:auto;
 	margin-right:auto;
 	position: relative;
