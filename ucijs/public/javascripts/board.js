@@ -123,7 +123,6 @@ var Board = (function () {
     this.sideToMove = 0;
     this.view = null;
     this.placeChecker = new PlaceChecker();
-    this.isPlacingPiece = true;        // at the stage of placing pieces
     this.init();
   }
 
@@ -313,20 +312,35 @@ var Board = (function () {
 
 var BoardView = (function () {
 
-  function BoardView($, elBoard, elBox) {
+  // options to the board view
+  var boardViewDefaults = {
+    mode: 0,                // 0 - placing piece, 1 - playing game, 2 - game replaying, etc.
+    player1Side: 0,         // the player facing the screen, 0 - red, 1 - black
+    showBox: true,          // show or hide the piece box
+    checkPiecePlace: true,  // check whether the place is legal while placing piece
+    cellWidth: 55,
+    cellHeight: 55,
+    offsetX: 3,
+    offsetY: 3
+  };
+
+  function BoardView($, elBoard, elBox, options) {
     this.$ = $;
     this.$board = this.$(elBoard);
     this.$box = this.$(elBox);
     this.board = null;
+    // options    
+    this.mode = !options || !options.mode ? boardViewDefaults.mode : options.mode;
+    this.player1Side = !options || !options.player1Side ? boardViewDefaults.player1Side : options.player1Side;
+    this.showBox = !options || !options.showBox ? this.mode === 0 : options.showBox;
+    this.checkPiecePlace = !options || !options.checkPiecePlace ? boardViewDefaults.checkPiecePlace : options.checkPiecePlace;
+    this.cellWidth = !options || !options.cellWidth ? boardViewDefaults.cellWidth : options.cellWidth;
+    this.cellHeight = !options || !options.cellHeight ? boardViewDefaults.cellHeight : options.cellHeight;
+    this.offsetX = !options || !options.offsetX ? boardViewDefaults.offsetX : options.offsetX;
+    this.offsetY = !options || !options.offsetY ? boardViewDefaults.offsetY : options.offsetY;
+    // internals
     this.lastSelected = null;
-    this.showBox = true;
     this.pieceToSelect = null;
-    this.player1Side = 0;
-    this.cellWidth = 55;
-    this.cellHeight = 55;
-    this.offsetX = 3;
-    this.offsetY = 3;
-    this.checkPiecePlace = true;
     this.boxCells = [];
   }
 
@@ -338,6 +352,72 @@ var BoardView = (function () {
     this.$box.empty();
   };
 
+  function onClickBox(self, e) {
+    self['onClickBox_' + self.mode](e);
+  }
+
+  // click box in the mode of placing piece
+  BoardView.prototype.onClickBox_0 = function (e) {
+    var piece;
+    if (!this.lastSelected) {
+      e.stopPropagation();
+      return;
+    }
+
+    if (this.isFreePiece(this.lastSelected)) {
+      // a piece in the box is selected currently
+      this.toggleSelectedFrame(this.lastSelected);
+      this.lastSelected = null;
+    } else {
+      // a piece on the board is selected, remove the selected piece from board
+      piece = this.lastSelected.data('piece');
+      this.board.removePiece(piece.r, piece.c);
+      // move the piece from board to box
+      this.moveToBox(piece, e);
+      this.lastSelected = null;
+    }
+    e.stopPropagation();
+  };
+
+  // move a piece from board to box
+  BoardView.prototype.moveToBox = function (piece, e) {
+    var location, x, y, zindex, cx, cy,
+      self = this;
+    location = this.$board.offset();
+    x = e.pageX - location.left;
+    y = e.pageY - location.top;
+    // normalize x, y to fit the cell 
+    x = (x - this.offsetX - this.cellWidth / 2) / this.cellWidth;
+    x = Math.round(x) * this.cellWidth;
+    y = (y - this.offsetY - this.cellHeight / 2) / this.cellHeight;
+    y = Math.round(y) * this.cellHeight;
+    // calculate dest r, c in piece box
+    location = this.$box.offset();
+    cx = e.pageX - location.left;
+    cy = e.pageY - location.top;
+    cx = (cx - this.cellWidth / 2) / this.cellWidth;
+    piece.c = Math.round(cx);
+    cy = (cy - this.cellHeight / 2) / this.cellHeight;
+    piece.r = Math.round(cy);
+    // animate the move
+    zindex = this.$board.css('z-index');
+    this.$board.css('z-index', 10);
+    piece.el.animate({"left": x, "top": y}, 200, function () {
+      var $selectedFrame = piece.el.data('selectedFrame');
+      if ($selectedFrame) {
+        $selectedFrame.remove();
+        piece.el.data('selectedFrame', null);
+      }
+      piece.el.remove();
+      piece.el = null;
+      self.addFreePiece(self.$box, piece);
+      this.$board.css('z-index', zindex);
+    });
+  };
+
+  BoardView.prototype.onClickBox_1 = function (e) {
+  };
+
   BoardView.prototype.init = function (board) {
     var r, c, self = this;
     this.board = board || new Board();
@@ -346,21 +426,7 @@ var BoardView = (function () {
     this.initPieceBox();
 
     this.$box.on('click', function (e) {
-      if (!self.lastSelected) {
-        return;
-      }
-
-      if (self.isFreePiece(self.lastSelected)) {
-        self.toggleSelectedFrame(self.lastSelected);
-        self.lastSelected = null;
-      } else {
-        // remove the selected piece from board, put back to box
-        r = self.lastSelected.data('piece').r;
-        c = self.lastSelected.data('piece').c;
-        self.board.removePiece(r, c);
-        self.updateView();
-      }
-      e.stopPropagation();
+      onClickBox(self, e);
     });
 
     this.$board.on('click', function (e) {
@@ -404,11 +470,14 @@ var BoardView = (function () {
     return r === -1 && c === -1;
   };
 
-  BoardView.prototype.showPieceBox = function (show) {
-    if (this.showBox !== show) {
-      this.showBox = show;
-      this.updateView();
-    }
+  BoardView.prototype.showPieceBox = function () {
+    this.showBox = true;
+    this.$box.show();
+  };
+
+  BoardView.prototype.hidePieceBox = function () {
+    this.showBox = false;
+    this.$box.hide();
   };
 
   BoardView.prototype.updateView = function () {
@@ -482,14 +551,22 @@ var BoardView = (function () {
   };
 
   // TODO...don't overlap the pieces in the box, use a 8*4 piece box instead of 7*2 
-  BoardView.prototype.getFreeCell = function () {
+  BoardView.prototype.getFreeCell = function (piece) {
     var i, r, c;
-    for (i = 0; i < PIECE_NUM; i = i + 1) {
-      if (!this.boxCells[i]) {
-        c = i % 4;
-        r = Math.floor(i / 4);
-        break;
+    if (piece.r === -1 && piece.c === -1) {
+      for (i = 0; i < PIECE_NUM; i = i + 1) {
+        if (!this.boxCells[i]) {
+          c = i % 4;
+          r = Math.floor(i / 4);
+          break;
+        }
       }
+    } else {
+      r = piece.r;
+      c = piece.c;
+      piece.r = -1;
+      piece.c = -1;
+      i = r * 4 + c;
     }
 
     return {
@@ -516,7 +593,7 @@ var BoardView = (function () {
   BoardView.prototype.createFreePiece = function (piece) {
     var $piece_div,
       self = this,
-      freeCell = this.getFreeCell();
+      freeCell = this.getFreeCell(piece);
     $piece_div = this.$('<div class="piece"/>');
     $piece_div.addClass('piece_' + piece.pt);
     $piece_div.css('width', this.cellWidth);
