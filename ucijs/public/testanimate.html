@@ -4,12 +4,16 @@
   <style>
 .block {
   position:absolute;
-  background-color:#abc;
   left:50px;
   width:90px;
   height:90px;
   margin:5px;
   z-index: 10;
+  background: -moz-radial-gradient(50% 50%, farthest-side, green 20px, yellow);
+  background: -webkit-gradient(radial, 50% 50%, 20, 50% 50%, 60, from(green), to(yellow));
+  -moz-border-radius: 50%;
+  -webkit-border-radius: 50%;
+  border-radius: 50%;
 }
 
 #container1 {
