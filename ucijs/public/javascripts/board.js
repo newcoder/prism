@@ -348,6 +348,7 @@ var BoardView = (function () {
     // internals
     this.lastSelected = null;
     this.boxCells = [];
+    this.boxDir = this.$box.height() > this.$box.width();
   }
 
   BoardView.prototype.initPieceBox = function () {
@@ -656,7 +657,7 @@ var BoardView = (function () {
 
   // get a cell from the box to place the piece, use a 8*4 piece box instead of 7*2 
   BoardView.prototype.getFreeCell = function (piece) {
-    var i, r, c;
+    var i, r, c, t;
     if (piece.r === -1 && piece.c === -1) {
       for (i = 0; i < PIECE_NUM; i = i + 1) {
         if (!this.boxCells[i]) {
@@ -664,13 +665,22 @@ var BoardView = (function () {
           r = Math.floor(i / 4);
           break;
         }
+      }    
+      if (!this.boxDir) {
+        t = r;
+        r = c;
+        c = t;
       }
     } else {
       r = piece.r;
       c = piece.c;
       piece.r = -1;
       piece.c = -1;
-      i = r * 4 + c;
+      if (this.boxDir) {
+        i = r * 4 + c;
+      } else {
+        i = c * 4 + r;
+      }
     }
 
     return {
