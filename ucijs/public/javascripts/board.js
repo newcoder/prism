@@ -643,17 +643,14 @@ var BoardView = (function () {
 
   BoardView.prototype.toggleSelectedFrame = function ($piece) {
     var $selectedFrame = $piece.data('selectedFrame'),
-      piece = $piece.data('piece'),
-      $container = piece.r === -1 && piece.c === -1 ? this.$box : this.$board;
+      piece = $piece.data('piece');
     if ($selectedFrame) {
       $selectedFrame.remove();
       $piece.data('selectedFrame', null);
     } else {
       $selectedFrame = this.$('<div class="selected"/>');
-      $selectedFrame.css('left', $piece.css('left'));
-      $selectedFrame.css('top', $piece.css('top'));
       $piece.data('selectedFrame', $selectedFrame);
-      $container.append($selectedFrame);
+      $piece.append($selectedFrame);
     }
   };
 
