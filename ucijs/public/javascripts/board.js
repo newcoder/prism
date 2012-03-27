@@ -130,8 +130,8 @@ var Board = (function () {
     var self = this,
       pieceArr = ALL_PIECES.split('');
     this.pieces = [];
-    pieceArr.forEach(function (p) {
-      self.pieces.push({pt: p, r: -1, c: -1});
+    pieceArr.forEach(function (p, i) {
+      self.pieces.push({id: i, pt: p, r: -1, c: -1});
     });
   };
 
@@ -236,18 +236,25 @@ var Board = (function () {
     return fen.join('');
   };
 
-  // add a piece to chess board
-  Board.prototype.addPiece = function (r, c, ch) {
-    this.board[r][c] = ch;
+  // add a piece to chess board by the piece type
+  Board.prototype.addPiece = function (r, c, pt) {
+    this.board[r][c] = pt;
     var i, p;
     for (i = 0; i < this.pieces.length; i = i + 1) {
       p = this.pieces[i];
-      if (p.pt === ch && p.r === -1 && p.c === -1) {
+      if (p.pt === pt && p.r === -1 && p.c === -1) {
         p.r = r;
         p.c = c;
         break;
       }
     }
+  };
+
+  // add a piece to chess board by the piece index
+  Board.prototype.addPieceById = function (r, c, id) {
+    this.board[r][c] = this.pieces[id].pt;
+    this.pieces[id].r = r;
+    this.pieces[id].c = c;
   };
 
   // remove a piece from chess board
@@ -299,11 +306,11 @@ var Board = (function () {
   };
 
   // place a piece on the board, origin_c, origin_r is null when move a piece from piece box
-  Board.prototype.placePiece = function (dest_r, dest_c, pt, origin_r, origin_c) {
+  Board.prototype.placePiece = function (dest_r, dest_c, id, origin_r, origin_c) {
     if (origin_r !== -1 && origin_c !== -1) {
       this.removePiece(origin_r, origin_c);
     }
-    this.addPiece(dest_r, dest_c, pt);
+    this.addPieceById(dest_r, dest_c, id);
   };
 
   return Board;
@@ -340,7 +347,6 @@ var BoardView = (function () {
     this.offsetY = !options || !options.offsetY ? boardViewDefaults.offsetY : options.offsetY;
     // internals
     this.lastSelected = null;
-    this.pieceToSelect = null;
     this.boxCells = [];
   }
 
@@ -356,7 +362,7 @@ var BoardView = (function () {
     self['onClickBox_' + self.mode](e);
   }
 
-  // click box in the mode of placing piece
+  // click in box in the mode of placing piece
   BoardView.prototype.onClickBox_0 = function (e) {
     var piece;
     if (!this.lastSelected) {
@@ -411,17 +417,97 @@ var BoardView = (function () {
       piece.el.remove();
       piece.el = null;
       self.addFreePiece(self.$box, piece);
-      this.$board.css('z-index', zindex);
+      self.$board.css('z-index', zindex);
     });
   };
 
+  // click box in the mode of gaming
   BoardView.prototype.onClickBox_1 = function (e) {
+  };
+
+  function onClickBoard(self, e) {
+    self['onClickBoard_' + self.mode](e);
+  }
+
+  /*
+     var 
+        origin_r = self.lastSelected.data('piece').r,
+        origin_c = self.lastSelected.data('piece').c;
+      self.toggleSelectedFrame(self.lastSelected);
+      self.lastSelected = null;  
+  */
+
+  // click in board in the mode of placing piece
+  BoardView.prototype.onClickBoard_0 = function (e) {
+    var piece, location, x, y, r, c;
+    if (!this.lastSelected) {
+      e.stopPropagation();
+      return;
+    }
+
+    piece = this.lastSelected.data('piece');
+    location = this.$board.offset();
+    x = e.pageX - location.left;
+    y = e.pageY - location.top;
+    r = this.toRow(y);
+    c = this.toCol(x);
+    if (this.isFreePiece(this.lastSelected)) {
+    // a piece in the box is selected currently
+      if (!this.checkPiecePlace || this.board.isLegalPlace(r, c, piece.pt)) {
+        // update the board
+        this.board.placePiece(r, c, piece.id, piece.r, piece.c);
+        // move the piece from box to board
+        this.moveToBoard(piece, e);
+        this.lastSelected = null;
+      } else {
+      // the place (r,c) is illegal for piece.pt, beep
+        this.playVoice('beep');
+      }
+    } else {
+    // a piece in the board is selected currently
+    }
+    e.stopPropagation();
+  };
+
+  BoardView.prototype.moveToBoard = function (piece, e) {
+    var location, x, y, zindex, cx, cy,
+      self = this;
+    location = this.$box.offset();
+    x = e.pageX - location.left;
+    y = e.pageY - location.top;
+    // normalize x, y to fit the cell 
+    x = (x - this.cellWidth / 2) / this.cellWidth;
+    x = Math.round(x) * this.cellWidth;
+    y = (y - this.cellHeight / 2) / this.cellHeight;
+    y = Math.round(y) * this.cellHeight;
+    // calculate dest r, c in board    
+    location = this.$board.offset();
+    cx = e.pageX - location.left;
+    cy = e.pageY - location.top;
+    piece.r = this.toRow(cy);
+    piece.c = this.toCol(cx);
+    // animate the move
+    zindex = this.$box.css('z-index');
+    this.$box.css('z-index', 10);
+    piece.el.animate({"left": x, "top": y}, 200, function () {
+      var $selectedFrame = piece.el.data('selectedFrame');
+      if ($selectedFrame) {
+        $selectedFrame.remove();
+        piece.el.data('selectedFrame', null);
+      }
+      piece.el.remove();
+      piece.el = null;
+      self.addPiece(self.$board, piece);
+      self.$box.css('z-index', zindex);
+    });
+  };
+
+  BoardView.prototype.playVoice = function (voice) {
   };
 
   BoardView.prototype.init = function (board) {
     var r, c, self = this;
     this.board = board || new Board();
-    this.showBox = this.board.isPlacingPiece;
     this.board.view = this;
     this.initPieceBox();
 
@@ -430,36 +516,7 @@ var BoardView = (function () {
     });
 
     this.$board.on('click', function (e) {
-      if (!self.lastSelected) {
-        return;
-      }
-
-      var location = self.$board.offset(),
-        x = e.pageX - location.left,
-        y = e.pageY - location.top,
-        r = self.toRow(y),
-        c = self.toCol(x),
-        pt = self.lastSelected.data('piece').pt,
-        origin_r = self.lastSelected.data('piece').r,
-        origin_c = self.lastSelected.data('piece').c;
-
-      self.toggleSelectedFrame(self.lastSelected);
-      self.lastSelected = null;
-
-      if (self.board.isPlacingPiece) {
-	  // user is placing piece
-        if (!self.checkPiecePlace || self.board.isLegalPlace(r, c, pt)) {
-          self.board.placePiece(r, c, pt, origin_r, origin_c);
-          // after the view update, select the placed piece if it was on the board
-          if (origin_r !== -1 && origin_c !== -1) {
-            self.pieceToSelect = {'pt': pt, 'r': r, 'c': c};
-          } else {
-            self.pieceToSelect = null;
-          }
-          self.updateView();
-        }
-      }
-      e.stopPropagation();
+      onClickBoard(self, e);
     });
     this.updateView();
   };
@@ -498,6 +555,30 @@ var BoardView = (function () {
     });
   };
 
+  function onClickPiece(self, $piece, e) {
+    self['onClickPiece_' + self.mode]($piece, e);
+  }
+
+  // piece clicked in placing mode
+  BoardView.prototype.onClickPiece_0 = function ($piece, e) {
+    if (this.lastSelected) {
+      this.toggleSelectedFrame(this.lastSelected);
+    }
+    if (this.lastSelected !== $piece) {
+      this.toggleSelectedFrame($piece);
+      this.lastSelected = $piece;
+    } else {
+      // click on a piece again, de-select it
+      this.lastSelected = null;
+    }
+    e.stopPropagation();
+  };
+
+  // piece clicked in gaming mode
+  BoardView.prototype.onClickPiece_1 = function ($piece, e) {
+
+  };
+
   BoardView.prototype.createPiece = function (piece) {
     var $piece_div,
       self = this;
@@ -509,24 +590,8 @@ var BoardView = (function () {
     $piece_div.css('top', this.toCoordY(piece.r));
     $piece_div.data('piece', piece);
     $piece_div.on('click', function (e) {
-      if (self.lastSelected) {
-        self.toggleSelectedFrame(self.lastSelected);
-      }
-      if (self.lastSelected !== $piece_div) {
-        self.toggleSelectedFrame($piece_div);
-        self.lastSelected = $piece_div;
-      } else {
-        // click on a piece again, de-select it
-        self.lastSelected = null;
-      }
-      e.stopPropagation();
+      onClickPiece(self, $piece_div, e);
     });
-    if (self.pieceToSelect
-        && self.pieceToSelect.pt === piece.pt
-        && self.pieceToSelect.r === piece.r
-        && self.pieceToSelect.c === piece.c) {
-      $piece_div.click();
-    }
     piece.el = $piece_div;
     return $piece_div;
   };
@@ -550,7 +615,7 @@ var BoardView = (function () {
     });
   };
 
-  // TODO...don't overlap the pieces in the box, use a 8*4 piece box instead of 7*2 
+  // get a cell from the box to place the piece, use a 8*4 piece box instead of 7*2 
   BoardView.prototype.getFreeCell = function (piece) {
     var i, r, c;
     if (piece.r === -1 && piece.c === -1) {
@@ -577,7 +642,9 @@ var BoardView = (function () {
   };
 
   BoardView.prototype.toggleSelectedFrame = function ($piece) {
-    var $selectedFrame = $piece.data('selectedFrame');
+    var $selectedFrame = $piece.data('selectedFrame'),
+      piece = $piece.data('piece'),
+      $container = piece.r === -1 && piece.c === -1 ? this.$box : this.$board;
     if ($selectedFrame) {
       $selectedFrame.remove();
       $piece.data('selectedFrame', null);
@@ -586,8 +653,33 @@ var BoardView = (function () {
       $selectedFrame.css('left', $piece.css('left'));
       $selectedFrame.css('top', $piece.css('top'));
       $piece.data('selectedFrame', $selectedFrame);
-      this.$board.append($selectedFrame);
+      $container.append($selectedFrame);
     }
+  };
+
+  function onClickFreePiece(self, $piece, e) {
+    self['onClickFreePiece_' + self.mode]($piece, e);
+  }
+
+  // free piece clicked in placing mode
+  BoardView.prototype.onClickFreePiece_0 = function ($piece, e) {
+    if (this.lastSelected) {
+      this.toggleSelectedFrame(this.lastSelected);
+    }
+
+    if (this.lastSelected !== $piece) {
+      this.toggleSelectedFrame($piece);
+      this.lastSelected = $piece;
+    } else {
+    // click on a free piece again
+      this.lastSelected = null;
+    }
+    e.stopPropagation();
+  };
+
+  // free piece clicked in gaming mode
+  BoardView.prototype.onClickFreePiece_1 = function ($piece, e) {
+
   };
 
   BoardView.prototype.createFreePiece = function (piece) {
@@ -603,26 +695,7 @@ var BoardView = (function () {
     $piece_div.data('piece', piece);
     this.boxCells[freeCell.i] = piece;
     $piece_div.on('click', function (e) {
-      if (self.lastSelected) {
-        if (self.isFreePiece(self.lastSelected)) {
-          self.toggleSelectedFrame(self.lastSelected);
-          if (self.lastSelected !== $piece_div) {
-            self.toggleSelectedFrame($piece_div);
-            self.lastSelected = $piece_div;
-          } else {
-          // click on a free piece again
-            self.lastSelected = null;
-          }
-          e.stopPropagation();
-        } //else {
-        // a piece on board was selected at the time, wanna move the piece to box?
-        // just bubble up the event, let $box.onclick handle it
-        //}
-      } else {
-        self.toggleSelectedFrame($piece_div);
-        self.lastSelected = $piece_div;
-        e.stopPropagation();
-      }
+      onClickFreePiece(self, $piece_div, e);
     });
     piece.el = $piece_div;
     return $piece_div;
