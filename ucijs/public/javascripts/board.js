@@ -465,10 +465,21 @@ var BoardView = (function () {
       }
     } else {
     // a piece in the board is selected currently
+      if (!this.checkPiecePlace || this.board.isLegalPlace(r, c, piece.pt)) {
+        // update the board
+        this.board.placePiece(r, c, piece.id, piece.r, piece.c);
+        // move the piece in board
+        this.moveInBoard(piece, e);
+        this.lastSelected = null;
+      } else {
+      // illegal place
+        this.playVoice('beep');
+      }
     }
     e.stopPropagation();
   };
 
+  // move a piece from box to board
   BoardView.prototype.moveToBoard = function (piece, e) {
     var location, x, y, zindex, cx, cy,
       self = this;
@@ -499,6 +510,34 @@ var BoardView = (function () {
       piece.el = null;
       self.addPiece(self.$board, piece);
       self.$box.css('z-index', zindex);
+    });
+  };
+
+  // move a piece in board
+  BoardView.prototype.moveInBoard = function (piece, e) {
+    var location, x, y, cx, cy,
+      self = this;
+    location = this.$board.offset();
+    x = e.pageX - location.left;
+    y = e.pageY - location.top;
+    piece.r = this.toRow(y); // destine row
+    piece.c = this.toCol(x); // destine col
+    // normalize x, y to fit the cell 
+    x = (x - this.offsetX - this.cellWidth / 2) / this.cellWidth;
+    x = Math.round(x) * this.cellWidth;
+    y = (y - this.offsetY - this.cellHeight / 2) / this.cellHeight;
+    y = Math.round(y) * this.cellHeight;
+
+    // animate the move
+    piece.el.animate({"left": x, "top": y}, 200, function () {
+      var $selectedFrame = piece.el.data('selectedFrame');
+      if ($selectedFrame) {
+        $selectedFrame.remove();
+        piece.el.data('selectedFrame', null);
+      }
+      piece.el.remove();
+      piece.el = null;
+      self.addPiece(self.$board, piece);
     });
   };
 

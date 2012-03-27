@@ -13,9 +13,15 @@
           
 		  $("#changefen").click(function(){ 
 		    var input = $("#feninput").val();
-			boardView.board.fromFen(input);
-			alert(boardView.board.toFen());
+		  	boardView.board.fromFen(input);
+  		}); 
+      
+      $("#getfen").click(function(){ 
+   			var fen = boardView.board.toFen();
+        $("#feninput").val(fen);
+	  		alert(fen);
 			}); 
+      
           		  
 		});
 
@@ -25,7 +31,8 @@
 	<body>
 	    <div id = "panel">
 	        <span text = "Last name:"/><input id = "feninput" type="text" name="lname" size="80" />
-		    <button id = "changefen" type="button">change fen!</button> 		   
+		    <button id = "changefen" type="button">change fen!</button> 		
+		    <button id = "getfen" type="button">get fen!</button> 		
 	    </div>
 
 	    <div id = "container">
