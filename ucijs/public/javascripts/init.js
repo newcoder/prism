@@ -12,7 +12,8 @@ define(function(require) {
   var BoardView = require('./boardview').BoardView;
 
   var boardView = new BoardView($, $("#board")[0], $("#box")[0]);
-  boardView.init();	    
+  boardView.init();	  
+  boardView.mode = 1;  
       
   $("#changefen").click(function(){ 
     var input = $("#feninput").val();

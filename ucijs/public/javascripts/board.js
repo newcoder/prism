@@ -32,9 +32,9 @@ define(function (require, exports, module) {
         return r >= 0 && r <= 2 && c >= 3 && c <= 5;
       },
 
-      // '炮，马，车' could be at any place
+      // '炮，马，车' could be at any place in the board
       anyPlace = function (r, c) {
-        return true;
+        return r >= 0 && r < consts.ROW_NUM && c >= 0 && c < consts.COL_NUM;
       },
 
       // '卒' could be at any place across the river, only ten places on own side
@@ -98,23 +98,23 @@ define(function (require, exports, module) {
           ((pt1.toUpperCase() !== pt1) && (pt2.toUpperCase() !== pt2));
       },
 
-      moves = function (piece, offset, barrier) {
+      generic_moves = function (piece, offset, barrier) {
         var i, p, b,
-          r = piece.r,
-          c = piece.c,
+          fr = piece.r,
+          fc = piece.c,
           pt = piece.pt,
           moves = [];
         for (i = 0; i < offset.length; i = i + 1) {
           p = offset[i];
-          r = r + p[0];
-          c = c + p[1];
+          r = fr + p[0];
+          c = fc + p[1];
           if (barrier) {
             b = barrier[i];
           }
-          if (this.placeChecker(pt, r, c)
+          if (this.placeChecker.check(pt, r, c)
               && ((this.board[r][c] === 0) || !sameSide(this.board[r][c], pt))) {
-            if (!barrier || this.board[r + b[0]][c + b[1]] === 0) {
-              moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': c});
+            if (!barrier || this.board[fr + b[0]][fc + b[1]] === 0) {
+              moves.push({'pt': pt, 'fr': fr, 'fc': fc, 'tr': r, 'tc': c});
               if (this.board[r][c] !== 0) {
                 piecesCaptured.push([this.board[r][c], r, c]);
               }
@@ -125,35 +125,35 @@ define(function (require, exports, module) {
       },
 
       k_moves = function (piece) {
-        return moves(piece, k_offset);
+        return this.generic_moves(piece, k_offset);
       },
 
       K_moves = k_moves,
 
       a_moves = function (piece) {
-        return moves(piece, a_offset);
+        return this.generic_moves(piece, a_offset);
       },
 
       A_moves = a_moves,
 
       b_moves = function (piece) {
-        return moves(piece, b_offset, elephant_eye);
+        return this.generic_moves(piece, b_offset, elephant_eye);
       },
 
       B_moves = b_moves,
 
       n_moves = function (piece) {
-        return moves(piece, n_offset, horse_leg);
+        return this.generic_moves(piece, n_offset, horse_leg);
       },
 
       N_moves = n_moves,
 
       p_moves = function (piece) {
-        return moves(piece, p_offset);
+        return this.generic_moves(piece, p_offset);
       },
 
       P_moves = function (piece) {
-        return moves(piece, P_offset);
+        return this.generic_moves(piece, P_offset);
       },
 
       r_moves = function (piece) {
@@ -295,9 +295,8 @@ define(function (require, exports, module) {
       C_moves = c_moves;
 
     function MoveGenerator(board) {
-      this.board = board;
-      this.placeChecker = board.placeChecker;
       this.generator = {
+        'generic_moves': generic_moves,
         'a': a_moves,
         'b': b_moves,
         'k': k_moves,
@@ -311,11 +310,14 @@ define(function (require, exports, module) {
         'P': P_moves,
         'C': C_moves,
         'N': N_moves,
-        'R': R_moves
+        'R': R_moves,
+        'board': board.board,
+        'placeChecker': board.placeChecker      
       };
     }
 
     // generate legal moves for a piece on the board
+    // return a moves array, each item is an object { pt, fr, fc, tr, tc }
     MoveGenerator.prototype.generateMoves = function (piece) {
       return this.generator[piece.pt](piece);
     };

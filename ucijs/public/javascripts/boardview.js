@@ -1,15 +1,17 @@
 define(function (require, exports, module) {
   var Board = require('./board').Board;
+  var MoveGenerator = require('./board').MoveGenerator;
   var consts = require('./consts');
 
   var BoardView = (function () {
 
     // options to the board view
     var boardViewDefaults = {
-      mode: 0,                // 0 - placing piece, 1 - playing game, 2 - game replaying, etc.
+      mode: 0,                // -1 - no interactive, 0 - placing piece, 1 - playing game, 2 - game replaying, etc.
       player1Side: 0,         // the player facing the screen, 0 - red, 1 - black
       showBox: true,          // show or hide the piece box
       checkPiecePlace: true,  // check whether the place is legal while placing piece
+      showMoveShadow: true,       // show shadow for legal moves
       cellWidth: 55,
       cellHeight: 55,
       offsetX: 3,
@@ -26,6 +28,7 @@ define(function (require, exports, module) {
       this.player1Side = !options || !options.player1Side ? boardViewDefaults.player1Side : options.player1Side;
       this.showBox = !options || !options.showBox ? this.mode === 0 : options.showBox;
       this.checkPiecePlace = !options || !options.checkPiecePlace ? boardViewDefaults.checkPiecePlace : options.checkPiecePlace;
+      this.showMoveShadow = !options || !options.showMoveShadow ? boardViewDefaults.showMoveShadow : options.showMoveShadow;
       this.cellWidth = !options || !options.cellWidth ? boardViewDefaults.cellWidth : options.cellWidth;
       this.cellHeight = !options || !options.cellHeight ? boardViewDefaults.cellHeight : options.cellHeight;
       this.offsetX = !options || !options.offsetX ? boardViewDefaults.offsetX : options.offsetX;
@@ -34,12 +37,14 @@ define(function (require, exports, module) {
       this.lastSelected = null;
       this.boxCells = [];
       this.boxDir = this.$box.height() > this.$box.width();
+      this.moveGenerator = null;
     }
 
     BoardView.prototype.init = function (board) {
       var r, c, self = this;
       this.board = board || new Board();
       this.board.view = this;
+      this.moveGenerator = new MoveGenerator(this.board);
       this.initPieceBox();
 
       this.$box.on('click', function (e) {
@@ -61,6 +66,9 @@ define(function (require, exports, module) {
     };
 
     function onClickBox(self, e) {
+      if (self.mode < 0 ) {
+        return;
+      }
       self['onClickBox_' + self.mode](e);
     }
 
@@ -125,9 +133,13 @@ define(function (require, exports, module) {
 
     // click box in the mode of gaming
     BoardView.prototype.onClickBox_1 = function (e) {
+      return;
     };
 
     function onClickBoard(self, e) {
+      if (self.mode < 0) {
+        return;
+      }
       self['onClickBoard_' + self.mode](e);
     }
 
@@ -281,6 +293,9 @@ define(function (require, exports, module) {
     };
 
     function onClickPiece(self, $piece, e) {
+      if (self.mode < 0) {
+        return;
+      }
       self['onClickPiece_' + self.mode]($piece, e);
     }
 
@@ -301,7 +316,51 @@ define(function (require, exports, module) {
 
     // piece clicked in gaming mode
     BoardView.prototype.onClickPiece_1 = function ($piece, e) {
+      var piece = $piece.data('piece'),
+        side = this.board.sideToMove;
+        pieceSide = (piece.id > 15) ? 0 : 1;
+      if (side !== pieceSide) {
+      // can not move piece belongs to other side
+        this.playVoice('beep');
+      } else {
+        if (this.showMoveShadow) {
+          this.clearMoveShadow();
+        }
+      // focus the piece to make move
+        if (this.lastSelected) {
+          this.toggleSelectedFrame(this.lastSelected);
+        }
+        if (this.lastSelected !== $piece) {
+          this.toggleSelectedFrame($piece);
+          this.lastSelected = $piece;
+        } else {
+          // click on a piece again, de-select it
+          this.lastSelected = null;
+        }
+        // shadow for possible move targets
+        if (this.showMoveShadow) {
+          this.addMoveShadow(piece);
+        }
+      }
+      e.stopPropagation();
+    };
 
+    BoardView.prototype.addMoveShadow = function (piece) {
+      var self = this,
+        moves = this.moveGenerator.generateMoves(piece);
+
+      moves.forEach(function(m) {
+        $shadow_div = self.$('<div class="move_shadow"/>');
+        $shadow_div.css('width', self.cellWidth);
+        $shadow_div.css('height', self.cellHeight);
+        $shadow_div.css('left', self.toCoordX(m.tc));
+        $shadow_div.css('top', self.toCoordY(m.tr));
+        self.$board.append($shadow_div);
+      });
+    };
+    
+    BoardView.prototype.clearMoveShadow = function () {
+      this.$('.move_shadow').remove();
     };
 
     BoardView.prototype.createPiece = function (piece) {
