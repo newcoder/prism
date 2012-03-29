@@ -254,6 +254,18 @@ define(function (require, exports, module) {
         self.addPiece(self.$board, piece);
       });
     };
+    
+    // click in board in the mode of gaming
+    BoardView.prototype.onClickBoard_1 = function (e) {
+      if (this.lastSelected) {
+        this.toggleSelectedFrame(this.lastSelected);
+        this.lastSelected = null;
+        if (this.showMoveShadow) {
+          this.clearMoveShadow();
+        }      
+      }
+      e.stopPropagation();
+    }
 
     BoardView.prototype.playVoice = function (voice) {
     };
@@ -333,13 +345,13 @@ define(function (require, exports, module) {
         if (this.lastSelected !== $piece) {
           this.toggleSelectedFrame($piece);
           this.lastSelected = $piece;
+          // shadow for possible move targets
+          if (this.showMoveShadow) {
+            this.addMoveShadow(piece);
+          }        
         } else {
           // click on a piece again, de-select it
           this.lastSelected = null;
-        }
-        // shadow for possible move targets
-        if (this.showMoveShadow) {
-          this.addMoveShadow(piece);
         }
       }
       e.stopPropagation();
