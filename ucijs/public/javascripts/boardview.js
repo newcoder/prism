@@ -36,8 +36,8 @@ define(function (require, exports, module) {
       // internals
       this.lastSelected = null;
       this.boxCells = [];
-      this.boxDir = this.$box.height() > this.$box.width();
       this.moveGenerator = null;
+      this.moves = [];
     }
 
     BoardView.prototype.init = function (board) {
@@ -66,7 +66,7 @@ define(function (require, exports, module) {
     };
 
     function onClickBox(self, e) {
-      if (self.mode < 0 ) {
+      if (self.mode < 0) {
         return;
       }
       self['onClickBox_' + self.mode](e);
@@ -254,18 +254,65 @@ define(function (require, exports, module) {
         self.addPiece(self.$board, piece);
       });
     };
-    
+
     // click in board in the mode of gaming
     BoardView.prototype.onClickBoard_1 = function (e) {
+      var piece;
       if (this.lastSelected) {
-        this.toggleSelectedFrame(this.lastSelected);
-        this.lastSelected = null;
+        //this.toggleSelectedFrame(this.lastSelected);
+        //this.lastSelected = null;
         if (this.showMoveShadow) {
           this.clearMoveShadow();
-        }      
+        }
+        piece = this.lastSelected.data('piece');
+        this.makeMove(piece, e);
       }
       e.stopPropagation();
-    }
+    };
+
+    BoardView.prototype.makeMove = function (piece, e) {
+      var location, x, y, fr = piece.r, fc = piece.c, tr, tc,
+        self = this, eatenPiece;
+      location = this.$board.offset();
+      x = e.pageX - location.left;
+      y = e.pageY - location.top;
+      tr = this.toRow(y); // destine row
+      tc = this.toCol(x); // destine col
+      if (this.legalPlaceToMove(tr, tc)) {
+        // if there is eaten piece, remove it
+        eatenPiece = this.board.getPieceAt(tr, tc);
+        if (eatenPiece) {
+          eatenPiece.el.remove();
+          eatenPiece.el = null;
+          eatenPiece.r = -1;
+          eatenPiece.c = -1;
+        }
+        // update the board
+        this.board.placePiece(tr, tc, piece.id, fr, fc);
+        // normalize x, y to fit the cell 
+        x = (x - this.offsetX - this.cellWidth / 2) / this.cellWidth;
+        x = Math.round(x) * this.cellWidth;
+        y = (y - this.offsetY - this.cellHeight / 2) / this.cellHeight;
+        y = Math.round(y) * this.cellHeight;
+        // animate the move
+        piece.el.animate({"left": x, "top": y}, 200, function () {
+          var $selectedFrame = piece.el.data('selectedFrame');
+          if ($selectedFrame) {
+            $selectedFrame.remove();
+            piece.el.data('selectedFrame', null);
+          }
+          piece.el.remove();
+          piece.el = null;
+          piece.r = tr;
+          piece.c = tc;
+          self.addPiece(self.$board, piece);
+          if (self.showBox) {
+            self.updateBox();
+          }
+          self.lastSelected = null;
+        });
+      }
+    };
 
     BoardView.prototype.playVoice = function (voice) {
     };
@@ -329,7 +376,7 @@ define(function (require, exports, module) {
     // piece clicked in gaming mode
     BoardView.prototype.onClickPiece_1 = function ($piece, e) {
       var piece = $piece.data('piece'),
-        side = this.board.sideToMove;
+        side = this.board.sideToMove,
         pieceSide = (piece.id > 15) ? 0 : 1;
       if (side !== pieceSide) {
       // can not move piece belongs to other side
@@ -348,7 +395,7 @@ define(function (require, exports, module) {
           // shadow for possible move targets
           if (this.showMoveShadow) {
             this.addMoveShadow(piece);
-          }        
+          }
         } else {
           // click on a piece again, de-select it
           this.lastSelected = null;
@@ -357,12 +404,22 @@ define(function (require, exports, module) {
       e.stopPropagation();
     };
 
-    BoardView.prototype.addMoveShadow = function (piece) {
-      var self = this,
-        moves = this.moveGenerator.generateMoves(piece);
+    BoardView.prototype.legalPlaceToMove = function (r, c) {
+      var i, m;
+      for (i = 0; i < this.moves.length; i = i + 1) {
+        m = this.moves[i];
+        if (m.tr === r && m.tc === c) {
+          return true;
+        }
+      }
+      return false;
+    };
 
-      moves.forEach(function(m) {
-        $shadow_div = self.$('<div class="move_shadow"/>');
+    BoardView.prototype.addMoveShadow = function (piece) {
+      var self = this;
+      this.moves = this.moveGenerator.generateMoves(piece);
+      this.moves.forEach(function (m) {
+        var $shadow_div = self.$('<div class="move_shadow"/>');
         $shadow_div.css('width', self.cellWidth);
         $shadow_div.css('height', self.cellHeight);
         $shadow_div.css('left', self.toCoordX(m.tc));
@@ -370,7 +427,7 @@ define(function (require, exports, module) {
         self.$board.append($shadow_div);
       });
     };
-    
+
     BoardView.prototype.clearMoveShadow = function () {
       this.$('.move_shadow').remove();
     };
@@ -413,7 +470,8 @@ define(function (require, exports, module) {
 
     // get a cell from the box to place the piece, use a 8*4 piece box instead of 7*2 
     BoardView.prototype.getFreeCell = function (piece) {
-      var i, r, c, t;
+      var i, r, c, t,
+        boxDir = this.$box.height() > this.$box.width();
       if (piece.r === -1 && piece.c === -1) {
         for (i = 0; i < consts.PIECE_NUM; i = i + 1) {
           if (!this.boxCells[i]) {
@@ -422,7 +480,7 @@ define(function (require, exports, module) {
             break;
           }
         }
-        if (!this.boxDir) {
+        if (!boxDir) {
           t = r;
           r = c;
           c = t;
@@ -432,7 +490,7 @@ define(function (require, exports, module) {
         c = piece.c;
         piece.r = -1;
         piece.c = -1;
-        if (this.boxDir) {
+        if (boxDir) {
           i = r * 4 + c;
         } else {
           i = c * 4 + r;
@@ -481,7 +539,6 @@ define(function (require, exports, module) {
 
     // free piece clicked in gaming mode
     BoardView.prototype.onClickFreePiece_1 = function ($piece, e) {
-
     };
 
     BoardView.prototype.createFreePiece = function (piece) {

@@ -39,7 +39,7 @@ define(function (require, exports, module) {
 
       // '×ä' could be at any place across the river, only ten places on own side
       p_placeChecker = function (r, c) {
-        return (r > 4) || (r > 2 && c % 2 === 0);
+        return ((r > 4) || (r > 2 && c % 2 === 0)) && anyPlace(r, c);
       },
 
       makeRedChecker = function (blackChecker) {
@@ -488,6 +488,17 @@ define(function (require, exports, module) {
           break;
         }
       }
+    };
+
+    Board.prototype.getPieceAt = function (r, c) {
+      var i;
+      for (i = 0; i < this.pieces.length; i = i + 1) {
+        p = this.pieces[i];
+        if (p.r === r && p.c === c) {
+          return p;
+        }
+      }
+      return null;
     };
 
     // move a piece in gaming
