@@ -111,6 +111,252 @@ var PlaceChecker = (function () {
   return PlaceChecker;
 }());
 
+var MoveGenerator = (function () {
+
+  var k_offset = [[1, 0], [-1, 0], [0, 1], [0, -1]],
+    a_offset = [[-1, -1], [1, 1], [-1, 1], [1, -1]],
+    elephant_eye = a_offset,
+    b_offset = [[-2, -2], [2, 2], [-2, 2], [2, -2]],
+    n_offset = [[-2, -1], [-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2]],
+    horse_leg = [[-1, 0], [-1, 0], [0, 1], [0, 1], [1, 0], [1, 0], [0, -1], [0, -1]],
+    p_offset = [[1, 0], [0, 1], [0, -1]],
+    P_offset = [[-1, 0], [0, 1], [0, -1]],
+    piecesCaptured = [],
+
+    sameSide = function (pt1, pt2) {
+      return ((pt1.toUpperCase() === pt1) && (pt2.toUpperCase() === pt2)) ||
+        ((pt1.toUpperCase() !== pt1) && (pt2.toUpperCase() !== pt2));
+    },
+
+    moves = function (piece, offset, barrier) {
+      var i, p, b,
+        r = piece.r,
+        c = piece.c,
+        pt = piece.pt,
+        moves = [];
+      for (i = 0; i < offset.length; i = i + 1) {
+        p = offset[i];
+        r = r + p[0];
+        c = c + p[1];
+        if (barrier) {
+          b = barrier[i];
+        }
+        if (this.placeChecker(pt, r, c)
+            && ((this.board[r][c] === 0) || !sameSide(this.board[r][c], pt))) {
+          if (!barrier || this.board[r + b[0]][c + b[1]] === 0) {
+            moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': c});
+            if (this.board[r][c] !== 0) {
+              piecesCaptured.push([this.board[r][c], r, c]);
+            }
+          }
+        }
+      }
+      return moves;
+    },
+
+    k_moves = function (piece) {
+      return moves(piece, k_offset);
+    },
+
+    K_moves = k_moves,
+
+    a_moves = function (piece) {
+      return moves(piece, a_offset);
+    },
+
+    A_moves = a_moves,
+
+    b_moves = function (piece) {
+      return moves(piece, b_offset, elephant_eye);
+    },
+
+    B_moves = b_moves,
+
+    n_moves = function (piece) {
+      return moves(piece, n_offset, horse_leg);
+    },
+
+    N_moves = n_moves,
+
+    p_moves = function (piece) {
+      return moves(piece, p_offset);
+    },
+
+    P_moves = function (piece) {
+      return moves(piece, P_offset);
+    },
+
+    r_moves = function (piece) {
+      var i,
+        r = piece.r,
+        c = piece.c,
+        pt = piece.pt,
+        moves = [];
+      // generate legal moves in 4 directions, duplicated code?
+      for (i = r + 1; i < ROW_NUM; i = i + 1) {
+        if (this.board[i][c] === 0) {
+          moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': i, 'tc': c});
+        } else if (!sameSide(this.board[i][c], pt)) {
+          moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': i, 'tc': c});
+          piecesCaptured.push([this.board[i][c], i, c]);
+          break;
+        } else {
+          break;
+        }
+      }
+      for (i = r - 1; i >= 0; i = i - 1) {
+        if (this.board[i][c] === 0) {
+          moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': i, 'tc': c});
+        } else if (!sameSide(this.board[i][c], pt)) {
+          moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': i, 'tc': c});
+          piecesCaptured.push([this.board[i][c], i, c]);
+          break;
+        } else {
+          break;
+        }
+      }
+      for (i = c + 1; i < COL_NUM; i = i + 1) {
+        if (this.board[r][i] === 0) {
+          moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': i});
+        } else if (!sameSide(this.board[r][i], pt)) {
+          moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': i});
+          piecesCaptured.push([this.board[r][i], r, i]);
+          break;
+        } else {
+          break;
+        }
+      }
+      for (i = c - 1; i >= 0; i = i - 1) {
+        if (this.board[r][i] === 0) {
+          moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': i});
+        } else if (!sameSide(this.board[r][i], pt)) {
+          moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': i});
+          piecesCaptured.push([this.board[r][i], r, i]);
+          break;
+        } else {
+          break;
+        }
+      }
+      return moves;
+    },
+
+    R_moves = r_moves,
+
+    c_moves = function (piece) {
+      var i, cannon_stand = false,
+        r = piece.r,
+        c = piece.c,
+        pt = piece.pt,
+        moves = [];
+      for (i = r + 1; i < ROW_NUM; i = i + 1) {
+        if (!cannon_stand) {
+          if (this.board[i][c] === 0) {
+            moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': i, 'tc': c});
+          } else {
+            cannon_stand = true;
+          }
+        } else {
+          if (this.board[i][c] !== 0) {
+            if (!sameSide(this.board[i][c], pt)) {
+              moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': i, 'tc': c});
+              piecesCaptured.push([this.board[i][c], i, c]);
+            }
+            break;
+          }
+        }
+      }
+      cannon_stand = false;
+      for (i = r - 1; i >= 0; i = i - 1) {
+        if (!cannon_stand) {
+          if (this.board[i][c] === 0) {
+            moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': i, 'tc': c});
+          } else {
+            cannon_stand = true;
+          }
+        } else {
+          if (this.board[i][c] !== 0) {
+            if (!sameSide(this.board[i][c], pt)) {
+              moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': i, 'tc': c});
+              piecesCaptured.push([this.board[i][c], i, c]);
+            }
+            break;
+          }
+        }
+      }
+      cannon_stand = false;
+      for (i = c + 1; i < COL_NUM; i = i + 1) {
+        if (!cannon_stand) {
+          if (this.board[r][i] === 0) {
+            moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': i});
+          } else {
+            cannon_stand = true;
+          }
+        } else {
+          if (this.board[r][i] !== 0) {
+            if (!sameSide(this.board[r][i], pt)) {
+              moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': i});
+              piecesCaptured.push([this.board[r][i], r, i]);
+            }
+            break;
+          }
+        }
+      }
+      cannon_stand = false;
+      for (i = c - 1; i >= 0; i = i - 1) {
+        if (!cannon_stand) {
+          if (this.board[r][i] === 0) {
+            moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': i});
+          } else {
+            cannon_stand = true;
+          }
+        } else {
+          if (this.board[r][i] !== 0) {
+            if (!sameSide(this.board[r][i], pt)) {
+              moves.push({'pt': pt, 'fr': piece.r, 'fc': piece.c, 'tr': r, 'tc': i});
+              piecesCaptured.push([this.board[r][i], r, i]);
+            }
+            break;
+          }
+        }
+      }
+      return moves;
+    },
+
+    C_moves = c_moves;
+
+  function MoveGenerator(board) {
+    this.board = board;
+    this.placeChecker = board.placeChecker;
+    this.generator = {
+      'a': a_moves,
+      'b': b_moves,
+      'k': k_moves,
+      'p': p_moves,
+      'c': c_moves,
+      'n': n_moves,
+      'r': r_moves,
+      'A': A_moves,
+      'B': B_moves,
+      'K': K_moves,
+      'P': P_moves,
+      'C': C_moves,
+      'N': N_moves,
+      'R': R_moves
+    };
+  }
+
+  // generate legal moves for a piece on the board
+  MoveGenerator.prototype.generateMoves = function (piece) {
+    return this.generator[piece.pt](piece);
+  };
+
+  // generate all moves for the side 
+  MoveGenerator.prototype.generateAllMoves = function () {
+
+  };
+
+  return MoveGenerator;
+}());
 
 var Board = (function () {
 
@@ -665,7 +911,7 @@ var BoardView = (function () {
           r = Math.floor(i / 4);
           break;
         }
-      }    
+      }
       if (!this.boxDir) {
         t = r;
         r = c;
