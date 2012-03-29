@@ -11,7 +11,7 @@ define(function (require, exports, module) {
       player1Side: 0,         // the player facing the screen, 0 - red, 1 - black
       showBox: true,          // show or hide the piece box
       checkPiecePlace: true,  // check whether the place is legal while placing piece
-      showMoveShadow: true,       // show shadow for legal moves
+      showMoveShadow: true,   // show shadow for legal moves
       cellWidth: 55,
       cellHeight: 55,
       offsetX: 3,

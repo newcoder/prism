@@ -12,7 +12,7 @@
 	margin-right:auto;
 	position: relative;
 	float: left;
-	background: transparent url(chessboard.png) no-repeat;	
+	background: transparent url(../images/chessboard.png) no-repeat;	
 }
 
 .piecebox{
@@ -22,18 +22,18 @@
 	margin-right:auto;
 	position: relative;
 	float: right;
-    background-color:#FAEBD7;
+  background-color:#FAEBD7;
 }
 
 .piece {
-	background: transparent url(pieces.png) no-repeat;
+	background: transparent url(../images/pieces.png) no-repeat;
 	width:55px;
 	height:55px;
 	position: absolute;
 }
 
 .selected {
-	background: transparent url(pieces.png) no-repeat;
+	background: transparent url(../images/pieces.png) no-repeat;
 	width:55px;
 	height:55px;
 	position: absolute;
@@ -41,13 +41,17 @@
 }
 
 .move_shadow {
-  background: transparent url(pieces.png) no-repeat;
+  background: transparent url(../images/pieces.png) no-repeat;
 	width:55px;
 	height:55px;
 	position: absolute;
 	background-position: -385px -55px;
-  opacity:0.6;
-  filter:alpha(opacity=60); /* For IE8 and earlier */
+  opacity:0.5;
+  filter:alpha(opacity=50); /* For IE8 and earlier */
+}
+
+.move_shadow:hover {
+	cursor:pointer;
 }
 
 .piece:hover {
