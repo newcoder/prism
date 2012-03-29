@@ -311,6 +311,10 @@ define(function (require, exports, module) {
           }
           self.lastSelected = null;
         });
+      } else {
+        // illegal place, can not make move
+        this.toggleSelectedFrame(this.lastSelected);
+        this.lastSelected = null;
       }
     };
 
