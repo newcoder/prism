@@ -4,28 +4,7 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 		<title>Chinese Chess UI Example Page</title>
 		<link rel="stylesheet" href="stylesheets/cchess.css" type="text/css" media="all" />
-		<script type="text/javascript" src="javascripts/jquery-1.7.1.min.js"></script>
-	    <script type="text/javascript" src="javascripts/board.js"></script>		
-		<script>
-	    $(function() {
-		  var boardView = new BoardView($, $("#board")[0], $("#box")[0]);
-		  boardView.init();	    
-          
-		  $("#changefen").click(function(){ 
-		    var input = $("#feninput").val();
-		  	boardView.board.fromFen(input);
-  		}); 
-      
-      $("#getfen").click(function(){ 
-   			var fen = boardView.board.toFen();
-        $("#feninput").val(fen);
-	  		alert(fen);
-			}); 
-      
-          		  
-		});
-
-	    </script>
+    <script type="text/javascript" src="javascripts/lib/sea.js" data-main="javascripts/init"></script> 		
 	</head>
 
 	<body>
@@ -42,7 +21,6 @@
 		    </div>		        
 		</div>
 		
-
 	</body>
 </html>
 
