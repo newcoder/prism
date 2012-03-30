@@ -41,13 +41,15 @@
 }
 
 .move_shadow {
-  background: transparent url(../images/pieces.png) no-repeat;
+  background-color:#384e69;
 	width:55px;
 	height:55px;
 	position: absolute;
-	background-position: -385px -55px;
-  opacity:0.5;
-  filter:alpha(opacity=50); /* For IE8 and earlier */
+  opacity:0.1;
+  filter:alpha(opacity=10); /* For IE8 and earlier */
+  -moz-border-radius: 50%;
+	-webkit-border-radius: 50%;
+  border-radius: 50%;
 }
 
 .move_shadow:hover {

@@ -143,14 +143,6 @@ define(function (require, exports, module) {
       self['onClickBoard_' + self.mode](e);
     }
 
-    /*
-       var 
-          origin_r = self.lastSelected.data('piece').r,
-          origin_c = self.lastSelected.data('piece').c;
-        self.toggleSelectedFrame(self.lastSelected);
-        self.lastSelected = null;  
-    */
-
     // click in board in the mode of placing piece
     BoardView.prototype.onClickBoard_0 = function (e) {
       var piece, location, x, y, r, c;
@@ -259,8 +251,6 @@ define(function (require, exports, module) {
     BoardView.prototype.onClickBoard_1 = function (e) {
       var piece;
       if (this.lastSelected) {
-        //this.toggleSelectedFrame(this.lastSelected);
-        //this.lastSelected = null;
         if (this.showMoveShadow) {
           this.clearMoveShadow();
         }
@@ -279,16 +269,13 @@ define(function (require, exports, module) {
       tr = this.toRow(y); // destine row
       tc = this.toCol(x); // destine col
       if (this.legalPlaceToMove(tr, tc)) {
-        // if there is eaten piece, remove it
-        eatenPiece = this.board.getPieceAt(tr, tc);
-        if (eatenPiece) {
+        // update the board
+        eatenPiece = this.board.movePiece(tr, tc, piece.id, fr, fc);
+        if (eatenPiece) { 
+        // delete the element of eaten piece
           eatenPiece.el.remove();
           eatenPiece.el = null;
-          eatenPiece.r = -1;
-          eatenPiece.c = -1;
         }
-        // update the board
-        this.board.placePiece(tr, tc, piece.id, fr, fc);
         // normalize x, y to fit the cell 
         x = (x - this.offsetX - this.cellWidth / 2) / this.cellWidth;
         x = Math.round(x) * this.cellWidth;
@@ -310,12 +297,32 @@ define(function (require, exports, module) {
             self.updateBox();
           }
           self.lastSelected = null;
+          self.addMoveTrail(tr, tc, fr, fc);
         });
       } else {
         // illegal place, can not make move
         this.toggleSelectedFrame(this.lastSelected);
         this.lastSelected = null;
       }
+    };
+
+    // create move trail to indicate the recent move
+    BoardView.prototype.addMoveTrail = function (tr, tc, fr, fc) {
+      var self = this,
+        createTrail = function (r, c) {
+          var $trail_div = self.$('<div class="selected"/>');
+          $trail_div.css('width', self.cellWidth);
+          $trail_div.css('height', self.cellHeight);
+          $trail_div.css('left', self.toCoordX(c));
+          $trail_div.css('top', self.toCoordY(r));
+          self.$board.append($trail_div);
+        };
+      createTrail(tr, tc);
+      createTrail(fr, fc);
+    };
+
+    BoardView.prototype.clearMoveTrail = function () {
+      this.$board.find('.selected').remove();
     };
 
     BoardView.prototype.playVoice = function (voice) {
@@ -386,6 +393,7 @@ define(function (require, exports, module) {
       // can not move piece belongs to other side
         this.playVoice('beep');
       } else {
+        this.clearMoveTrail();
         if (this.showMoveShadow) {
           this.clearMoveShadow();
         }

@@ -535,11 +535,49 @@ define(function (require, exports, module) {
     };
 
     // place a piece on the board, origin_c, origin_r is null when move a piece from piece box
-    Board.prototype.placePiece = function (dest_r, dest_c, id, origin_r, origin_c) {
-      if (origin_r !== -1 && origin_c !== -1) {
-        this.removePiece(origin_r, origin_c);
+    Board.prototype.placePiece = function (tr, tc, id, fr, fc) {
+      if (fr !== -1 && fc !== -1) {
+        this.removePiece(fr, fc);
       }
-      this.addPieceById(dest_r, dest_c, id);
+      this.addPieceById(tr, tc, id);
+    };
+
+    // move a piece in the gaming mode, if there is piece in the destination place, it will be eaten.
+    // this function is called from the board view.
+    Board.prototype.movePiece = function (tr, tc, id, fr, fc) {
+      // if there is eaten piece, clear it
+      var eatenPiece = this.getPieceAt(tr, tc);
+      if (eatenPiece) {
+        eatenPiece.r = -1;
+        eatenPiece.c = -1;
+      }
+      // update the board
+      this.placePiece(tr, tc, id, fr, fc);
+      // switch side to move
+      this.switchSide();
+      if (eatenPiece) {
+      // piece eaten, update the init fen, clear move list
+        this.initFen = this.toFen();
+        this.moveList = [];
+      } else {
+      // add move to the list
+        this.moveList.push(this.toMoveStr(tr, tc, fr, fc));
+      }
+      return eatenPiece;
+    };
+
+    // transform the move (fromRow, fromCol) -> (toRow, toCol) to a move string. eg. from (9,1)->(7, 2)  to   b0c2
+    Board.prototype.toMoveStr = function (tr, tc, fr, fc) {
+      var arrColChars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'], 
+        fromRow = consts.ROW_NUM - 1 - fr,
+        toRow = consts.ROW_NUM - 1 - tr,
+        moveStr;
+      moveStr = arrColChars[fc] + fromRow + arrColChars[tc] + toRow;
+      return moveStr;
+    };
+
+    Board.prototype.switchSide = function () {
+      this.sideToMove = this.sideToMove === 0 ? 1 : 0;
     };
 
     return Board;
