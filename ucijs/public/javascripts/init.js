@@ -21,8 +21,6 @@ define(function(require) {
   }); 
   
   $("#getfen").click(function(){ 
-    var fen = boardView.board.toFen();
-    $("#feninput").val(fen);
-    alert(fen);
+    boardView.board.makeMove('b0c2');
   }); 
 });

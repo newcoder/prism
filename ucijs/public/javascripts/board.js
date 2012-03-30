@@ -340,6 +340,7 @@ define(function (require, exports, module) {
       this.moveList = [];
       this.sideToMove = 0;
       this.view = null;
+      this.lastMove = '';
       this.placeChecker = new PlaceChecker();
       this.init();
     }
@@ -501,27 +502,53 @@ define(function (require, exports, module) {
       return null;
     };
 
-    // move a piece in gaming
-    Board.prototype.makeMove = function (move) {
-      var pt, dest_c, dest_r, origin_c, origin_r, origin_pt;
-      origin_c = move[0].charCodeAt(0) - 'a'.charCodeAt(0);
-      origin_r = consts.ROW_NUM - 1 - move[1];
-      origin_pt = this.board[origin_r][origin_c];
-      dest_c = move[2].charCodeAt(0) - 'a'.charCodeAt(0);
-      dest_r = consts.ROW_NUM - 1 - move[3];
+    // apply a move string to the board, then update the board view
+    Board.prototype.makeMove = function (moveStr) {
+      var pt, tc, tr, fc, fr, f_pt;
+      fc = moveStr[0].charCodeAt(0) - 'a'.charCodeAt(0);
+      fr = consts.ROW_NUM - 1 - moveStr[1];
+      f_pt = this.board[fr][fc];
+      tc = moveStr[2].charCodeAt(0) - 'a'.charCodeAt(0);
+      tr = consts.ROW_NUM - 1 - moveStr[3];
 
-      this.moveList.push(move);
-      pt = this.board[dest_r][dest_c];
-      if (pt !== 0) {
-        this.removePiece(dest_r, dest_c);
+      if (!this.isLegalMove(tr, tc, fr, fc)) {
+        return;
       }
-      this.removePiece(origin_r, origin_c);
-      return this.addPiece(dest_r, dest_c, origin_pt);
+      
+      pt = this.board[tr][tc];
+      if (pt !== 0) { // there is piece eaten
+        this.removePiece(tr, tc);
+      }
+      this.removePiece(fr, fc);
+      this.addPiece(tr, tc, f_pt);
+      this.lastMove = moveStr;
+      this.switchSide();
+      if (pt !== 0) {
+        this.initFen = this.toFen();
+        this.moveList = [];
+      } else {
+        this.moveList.push(moveStr);
+      }
+      this.view.updateView();
     };
 
     // check whether a move is legal based on current position
-    Board.prototype.isLegalMove = function (move) {
-
+    Board.prototype.isLegalMove = function (tr, tc, fr, fc) {
+      var piece, side, moves, i, m;
+      piece = this.getPieceAt (fr, fc);
+      if (piece) {
+        side = (piece.id > 15) ? 0 : 1;
+        if (side === this.sideToMove) {
+          moves = this.view.moveGenerator.generateMoves(piece);
+          for (i = 0; i < moves.length; i = i + 1) {
+            m = moves[i];
+            if (m.tr === tr && m.tc === tc) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
     };
 
     // check the place is legal on the board
@@ -543,10 +570,10 @@ define(function (require, exports, module) {
     };
 
     // move a piece in the gaming mode, if there is piece in the destination place, it will be eaten.
-    // this function is called from the board view.
+    // this function is called from the board view after a move has been made in the view
     Board.prototype.movePiece = function (tr, tc, id, fr, fc) {
       // if there is eaten piece, clear it
-      var eatenPiece = this.getPieceAt(tr, tc);
+      var moveStr, eatenPiece = this.getPieceAt(tr, tc);
       if (eatenPiece) {
         eatenPiece.r = -1;
         eatenPiece.c = -1;
@@ -554,15 +581,17 @@ define(function (require, exports, module) {
       // update the board
       this.placePiece(tr, tc, id, fr, fc);
       // switch side to move
-      this.switchSide();
+      this.switchSide(); 
+      moveStr = this.toMoveStr(tr, tc, fr, fc);
       if (eatenPiece) {
       // piece eaten, update the init fen, clear move list
         this.initFen = this.toFen();
         this.moveList = [];
       } else {
-      // add move to the list
-        this.moveList.push(this.toMoveStr(tr, tc, fr, fc));
+      // add move to the list 
+        this.moveList.push(moveStr);
       }
+      this.lastMove = moveStr;
       return eatenPiece;
     };
 

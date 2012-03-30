@@ -294,7 +294,7 @@ define(function (require, exports, module) {
           piece.c = tc;
           self.addPiece(self.$board, piece);
           if (self.showBox) {
-            self.updateBox();
+            self.refreshBox();
           }
           self.lastSelected = null;
           self.addMoveTrail(tr, tc, fr, fc);
@@ -345,14 +345,14 @@ define(function (require, exports, module) {
     };
 
     BoardView.prototype.updateView = function () {
-      this.updateBoard();
+      this.refreshBoard();
       if (this.showBox) {
-        this.updateBox();
+        this.refreshBox();
       }
     };
 
-    BoardView.prototype.updateBoard = function () {
-      var self = this;
+    BoardView.prototype.refreshBoard = function () {
+      var self = this, moveStr;
       this.$board.empty();
       this.lastSelected = null;
       this.board.pieces.forEach(function (p) {
@@ -360,6 +360,15 @@ define(function (require, exports, module) {
           self.addPiece(self.$board, p);
         }
       });
+      if (this.board.lastMove.length > 0) {
+      // add the move trail to the last move
+        moveStr = this.board.lastMove;
+        fc = moveStr[0].charCodeAt(0) - 'a'.charCodeAt(0);
+        fr = consts.ROW_NUM - 1 - moveStr[1];
+        tc = moveStr[2].charCodeAt(0) - 'a'.charCodeAt(0);
+        tr = consts.ROW_NUM - 1 - moveStr[3];
+        this.addMoveTrail(tr, tc, fr, fc);
+      }
     };
 
     function onClickPiece(self, $piece, e) {
@@ -470,7 +479,7 @@ define(function (require, exports, module) {
       return container.append(this.createPiece(piece));
     };
 
-    BoardView.prototype.updateBox = function () {
+    BoardView.prototype.refreshBox = function () {
       var self = this;
       this.initPieceBox();
       this.board.pieces.forEach(function (p) {
