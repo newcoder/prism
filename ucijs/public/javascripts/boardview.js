@@ -1,9 +1,10 @@
 define(function (require, exports, module) {
-  var Board = require('./board').Board;
-  var MoveGenerator = require('./board').MoveGenerator;
-  var consts = require('./consts');
+  var Board = require('./board').Board,
+    MoveGenerator = require('./board').MoveGenerator,
+    consts = require('./consts'),
+    BoardView;
 
-  var BoardView = (function () {
+  BoardView = (function () {
 
     // options to the board view
     var boardViewDefaults = {
@@ -40,6 +41,20 @@ define(function (require, exports, module) {
       this.moves = [];
     }
 
+    function onClickBox(self, e) {
+      if (self.mode < 0) {
+        return;
+      }
+      self['onClickBox_' + self.mode](e);
+    }
+
+    function onClickBoard(self, e) {
+      if (self.mode < 0) {
+        return;
+      }
+      self['onClickBoard_' + self.mode](e);
+    }
+
     BoardView.prototype.init = function (board) {
       var r, c, self = this;
       this.board = board || new Board();
@@ -64,13 +79,6 @@ define(function (require, exports, module) {
       }
       this.$box.empty();
     };
-
-    function onClickBox(self, e) {
-      if (self.mode < 0) {
-        return;
-      }
-      self['onClickBox_' + self.mode](e);
-    }
 
     // click in box in the mode of placing piece
     BoardView.prototype.onClickBox_0 = function (e) {
@@ -135,13 +143,6 @@ define(function (require, exports, module) {
     BoardView.prototype.onClickBox_1 = function (e) {
       return;
     };
-
-    function onClickBoard(self, e) {
-      if (self.mode < 0) {
-        return;
-      }
-      self['onClickBoard_' + self.mode](e);
-    }
 
     // click in board in the mode of placing piece
     BoardView.prototype.onClickBoard_0 = function (e) {
@@ -271,7 +272,7 @@ define(function (require, exports, module) {
       if (this.legalPlaceToMove(tr, tc)) {
         // update the board
         eatenPiece = this.board.movePiece(tr, tc, piece.id, fr, fc);
-        if (eatenPiece) { 
+        if (eatenPiece) {
         // delete the element of eaten piece
           eatenPiece.el.remove();
           eatenPiece.el = null;
@@ -352,7 +353,7 @@ define(function (require, exports, module) {
     };
 
     BoardView.prototype.refreshBoard = function () {
-      var self = this, moveStr;
+      var self = this, moveStr, fr, fc, tr, tc;
       this.$board.empty();
       this.lastSelected = null;
       this.board.pieces.forEach(function (p) {

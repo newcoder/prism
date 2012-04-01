@@ -1,8 +1,11 @@
 define(function (require, exports, module) {
   require('./utils');
-  var consts = require('./consts');
+  var consts = require('./consts'),
+    PlaceChecker,
+    MoveGenerator,
+    Board;
 
-  var PlaceChecker = (function () {
+  PlaceChecker = (function () {
     // legal places of ' À'    
     var a_legalPlaces = [[0, 3], [0, 5], [1, 4], [2, 3], [2, 5]],
     // legal places of 'œÛ'  
@@ -81,7 +84,7 @@ define(function (require, exports, module) {
     return PlaceChecker;
   }());
 
-  var MoveGenerator = (function () {
+  MoveGenerator = (function () {
 
     var k_offset = [[1, 0], [-1, 0], [0, 1], [0, -1]],
       a_offset = [[-1, -1], [1, 1], [-1, 1], [1, -1]],
@@ -99,7 +102,7 @@ define(function (require, exports, module) {
       },
 
       generic_moves = function (piece, offset, barrier) {
-        var i, p, b,
+        var i, p, b, r, c,
           fr = piece.r,
           fc = piece.c,
           pt = piece.pt,
@@ -312,7 +315,7 @@ define(function (require, exports, module) {
         'N': N_moves,
         'R': R_moves,
         'board': board.board,
-        'placeChecker': board.placeChecker      
+        'placeChecker': board.placeChecker
       };
     }
 
@@ -330,7 +333,7 @@ define(function (require, exports, module) {
     return MoveGenerator;
   }());
 
-  var Board = (function () {
+  Board = (function () {
 
     function Board(option, initFen) {
       this.option = option;
@@ -492,7 +495,7 @@ define(function (require, exports, module) {
     };
 
     Board.prototype.getPieceAt = function (r, c) {
-      var i;
+      var i, p;
       for (i = 0; i < this.pieces.length; i = i + 1) {
         p = this.pieces[i];
         if (p.r === r && p.c === c) {
@@ -514,7 +517,7 @@ define(function (require, exports, module) {
       if (!this.isLegalMove(tr, tc, fr, fc)) {
         return;
       }
-      
+
       pt = this.board[tr][tc];
       if (pt !== 0) { // there is piece eaten
         this.removePiece(tr, tc);
@@ -535,7 +538,7 @@ define(function (require, exports, module) {
     // check whether a move is legal based on current position
     Board.prototype.isLegalMove = function (tr, tc, fr, fc) {
       var piece, side, moves, i, m;
-      piece = this.getPieceAt (fr, fc);
+      piece = this.getPieceAt(fr, fc);
       if (piece) {
         side = (piece.id > 15) ? 0 : 1;
         if (side === this.sideToMove) {
@@ -581,7 +584,7 @@ define(function (require, exports, module) {
       // update the board
       this.placePiece(tr, tc, id, fr, fc);
       // switch side to move
-      this.switchSide(); 
+      this.switchSide();
       moveStr = this.toMoveStr(tr, tc, fr, fc);
       if (eatenPiece) {
       // piece eaten, update the init fen, clear move list
@@ -597,7 +600,7 @@ define(function (require, exports, module) {
 
     // transform the move (fromRow, fromCol) -> (toRow, toCol) to a move string. eg. from (9,1)->(7, 2)  to   b0c2
     Board.prototype.toMoveStr = function (tr, tc, fr, fc) {
-      var arrColChars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'], 
+      var arrColChars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
         fromRow = consts.ROW_NUM - 1 - fr,
         toRow = consts.ROW_NUM - 1 - tr,
         moveStr;
@@ -612,9 +615,9 @@ define(function (require, exports, module) {
     return Board;
 
   }());
-  
+
   exports.Board = Board;
   exports.PlaceChecker = PlaceChecker;
   exports.MoveGenerator = MoveGenerator;
-  
+
 });
