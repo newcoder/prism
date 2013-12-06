@@ -151,24 +151,37 @@ namespace prism
 		TLUtils::Remove(macd_, macd_->size() - signal_ema_->result()->size());
 		TLUtils::Subtract(macd_, signal_ema_->result(), histogram_);
 		// calculate crossovers
-		GenerateCrossOvers();
+		GenerateCrossOvers(begin, end);
 	}
 
-	void MACD::GenerateCrossOvers()
+	void MACD::GenerateCrossOvers(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end)
 	{
 		cross_overs_->clear();
 		DoubleTimeList::const_iterator cit = histogram_->begin();
+		DoubleTimeList::const_iterator cit_price = begin;
+
 		if (cit == histogram_->end())
 			return;
 		CrossOver co;
 		DoubleTimePoint previous = *cit;
-		co.integral = 0.0F;
+		DoubleTimePoint previous_price = *cit_price;
+		co.area = 0.0F;
 		co.positive = (*cit).value < 0;
 		co.length = 0;
 		co.slope = 0.0F;
+		co.profit = 0.0F;
 		co.time = (*cit).position;
 		// push the first point 
 		cross_overs_->push_back(co);
+		// move the price iterator to crossover position
+		while (cit_price != end)
+		{
+			if (co.time == (*cit_price).position)
+				break;
+			cit_price++;
+		}
+		previous_price = *cit_price;
+
 		co.positive = !co.positive;
 		while (cit != histogram_->end())
 		{
@@ -177,7 +190,7 @@ namespace prism
 			if (sameSign)
 			{
 				co.length++;
-				co.integral = co.integral + value;
+				co.area = co.area + value;
 				co.time = (*cit).position;
 				co.slope = std::fabs((previous.value - value) / (previous.value + value));
 				previous = *cit;
@@ -185,8 +198,17 @@ namespace prism
 			}
 			else
 			{
+				while (cit_price != end)
+				{
+					if (co.time == (*cit_price).position)
+						break;
+					cit_price++;
+				}
+				co.profit = ((*cit_price).value - previous_price.value) / previous_price.value;
+				previous_price = *cit_price;
 				cross_overs_->push_back(co);
-				co.integral = 0.0F;
+				// new crossover
+				co.area = 0.0F;
 				co.positive = (*cit).value > 0;
 				co.length = 0;
 				co.slope = 0.0F;
@@ -194,6 +216,14 @@ namespace prism
 			}
 		}
 		// push the last point, the first & last point is not real crossover.
+		while (cit_price != end)
+		{
+			if (co.time == (*cit_price).position)
+				break;
+			cit_price++;
+		}
+		co.profit = ((*cit_price).value - previous_price.value) / previous_price.value;
+		previous_price = *cit_price;
 		cross_overs_->push_back(co);
 	}
 
@@ -345,7 +375,7 @@ namespace prism
 		// generate K and D from RSV
 		k_ema_->Generate(rsv->begin(), rsv->end());
 		d_ema_->Generate(k()->begin(), k()->end());
-		// generate J = 3*D - 2*K
+		// generate J = 3D - 2K // or J = 3K - 2D ???
 		TLUtils::Remove(k(), k()->size() - d()->size());
 		struct Jcalculator {
 			double operator() (double p1, double p2) { return 3*p2 -2*p1; }

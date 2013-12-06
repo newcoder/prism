@@ -48,7 +48,7 @@ namespace prism {
 
 	bool AShareFilter::Filter(const std::string& file)
 	{
-		boost::regex pattern("^S[HZ]\\d{5}7\\.csv");
+		boost::regex pattern("^S[HZ]\\d{5}3\\.csv");
 		return regex_match(file, pattern);
 	}
 

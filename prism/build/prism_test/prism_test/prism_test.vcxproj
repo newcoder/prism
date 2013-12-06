@@ -41,11 +41,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>..\..\..\lib\boost_1_55_0\lib32-msvc-10.0;..\..\..\lib\kcwin32\lib;..\..\..\lib\gmock-1.7.0\msvc\2010\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>..\..\..\lib\boost_1_55_0\lib32-msvc-12.0;..\..\..\lib\kcwin32\lib;..\..\..\lib\gmock-1.7.0\msvc\2010\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>..\..\..\lib\boost_1_55_0\lib32-msvc-10.0;..\..\..\lib\kcwin32\lib;..\..\..\lib\gmock-1.7.0\msvc\2010\Release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>..\..\..\lib\boost_1_55_0\lib32-msvc-12.0;..\..\..\lib\kcwin32\lib;..\..\..\lib\gmock-1.7.0\msvc\2010\Release;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -53,13 +53,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\lib\rapidjson-0.11\rapidjson\include;..\..\..\lib\boost_1_55_0;..\..\..\lib\kcwin32\include;..\..\..\lib\eigen;..\..\..\lib\gmock-1.7.0\gtest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\lib\rapidjson\include;..\..\..\lib\boost_1_55_0;..\..\..\lib\eigen;..\..\..\lib\kcwin32\include;..\..\..\lib\gmock-1.7.0\gtest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>gmock.lib;kyotocabinet_MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gmock.lib;kyotocabinet_MTd.lib;libboost_filesystem-vc120-mt-sgd-1_55.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -70,7 +70,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\lib\rapidjson-0.11\rapidjson\include;..\..\..\lib\boost_1_55_0;..\..\..\lib\kcwin32\include;..\..\..\lib\eigen;..\..\..\lib\gmock-1.7.0\gtest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\lib\rapidjson\include;..\..\..\lib\boost_1_55_0;..\..\..\lib\eigen;..\..\..\lib\kcwin32\include;..\..\..\lib\gmock-1.7.0\gtest\include;</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -78,7 +78,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>gmock.lib;kyotocabinet_MT.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gmock.lib;kyotocabinet_MT.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -94,9 +94,11 @@
     <ClInclude Include="..\..\..\src\indicator.h" />
     <ClInclude Include="..\..\..\src\pattern.h" />
     <ClInclude Include="..\..\..\src\rule.h" />
+    <ClInclude Include="..\..\..\src\stdafx.h" />
     <ClInclude Include="..\..\..\src\store.h" />
     <ClInclude Include="..\..\..\src\strategy.h" />
     <ClInclude Include="..\..\..\src\strategy_screener.h" />
+    <ClInclude Include="..\..\..\src\targetver.h" />
     <ClInclude Include="..\..\..\src\time_series.h" />
     <ClInclude Include="..\..\..\src\util.h" />
   </ItemGroup>
@@ -105,25 +107,30 @@
     <ClCompile Include="..\..\..\src\asset_test.cpp" />
     <ClCompile Include="..\..\..\src\hloc_series.cpp" />
     <ClCompile Include="..\..\..\src\hloc_series_test.cpp" />
-    <ClCompile Include="..\..\..\src\import.cpp" />
-    <ClCompile Include="..\..\..\src\import_test.cpp" />
+    <ClCompile Include="..\..\..\src\import.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\import_test.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\..\src\indicator.cpp" />
     <ClCompile Include="..\..\..\src\indicator_test.cpp" />
     <ClCompile Include="..\..\..\src\lib_test.cpp" />
     <ClCompile Include="..\..\..\src\pattern.cpp" />
     <ClCompile Include="..\..\..\src\pattern_test.cpp" />
-    <ClCompile Include="..\..\..\src\prism_test.cpp" />
+    <ClCompile Include="..\..\..\src\prism_test.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\..\src\rule.cpp" />
-    <ClCompile Include="..\..\..\src\store.cpp" />
+    <ClCompile Include="..\..\..\src\stdafx.cpp" />
+    <ClCompile Include="..\..\..\src\store.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\..\src\strategy.cpp" />
     <ClCompile Include="..\..\..\src\strategy_screener.cpp" />
     <ClCompile Include="..\..\..\src\strategy_test.cpp" />
-    <ClCompile Include="..\..\..\src\time_series.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\time_series_test.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="..\..\..\src\time_series.cpp" />
+    <ClCompile Include="..\..\..\src\time_series_test.cpp" />
     <ClCompile Include="..\..\..\src\util.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -64,7 +64,7 @@ namespace prism {
 		virtual ~MACD();
 		virtual void Generate(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end);
 		virtual void Clear();
-		void GenerateCrossOvers();
+		void GenerateCrossOvers(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end);
 
 		DoubleTimeList* macd();
 		DoubleTimeList* signal();

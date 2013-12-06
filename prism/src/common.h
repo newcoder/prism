@@ -101,8 +101,9 @@ namespace prism {
 	public:
 		bool positive;
 		double slope;
-		double integral;
+		double area;
 		int length;
+		double profit;  // in percentage
 		time_t time;
 	};
 

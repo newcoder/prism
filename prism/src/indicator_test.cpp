@@ -79,13 +79,43 @@ TEST_F(TestIndicator, testMACD)
 
 	CrossOverList* co = macd->cross_overs();
 	std::cout << "count of crossovers: " << co->size() << std::endl;
-	DoubleTimeList crossOverIntegral;
+	DoubleTimeList crossOverProfit;
 	for (size_t i = 0; i < co->size(); i++)
 	{
-		crossOverIntegral.push_back(DoubleTimePoint(co->at(i).integral, co->at(i).time));
+		crossOverProfit.push_back(DoubleTimePoint(co->at(i).profit, co->at(i).time));
 	}
-	TLUtils::Dump(kDataPath + "MACD-Crossover-Histogram.csv", macd->histogram(), &crossOverIntegral);
-	TLUtils::Dump(kDataPath + "MACD-Crossover.csv", macd->macd(), macd->signal(), &crossOverIntegral);
+
+	struct positive_counter {
+		bool operator ()(const DoubleTimePoint& profit) const {
+			return profit.value > 0;
+		}
+	};
+	int count = std::count_if(crossOverProfit.begin(), crossOverProfit.end(), positive_counter());
+	std::cout << "num of positive profit:" << count << std::endl;
+
+	int win_length = 0, loss_length = 0;
+	double win_area = 0.0F, loss_area = 0.0F;
+	for (size_t i = 1; i < co->size() - 1; i++)
+	{
+		if (co->at(i + 1).profit > 0)
+		{
+			win_length += co->at(i).length;
+			win_area += co->at(i).area;
+		}
+		else
+		{
+			loss_length += co->at(i).length;
+			loss_area += co->at(i).area;
+		}
+	}
+	
+	std::cout << "total length of wins:" << win_length << std::endl;
+	std::cout << "total length of loss:" << loss_length << std::endl;
+	std::cout << "total area of wins:" << win_area << std::endl;
+	std::cout << "total area of loss:" << loss_area << std::endl;
+
+	TLUtils::Dump(kDataPath + "MACD-Crossover-Histogram.csv", macd->histogram(), &crossOverProfit);
+	TLUtils::Dump(kDataPath + "MACD-Profit.csv", &crossOverProfit);
 }
 
 TEST_F(TestIndicator, testRSI)
