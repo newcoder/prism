@@ -3,6 +3,7 @@
   It will be used to build a opening book database.
 */
 var request = require('request'),
+  iconv = require('iconv-lite'),
   cheerio = require('cheerio'),
   mongodb = require('mongodb'),
   jsdom = require('jsdom'),
@@ -40,7 +41,7 @@ var getDPBook = function getDPBook(url, num, callback) {
 };
 
 var getDPBook_jsdom = function getDPBook(url, num, callback) {
-  var reqOptions = {uri: url};
+  var reqOptions = {uri: url, encoding: 'binary'};
   if (proxy !== '') reqOptions['proxy'] = proxy;
 
   var self = this;
@@ -61,7 +62,13 @@ var getDPBook_jsdom = function getDPBook(url, num, callback) {
           title = getvar(varstr, 'title');
           console.log(varstr); 
           console.log(title);
-        new BookPersister().saveGameInfo(title);
+          
+          var bintitle = iconv.toEncoding(varstr, "binary");
+          var newtitle = iconv.fromEncoding(bintitle, 'GBK');
+          console.log(newtitle);
+          //newtitle = iconv.fromEncoding(newtitle, 'GBK');
+          //console.log(newtitle);
+        new BookPersister().saveGameInfo(newtitle);
       }
     });
   });
@@ -77,7 +84,7 @@ var scrapeDPBooks = function (from, callback) {
 var st_url = 'http://www.stqiyuan.com/game_view.asp?id=0120195F7A30FD';
 
 var getSTBook = function getSTBook(url, callback) {
-  var reqOptions = {uri: url};
+  var reqOptions = {uri: url, encoding: 'binary'};
   if (proxy !== '') reqOptions['proxy'] = proxy;
 
   var self = this;
@@ -90,11 +97,12 @@ var getSTBook = function getSTBook(url, callback) {
    
     var $ = cheerio.load(body),
       bodystr = $('body').html(),
-      movelist = bodystr.match(/\[DHJHtmlXQ_34\]\d+\[\/DHJHtmlXQ_34\]/), 
-      moves = movelist[0].match(/\d+/);
+      movelist = bodystr.match(/\[DHJHtmlXQ_34\]\d+\[\/DHJHtmlXQ_34\]/);
+      console.log(bodystr);
+      //moves = movelist[0].match(/\d+/);
       // movelist encoded by coordinate , r0c0 => r1c1
-    console.log(moves[1]);
-    console.log(convertMoveList(moves[1]));
+    //console.log(moves[1]);
+    //console.log(convertMoveList(moves[1]));
   });
 };
 
@@ -258,7 +266,7 @@ function getvar(varstr, v) {
 //  console.log(movestr);
 //});
 
-//getDPBook_jsdom(site_url + 46988 + '.html', 46988, null);
+getDPBook_jsdom(site_url + 46988 + '.html', 46988, null);
 
 //getSTBook(st_url, null);
-console.log(convertMoveList(testMoves));
+//console.log(convertMoveList(testMoves));
