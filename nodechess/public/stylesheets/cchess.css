@@ -1,0 +1,126 @@
+#container {
+  float: left;
+	position: relative;
+	width: 730px;
+	height: 556px;
+}
+
+.chessboard{
+	width: 500px;
+	height: 556px;
+	margin-left:auto;
+	margin-right:auto;
+	position: relative;
+	float: left;
+	background: transparent url(../images/chessboard.png) no-repeat;	
+}
+
+.piecebox{
+	width: 220px;
+	height: 440px;
+	margin-left:auto;
+	margin-right:auto;
+	position: relative;
+	float: right;
+  background-color:#FAEBD7;
+}
+
+.piece {
+	background: transparent url(../images/pieces.png) no-repeat;
+	width:55px;
+	height:55px;
+	position: absolute;
+}
+
+.selected {
+	background: transparent url(../images/pieces.png) no-repeat;
+	width:55px;
+	height:55px;
+	position: absolute;
+	background-position: -385px 0px;
+}
+
+.move_shadow {
+  background-color:#384e69;
+	width:55px;
+	height:55px;
+	position: absolute;
+  opacity:0.1;
+  filter:alpha(opacity=10); /* For IE8 and earlier */
+  -moz-border-radius: 50%;
+	-webkit-border-radius: 50%;
+  border-radius: 50%;
+}
+
+.move_shadow:hover {
+	cursor:pointer;
+}
+
+.piece:hover {
+	cursor:pointer;
+  border-style: solid;
+	border-width: 1px;
+	border-color: yellow; 
+/*    background-color: yellow; */
+  -moz-border-radius: 50%;
+	-webkit-border-radius: 50%;
+  border-radius: 50%;
+}
+
+/* black pieces */
+.piece_a { /* 仕 */
+	background-position: 0px 0px;
+}
+
+.piece_c { /* 炮 */
+	background-position: -55px 0px;
+}
+
+.piece_r { /* 车 */
+	background-position: -110px 0px;
+}
+
+.piece_b { /* 相 */
+	background-position: -165px 0px;
+}
+
+.piece_n { /* 马 */
+	background-position: -220px 0px;
+}
+
+.piece_k { /* 帅 */
+	background-position: -275px 0px;
+}
+
+.piece_p { /* 兵 */
+	background-position: -330px 0px;
+}
+
+/* red pieces */
+.piece_A { /* 仕 */
+	background-position: 0px -55px;
+}
+
+.piece_C { /* 炮 */
+	background-position: -55px -55px;
+}
+
+.piece_R { /* 车 */
+	background-position: -110px -55px;
+}
+
+.piece_B { /* 象 */
+	background-position: -165px -55px;
+}
+
+.piece_N { /* 马 */
+	background-position: -220px -55px;
+}
+
+.piece_K { /* 将 */
+	background-position: -275px -55px;
+}
+
+.piece_P { /* 卒 */
+	background-position: -330px -55px;
+}
