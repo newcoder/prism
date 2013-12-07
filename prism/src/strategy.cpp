@@ -106,76 +106,37 @@ namespace prism {
 		return true;
 	}
 
-	IndexedAsset::IndexedAsset(Asset* asset, time_t begin): asset_(asset)
+	AssetsProvider::AssetsProvider(IStore* store) : store_(store), loader_(nullptr)
 	{
-		index_ = -1;
-		MoveTo(begin);
-	}
-	
-	IndexedAsset::IndexedAsset(Asset* asset): asset_(asset)
-	{
-		index_ = -1;
 	}
 
-	void IndexedAsset::MoveTo(time_t pos)
+	AssetsProvider::~AssetsProvider()
 	{
-		HLOCList* hloc_list = asset_->raw_data();
-		size_t i = index_ > 0? index_ : 0;
-		while (i < hloc_list->size())
-		{
-			time_t time = hloc_list->at(i).time;
-			if (time <= pos)
-			{
-				index_ = i;
-				i++;
-			} else 
-				{
-					break;
-			}
-		}
-	}
-	
-	bool IndexedAsset::at_end()
-	{
-		return index_ == asset_->raw_data()->size() - 1;
+		delete loader_;
 	}
 
-	time_t IndexedAsset::GetIndexTime()
+	bool AssetsProvider::LoadAll(DATA_TYPE type)
 	{
-		if (index_ < 0)
-			return -1;
-		return asset_->raw_data()->at(index_).time;
+		std::vector<std::string> elems;
+		std::string symbols_str;
+		std::set<std::string> symbols_set;
+		if (!store_->GetBlock(kBlockAllAShares, symbols_str))
+			return false;
+		kyotocabinet::strsplit(symbols_str, '\n', &elems);
+		
+		if (loader_ != NULL)
+			delete loader_;
+		loader_ = new AssetsLoader(store_);
+
+		// load symbols
+		loader_->LoadAssets(elems, 1992, 2013, type, 1);
+		return true;
 	}
 
-	StrategyRunner::StrategyRunner(IStore* store)
+	bool AssetsProvider::LoadForStrategy(Strategy* strategy)
 	{
-		store_ = store;
-		strategy_ = NULL;
-		assets_loader_ = NULL;
-		//std::cout << "StrategyRunner::StrategyRunner()" << std::endl;
-	}
-
-	StrategyRunner::~StrategyRunner()
-	{
-		delete assets_loader_;
-		delete strategy_;
-		//std::cout << "StrategyRunner::~StrategyRunner()" << std::endl;
-	}
-
-	bool StrategyRunner::Initialize()
-	{
-		// load stocks
-		assert(store_);
-		assert(strategy_); 
-		cash_ = strategy_->init_cash();
-		return LoadCandidates(strategy_->stocks());
-	}
-
-	// load all stocks for a strategy to run against.
-	// "stocks": "blocks=行业\交通运输,行业\金融;patterns=SH600\\d{3},SZ300\\d{3}"
-	bool StrategyRunner::LoadCandidates(const std::string& stocks)
-	{		
 		std::vector<std::string> elems, blocks, patterns;
+		std::string stocks = strategy->stocks();
 		kyotocabinet::strsplit(stocks, ';', &elems);
 		for (size_t i = 0; i < elems.size(); ++i)
 		{
@@ -184,14 +145,14 @@ namespace prism {
 				std::string block_list = elems[i].substr(elems[i].find("=") + 1);
 				kyotocabinet::strsplit(block_list, ',', &blocks);
 			}
-						
+
 			if (elems[i].find(kStockPatterns) != std::string::npos)
 			{
 				std::string pattern_list = elems[i].substr(elems[i].find("=") + 1);
 				kyotocabinet::strsplit(pattern_list, ',', &patterns);
 			}
 		}
-			
+
 		// load symbols list from blocks		
 		std::string symbols_str;
 		std::set<std::string> symbols_set;
@@ -205,7 +166,7 @@ namespace prism {
 			if (!store_->GetBlock(blocks[i], symbols_str))
 				return false;
 			kyotocabinet::strsplit(symbols_str, '\n', &elems);
-			for(size_t j = 0; j < elems.size(); ++j)
+			for (size_t j = 0; j < elems.size(); ++j)
 			{
 				if (!elems[j].empty())
 					symbols_set.insert(elems[j]);
@@ -228,51 +189,115 @@ namespace prism {
 			cit++;
 		}
 
-		if (assets_loader_ != NULL)
-			delete assets_loader_;
-		assets_loader_ = new AssetsLoader(store_);
-		
-		// load symbols
-		assets_loader_->LoadAssets(symbols_filtered, 
-			GetYear(strategy_->begin_time()), 
-			GetYear(strategy_->end_time()), 
-			strategy_->data_type(),
-			strategy_->data_num());
+		if (loader_ != NULL)
+			delete loader_;
+		loader_ = new AssetsLoader(store_);
 
-		// initialize the index for the loaded asset
-		InitializeIndex();
+		// load symbols
+		loader_->LoadAssets(symbols_filtered,
+			GetYear(strategy->begin_time()),
+			GetYear(strategy->end_time()),
+			strategy->data_type(),
+			strategy->data_num());
 
 		return true;
 	}
 
-	void StrategyRunner::InitializeIndex()
+
+	AssetIndexer::AssetIndexer(Asset* asset, time_t begin) : asset_(asset)
 	{
+		index_ = -1;
+		MoveTo(begin);
+	}
+	
+	AssetIndexer::AssetIndexer(Asset* asset) : asset_(asset)
+	{
+		index_ = -1;
+	}
+
+	void AssetIndexer::MoveTo(time_t pos)
+	{
+		HLOCList* hloc_list = asset_->raw_data();
+		size_t i = index_ > 0? index_ : 0;
+		while (i < hloc_list->size())
+		{
+			time_t time = hloc_list->at(i).time;
+			if (time <= pos)
+			{
+				index_ = i;
+				i++;
+			} else 
+				{
+					break;
+			}
+		}
+	}
+	
+	bool AssetIndexer::at_end()
+	{
+		return index_ == asset_->raw_data()->size() - 1;
+	}
+
+	time_t AssetIndexer::GetIndexTime()
+	{
+		if (index_ < 0)
+			return -1;
+		return asset_->raw_data()->at(index_).time;
+	}
+
+	StrategyRunner::StrategyRunner(IStore* store)
+	{
+		store_ = store;
+		strategy_ = NULL;
+		assets_provider_ = new AssetsProvider(store);
+		//std::cout << "StrategyRunner::StrategyRunner()" << std::endl;
+	}
+
+	StrategyRunner::~StrategyRunner()
+	{
+		delete strategy_;
+		delete assets_provider_;
+		//std::cout << "StrategyRunner::~StrategyRunner()" << std::endl;
+	}
+
+	bool StrategyRunner::Initialize(bool reload)
+	{
+		assert(store_);
+		assert(strategy_); 
+		cash_ = strategy_->init_cash();
+		// re-load assets
+		if (reload)
+		{
+			if (!assets_provider_->LoadForStrategy(strategy_))
+				return false;
+		}
 		cursor_ = strategy_->begin_time();
 		init_candidates_.clear();
-		std::map<std::string, Asset*> *loaded_assets = assets_loader_->assets();
+		std::map<std::string, Asset*> *loaded_assets = assets_provider_->loader()->assets();
 		std::map<std::string, Asset*>::iterator it = loaded_assets->begin();
 		while(it != loaded_assets->end())
 		{
-			init_candidates_.insert(std::make_pair(it->second->symbol(),IndexedAsset(it->second, cursor_)));
+			init_candidates_.insert(std::make_pair(it->second->symbol(),AssetIndexer(it->second, cursor_)));
 			it++;
 		}
+		return true;
 	}
 
 	void StrategyRunner::ScreenBuys()
 	{
 		// filter the buys candidates by the screen rule in strategy
-		IndexedAssetMap::iterator it = init_candidates_.begin();
+		AssetIndexerMap::iterator it = init_candidates_.begin();
 		buy_candidates_.clear();
 		while (it != init_candidates_.end())
 		{
 			IRule* rule = strategy_->screen_rule();
-			IndexedAsset *indexed_asset = &(it->second);
-			time_t time = indexed_asset->GetIndexTime();
+			AssetIndexer *asset_indexer = &(it->second);
+			time_t time = asset_indexer->GetIndexTime();
 			if (time > 0)
 			{
-				if (!indexed_asset->at_end() && rule->Verify(indexed_asset->asset(), indexed_asset->index()))
+				if (!asset_indexer->at_end() && rule->Verify(asset_indexer->asset(), asset_indexer->index()))
 				{
-					buy_candidates_.insert(std::make_pair(indexed_asset->asset()->symbol(), indexed_asset));
+					buy_candidates_.insert(std::make_pair(asset_indexer->asset()->symbol(), asset_indexer));
 				}
 			}
 			it++;
@@ -281,7 +306,7 @@ namespace prism {
 
 	bool StrategyRunner::InBuysCandidates(Asset* asset)
 	{
-		IndexedAssetPtrMap::const_iterator cit = buy_candidates_.find(asset->symbol());
+		AssetIndexerPtrMap::const_iterator cit = buy_candidates_.find(asset->symbol());
 		return cit != buy_candidates_.end();
 	}
 
@@ -308,7 +333,7 @@ namespace prism {
 	void StrategyRunner::Step()
 	{
 		cursor_ = cursor_ + 3600 * 24 * strategy_->step();
-		IndexedAssetMap::iterator it = init_candidates_.begin();
+		AssetIndexerMap::iterator it = init_candidates_.begin();
 		while (it != init_candidates_.end())
 		{
 			it->second.MoveTo(cursor_);
@@ -348,14 +373,14 @@ namespace prism {
 
 	bool StrategyRunner::SellPortfolioItem(const PortfolioItem& item)
 	{
-		IndexedAssetMap::const_iterator cit = init_candidates_.find(item.asset()->symbol());
+		AssetIndexerMap::const_iterator cit = init_candidates_.find(item.asset()->symbol());
 		assert(cit != init_candidates_.end());
-		IndexedAsset indexed_asset = cit->second;
-		assert(item.asset() == indexed_asset.asset());
-		if (indexed_asset.GetIndexTime() == cursor_) 
+		AssetIndexer asset_indexer = cit->second;
+		assert(item.asset() == asset_indexer.asset());
+		if (asset_indexer.GetIndexTime() == cursor_)
 		{
 			// the stock was on trade at the time
-			size_t index = indexed_asset.index();
+			size_t index = asset_indexer.index();
 			double amount = item.amount();
 			// assume the stock saled at open price
 			double price = item.asset()->raw_data()->at(index).open;
@@ -365,7 +390,7 @@ namespace prism {
 			trans.asset_ = item.asset();
 			trans.price_ = price;
 			trans.shares_ = item.amount();
-			trans.time_ = indexed_asset.GetIndexTime();
+			trans.time_ = asset_indexer.GetIndexTime();
 			trans.type_ = TRANSACTION_TYPE_SELL;
 			trans.commission_ = kCommissionRate * money;
 			cash_ = cash_ + money - trans.commission_;		
@@ -390,23 +415,23 @@ namespace prism {
 		for (int i = 0; i < num_to_buy; ++i)
 		{	
 			size_t k = rand() % buy_candidates_.size();
-			IndexedAssetPtrMap::const_iterator cit = buy_candidates_.begin();
+			AssetIndexerPtrMap::const_iterator cit = buy_candidates_.begin();
 			while (k > 0) { cit++; k--; }
-			IndexedAsset *indexed_asset = cit->second;
-			if (indexed_asset->GetIndexTime() == cursor_) 
+			AssetIndexer *asset_indexer = cit->second;
+			if (asset_indexer->GetIndexTime() == cursor_)
 			{
-				size_t index = indexed_asset->index();
-				double price = indexed_asset->asset()->raw_data()->at(index).open;
+				size_t index = asset_indexer->index();
+				double price = asset_indexer->asset()->raw_data()->at(index).open;
 				int amount_hands = (int)(money / (kHand * (1 + kCommissionRate)*price));
 				if (amount_hands > 0)
 				{
 					double shares = 100*amount_hands;
 					money = shares * price;
 					Transaction trans;
-					trans.asset_ = indexed_asset->asset();
+					trans.asset_ = asset_indexer->asset();
 					trans.price_ = price;
 					trans.shares_ = shares;
-					trans.time_ = indexed_asset->GetIndexTime();
+					trans.time_ = asset_indexer->GetIndexTime();
 					trans.type_ = TRANSACTION_TYPE_BUY;
 					trans.commission_ = kCommissionRate * money;
 					cash_ = cash_ - money - trans.commission_;
@@ -436,10 +461,10 @@ namespace prism {
 		return ret;
 	}
 
-	bool StrategyRunner::Run()
+	bool StrategyRunner::Run(bool reload)
 	{
 		assert(strategy_ != NULL);
-		if (!Initialize())
+		if (!Initialize(reload))
 			return false;
 		RunLoop();
 		return true;
@@ -452,11 +477,11 @@ namespace prism {
 		while (cit != portfolios_.end())
 		{
 			PortfolioItem item = *cit; 
-			IndexedAssetMap::const_iterator cit_asset = init_candidates_.find(item.asset()->symbol());
+			AssetIndexerMap::const_iterator cit_asset = init_candidates_.find(item.asset()->symbol());
 			assert(cit_asset != init_candidates_.end());
-			IndexedAsset indexed_asset = cit_asset->second;
+			AssetIndexer asset_indexer = cit_asset->second;
 			assert(item.asset() == indexed_asset.asset());
-			double price = item.asset()->raw_data()->at(indexed_asset.index()).close;
+			double price = item.asset()->raw_data()->at(asset_indexer.index()).close;
 			balance += price * item.amount() * (1 - kCommissionRate);
 			cit++;
 		}

@@ -24,14 +24,22 @@ namespace prism {
 	public:
 		Asset(const std::string& symbol);
 		~Asset();
-		bool Load(IStore* store, size_t begin, size_t end, DATA_TYPE data_type = DATA_TYPE_DAILY, int data_num = 1);
+		bool Load(IStore* store, size_t begin_year, size_t end_year, DATA_TYPE data_type = DATA_TYPE_DAILY, int data_num = 1);
 		HLOCList* raw_data() { return raw_data_; }
 		std::string symbol() { return symbol_; }
+		DATA_TYPE data_type() { return data_type_; }
+		int data_num() { return data_num_; }
+		size_t begin_year() { return begin_year_; }
+		size_t end_year() { return end_year_; }
 		ILocalIndicator* indicators(const std::string& indicator_str);
 	private:
 		ILocalIndicator* GenerateIndicator(const std::string& indicator_str);
 	private:
 		std::string symbol_;
+		DATA_TYPE data_type_;
+		int data_num_;
+		size_t begin_year_;
+		size_t end_year_;
 		HLOCList* raw_data_;
 		std::map<std::string, ILocalIndicator*> indicators_;
 	};

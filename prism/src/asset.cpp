@@ -34,9 +34,9 @@ namespace prism {
 
 	}
 
-	bool Asset::Load(IStore* store, size_t begin, size_t end, DATA_TYPE data_type, int data_num)
+	bool Asset::Load(IStore* store, size_t begin_year, size_t end_year, DATA_TYPE data_type, int data_num)
 	{
-		if (!store->Get(symbol_, begin, end, raw_data_))
+		if (!store->Get(symbol_, begin_year, end_year, raw_data_))
 			return false;
 		if (data_type == DATA_TYPE_WEEKLY)
 		{
@@ -62,6 +62,10 @@ namespace prism {
 			delete raw_data_;
 			raw_data_ = shrinked_data;
 		}
+		data_type_ = data_type;
+		data_num_ = data_num;
+		begin_year_ = begin_year;
+		end_year_ = end_year;
 		return true;
 	}
 

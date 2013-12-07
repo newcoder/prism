@@ -41,6 +41,8 @@ namespace prism {
 			return "CONST_FALSE";
 		case RULE_TYPE_INDICATOR_EMA:
 			return "INDICATOR_EMA";
+		case RULE_TYPE_INDICATOR_EMA_COMPARE:
+			return "INDICATOR_EMA_COMPARE";
 		case RULE_TYPE_INDICATOR_MACD:
 			return "INDICATOR_MACD";
 		case RULE_TYPE_INDICATOR_EMAARRAY:
@@ -63,6 +65,8 @@ namespace prism {
 			return RULE_TYPE_FALSE;
 		else if(type == "INDICATOR_EMA")
 			return RULE_TYPE_INDICATOR_EMA;
+		else if (type == "INDICATOR_EMA_COMPARE")
+			return RULE_TYPE_INDICATOR_EMA_COMPARE;
 		else if(type == "INDICATOR_MACD")
 			return RULE_TYPE_INDICATOR_MACD;
 		else if(type == "INDICATOR_EMAARRAY")
@@ -188,6 +192,47 @@ namespace prism {
 		{
 		//	std::cout << TimeToString(tl->at(index).position, "time: %Y-%m-%d") << "," << index << "," << indicator_str << ", close:" << asset->raw_data()->at(pos).close << ", value:" << tl->at(index).value << std::endl;
 			return tl->at(index).value < asset->raw_data()->at(pos).close;
+		}
+	}
+
+	EMACompareRule::EMACompareRule() : Rule(RULE_TYPE_INDICATOR_EMA_COMPARE)
+	{
+	}
+
+	void EMACompareRule::Serialize(JsonSerializer* serializer)
+	{
+		Rule::Serialize(serializer);
+		serializer->String("period_one");
+		serializer->Int(period_one_);
+		serializer->String("period_two");
+		serializer->Int(period_two_);
+	}
+
+	bool EMACompareRule::Parse(JsonValue* json)
+	{		
+		period_one_ = json->operator[]("period_one").GetInt();
+		period_two_ = json->operator[]("period_two").GetInt();
+		return true;
+	}
+
+	bool EMACompareRule::Verify(Asset* asset, size_t pos)
+	{
+		std::string indicator_str = std::string("EMA") + "_" + std::to_string(static_cast<long long>(period_one_));
+		EMA* ema_one = (EMA*)asset->indicators(indicator_str);
+		indicator_str = std::string("EMA") + "_" + std::to_string(static_cast<long long>(period_two_));
+		EMA* ema_two = (EMA*)asset->indicators(indicator_str);
+		assert(ema_one != NULL);
+		assert(ema_two != NULL);
+
+		DoubleTimeList* tl_one = ema_one->result();
+		DoubleTimeList* tl_two = ema_two->result();
+		
+		int index = pos - std::max(period_one_, period_two_);
+		if (index < 0)
+			return false;
+		else
+		{
+			return tl_one->at(pos - period_one_).value > tl_two->at(pos - period_two_).value;
 		}
 	}
 
@@ -343,8 +388,8 @@ namespace prism {
 			assert( tl1->at(pos - first_period_).position == tl2->at(pos - second_period_).position);
 			return period4_value < period3_value
 				&& period3_value < period2_value
-				&& period3_value < period1_value 
-				&& period3_value < close;
+				&& period2_value < period1_value 
+				&& period1_value < close;
 		}
 	}
 
@@ -372,6 +417,8 @@ namespace prism {
 			return new FalseRule();
 		case RULE_TYPE_INDICATOR_EMA:
 			return new EMARule();
+		case RULE_TYPE_INDICATOR_EMA_COMPARE:
+			return new EMACompareRule();
 		case RULE_TYPE_INDICATOR_MACD:
 			return new MACDRule();
 		case RULE_TYPE_INDICATOR_EMAARRAY:

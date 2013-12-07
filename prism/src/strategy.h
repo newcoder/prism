@@ -113,11 +113,35 @@ namespace prism {
 		IRule *screen_rule_;
 	};
 
-	class IndexedAsset 
+	class LoadedRange
 	{
 	public:
-		IndexedAsset(Asset* asset, time_t begin);
-		IndexedAsset(Asset* asset);
+		size_t begin_year_;
+		size_t end_year_;
+	};
+
+	// responsible for preparing asset data for strategy test
+	class AssetsProvider
+	{
+	public:
+		AssetsProvider(IStore* store);
+		~AssetsProvider();
+		// load necessary symbols for the strategy
+		bool LoadForStrategy(Strategy* strategy);
+		bool LoadAll(DATA_TYPE type = DATA_TYPE_DAILY);
+		AssetsLoader* loader() { return loader_; }
+	private:
+		// the key is SYMBOL + '_' + DATA_TYPE + '_' + DATA_NUM, e.g. SH600234_0_1, one-day hloc data
+		std::map <std::string, LoadedRange> loaded_symbols_;
+		IStore* store_;
+		AssetsLoader* loader_;
+	};
+
+	class AssetIndexer 
+	{
+	public:
+		AssetIndexer(Asset* asset, time_t begin);
+		AssetIndexer(Asset* asset);
 		void MoveTo(time_t pos);
 		time_t GetIndexTime();
 		bool valid() { return index_ >= 0; }
@@ -130,8 +154,8 @@ namespace prism {
 		int index_;
 	};
 
-	typedef std::map<std::string, IndexedAsset> IndexedAssetMap;
-	typedef std::map<std::string, IndexedAsset*> IndexedAssetPtrMap;
+	typedef std::map<std::string, AssetIndexer> AssetIndexerMap;
+	typedef std::map<std::string, AssetIndexer*> AssetIndexerPtrMap;
 
 
 	// the environment for strategy to run
@@ -142,16 +166,14 @@ namespace prism {
 		~StrategyRunner();
 	public:
 		bool Load(const std::string& strategy_file);
-		bool Initialize();
-		bool Run();		
+		bool Run(bool reload = true);		
 		double GetBalance();
 		void CleanUp();	
 	public:
 		Strategy* strategy() { return strategy_; }
 		void set_observer(StrategyObserver* observer) { observer_ = observer; }
 	private:
-		bool LoadCandidates(const std::string& stocks);
-		void InitializeIndex();
+		bool Initialize(bool reload);	
 		void ScreenBuys();
 		bool InBuysCandidates(Asset* asset);
 		void RunLoop();		
@@ -163,13 +185,13 @@ namespace prism {
 		bool SellPortfolioItem(const PortfolioItem& item);
 	private:
 		IStore* store_;
-		AssetsLoader* assets_loader_;
+		AssetsProvider* assets_provider_;
 		Strategy* strategy_;
 		StrategyObserver* observer_;
 		time_t cursor_;
 		double cash_;
-		IndexedAssetMap init_candidates_;
-		IndexedAssetPtrMap buy_candidates_;
+		AssetIndexerMap init_candidates_;
+		AssetIndexerPtrMap buy_candidates_;
 
 		std::vector<PortfolioItem> portfolios_;
 	};

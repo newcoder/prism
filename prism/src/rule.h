@@ -26,6 +26,7 @@ namespace prism {
 		RULE_TYPE_TRUE,
 		RULE_TYPE_FALSE,
 		RULE_TYPE_INDICATOR_EMA,
+		RULE_TYPE_INDICATOR_EMA_COMPARE,
 		RULE_TYPE_INDICATOR_MACD,
 		RULE_TYPE_INDICATOR_EMAARRAY,
 	} RULE_TYPE;
@@ -108,8 +109,29 @@ namespace prism {
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
 		virtual bool Verify(Asset* asset, size_t pos);
+	public:
+		int period() { return period_; }
+		void set_period(int period) { period_ = period; }
 	private:
 		int period_;
+	};
+
+	class EMACompareRule : public Rule
+	{
+	public:
+		EMACompareRule();
+		virtual ~EMACompareRule() {}
+		virtual void Serialize(JsonSerializer* serializer);
+		virtual bool Parse(JsonValue* json);
+		virtual bool Verify(Asset* asset, size_t pos);
+	public:
+		int period_one() { return period_one_; }
+		int period_two() { return period_two_; }
+		void set_period_one(int period_one) { period_one_ = period_one; }
+		void set_period_two(int period_two) { period_two_ = period_two; }
+	private:
+		int period_one_;
+		int period_two_;
 	};
 
 	class MACDRule: public Rule
