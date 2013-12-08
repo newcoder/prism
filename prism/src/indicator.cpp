@@ -407,4 +407,34 @@ namespace prism
 		j_->clear();
 	}
 
+	TL::TL(double threshold) : threshold_(threshold)
+	{
+		short_trend_ = new DoubleTimeList();
+		medium_trend_ = new DoubleTimeList();
+	}
+
+	TL::~TL()
+	{
+		delete short_trend_;
+		delete medium_trend_;
+	}
+
+	void TL::Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end)
+	{
+		DoubleTimeList tl;
+		TLUtils::Populate(begin, end, PRICE_TYPE_H, &tl);
+		TimeSeries ts(tl.begin(), tl.end());
+
+		// find local min/max
+		DoubleTimeList local_maxs;
+		ts.FindLocalExtremas(threshold_, &local_maxs);
+
+	}
+	
+	void TL::Clear()
+	{
+		short_trend_->clear();
+		medium_trend_->clear();
+	}
+
 }

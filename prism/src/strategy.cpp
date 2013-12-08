@@ -310,7 +310,7 @@ namespace prism {
 		return cit != buy_candidates_.end();
 	}
 
-	void StrategyRunner::RunLoop()
+	void StrategyRunner::Run()
 	{
 		if (observer_)
 			observer_->OnStart();
@@ -459,15 +459,6 @@ namespace prism {
 		strategy_ = new Strategy(strategy_path.filename().string());
 		ret = strategy_->Parse(&doc);
 		return ret;
-	}
-
-	bool StrategyRunner::Run(bool reload)
-	{
-		assert(strategy_ != NULL);
-		if (!Initialize(reload))
-			return false;
-		RunLoop();
-		return true;
 	}
 
 	double StrategyRunner::GetBalance()

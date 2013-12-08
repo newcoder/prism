@@ -149,7 +149,7 @@ TEST_F(TestTimeSeries, testLinearRegression)
 	EXPECT_TRUE(ret);
 
 	DoubleTimeList tl, result;
-	TLUtils::Populate(hloc_list, PRICE_TYPE_H, &tl, 0, 100);
+	TLUtils::Populate(hloc_list->begin(), hloc_list->begin() + 100, PRICE_TYPE_H, &tl);
 	TimeSeries ts(tl.begin(), tl.end());
 	LRCoef coef = ts.LinearRegression(&result);
 	std::cout << "A = " << coef.A << ", B = " << coef.B << std::endl;
@@ -173,7 +173,7 @@ TEST_F(TestTimeSeries, testLinearFit)
 TEST_F(TestTimeSeries, testFindLocalExtremas)
 {
 	HLOCList *hloc_list = new prism::HLOCList();
-	bool ret = store.GetAll("SH600688", hloc_list);
+	bool ret = store.GetAll("SH600287", hloc_list);
 	EXPECT_TRUE(ret);
 
 	DoubleTimeList tl;
@@ -197,7 +197,7 @@ TEST_F(TestTimeSeries, testFindLocalExtremas)
 TEST_F(TestTimeSeries, testFindTurningPoints)
 {
 	HLOCList *hloc_list = new prism::HLOCList();
-	bool ret = store.GetAll("SH600648", hloc_list);
+	bool ret = store.GetAll("SH600177", hloc_list);
 	EXPECT_TRUE(ret);
 
 	DoubleTimeList tl;
@@ -230,6 +230,7 @@ TEST_F(TestTimeSeries, testFindTurningPoints)
 			count = ts2.FindTurningPoints(0.01*i, 24*3600*j, &turning_points);
 			dist = TLUtils::Distance(&result, &turning_points); // distance between original series and turning points
 			std::cout << "dp: " << 0.01*i << ", dt: " << j << ", count: " << count << ", dist: " << dist << std::endl;
+			TLUtils::Dump(kDataPath + std::to_string(static_cast<long long>(i)) + "_" + std::to_string(static_cast<long long>(j)) + "_" + "dump_findTurningPoints.csv", &result, &turning_points);
 		}
 	}
 

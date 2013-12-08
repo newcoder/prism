@@ -51,6 +51,7 @@ TEST_F(StrategyTest, testRun)
 
 	StrategyObserver observer(&runner);
 	runner.set_observer(&observer);
+	runner.Initialize();
 	runner.Run();
 
 	TLUtils::Dump(kDataPath + "perf.csv", &observer.performance_series());

@@ -166,17 +166,16 @@ namespace prism {
 		~StrategyRunner();
 	public:
 		bool Load(const std::string& strategy_file);
-		bool Run(bool reload = true);		
+		bool Initialize(bool reload = true);		
+		void Run();		
 		double GetBalance();
 		void CleanUp();	
 	public:
 		Strategy* strategy() { return strategy_; }
 		void set_observer(StrategyObserver* observer) { observer_ = observer; }
 	private:
-		bool Initialize(bool reload);	
 		void ScreenBuys();
-		bool InBuysCandidates(Asset* asset);
-		void RunLoop();		
+		bool InBuysCandidates(Asset* asset);	
 		void Trade();		
 		void Buy();
 		void Step();		

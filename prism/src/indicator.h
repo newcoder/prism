@@ -131,6 +131,22 @@ namespace prism {
 		DoubleTimeList* j_;
 	};
 
+	// Trend Line, by local min/max
+	class TL : public ILocalIndicator
+	{
+	public:
+		TL(double threshold);
+		virtual ~TL();
+		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
+		virtual void Clear();
+		DoubleTimeList* short_trend() { return short_trend_; }
+		DoubleTimeList* medium_trend() { return medium_trend_; }
+	private:
+		double threshold_;
+		DoubleTimeList* short_trend_;
+		DoubleTimeList* medium_trend_;
+	};
+
 
 }
 

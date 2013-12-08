@@ -91,8 +91,8 @@ namespace prism {
 	{
 	public:
 		TREND_TYPE shortTerm;
+		TREND_TYPE mediumTerm;		
 		TREND_TYPE longTerm;
-		TREND_TYPE middleTerm;
 	};
 
 	// characteristics of a MACD/KDJ crossover

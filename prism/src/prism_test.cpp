@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
 	//::testing::GTEST_FLAG(filter) = "StrategyTest.testMACDScreener";
 	//::testing::GTEST_FLAG(filter) = "LibTest.testBoostFile";
 	//::testing::GTEST_FLAG(filter) = "ImportTest.testImportBlock";
-	//::testing::GTEST_FLAG(filter) = "TestTimeSeries.testLinearFit";
+	::testing::GTEST_FLAG(filter) = "TestTimeSeries.testFindTurningPoints";
 	//::testing::GTEST_FLAG(filter) = "ImportTest.testImportDir";
 
 	testing::InitGoogleTest(&argc, argv);

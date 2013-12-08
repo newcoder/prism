@@ -62,8 +62,9 @@ namespace prism {
 		std::string stocks = "patterns=" + symbol;
 		runner_->strategy()->set_stocks(stocks);
 		// run backtest against the symbol
-		if (!runner_->Run())
+		if (!runner_->Initialize())
 			return false;
+		runner_->Run();
 		// get performance
 		StrategyPerformance perf;
 		int num_trans = observer_->transactions().size();

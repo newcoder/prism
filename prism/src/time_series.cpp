@@ -213,16 +213,11 @@ namespace prism
 		return BinaryOpHelper(tl1, tl2, result, divider);
 	}
 
-	DoubleTimeList* TLUtils::Populate(HLOCList* hlocList, PRICE_TYPE type, DoubleTimeList *result, int begin, int end)
+	DoubleTimeList* TLUtils::Populate(HLOCList::const_iterator cit_begin, HLOCList::const_iterator cit_end, PRICE_TYPE type, DoubleTimeList *result)
 	{
-		HLOCList::const_iterator citBegin = hlocList->begin(), citEnd = hlocList->end();
-		if (begin != -1)
-			citBegin += begin;
-		if (end != -1)
-			citEnd = hlocList->begin() + end;
-
+		HLOCList::const_iterator citBegin = cit_begin;
 		result->clear();
-		while (citBegin != citEnd && citBegin != hlocList->end())
+		while (citBegin != cit_end)
 		{
 			DoubleTimePoint point;
 			point.position = (*citBegin).time;
@@ -247,6 +242,11 @@ namespace prism
 			citBegin++;
 		}
 		return result;
+	}
+
+	DoubleTimeList* TLUtils::Populate(HLOCList* hlocList, PRICE_TYPE type, DoubleTimeList *result)
+	{
+		return TLUtils::Populate(hlocList->begin(), hlocList->end(), type, result);
 	}
 
 	void TLUtils::Remove(DoubleTimeList *result, size_t num, bool head)

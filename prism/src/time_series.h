@@ -60,7 +60,8 @@ namespace prism {
 
 	public:
 		// populate from HLOC series
-		static DoubleTimeList* Populate(HLOCList* hlocList, PRICE_TYPE type, DoubleTimeList *result, int begin = -1, int end = -1);
+		static DoubleTimeList* Populate(HLOCList::const_iterator cit_begin, HLOCList::const_iterator cit_end, PRICE_TYPE type, DoubleTimeList *result);
+		static DoubleTimeList* Populate(HLOCList* hlocList, PRICE_TYPE type, DoubleTimeList *result);
 		// remove n elment from head or rear
 		static void TLUtils::Remove(DoubleTimeList *result, size_t num, bool head = true);
 		// calculate the Euclidean distance between two time series
