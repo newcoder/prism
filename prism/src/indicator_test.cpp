@@ -141,3 +141,13 @@ TEST_F(TestIndicator, testKDJ)
 	TLUtils::Dump(kDataPath + "K_D_J.csv", kdj->k(), kdj->d(), kdj->j());
 
 }
+
+TEST_F(TestIndicator, testCR)
+{
+	CR* cr = new CR(20);
+	HLOCSeries hs(hloc_list->begin(), hloc_list->end());
+	hs.CalculateIndicator(cr);
+
+	TLUtils::Dump(kDataPath + "CR.csv", cr->result());
+
+}

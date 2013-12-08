@@ -90,9 +90,11 @@ namespace prism {
 	class Trend
 	{
 	public:
-		TREND_TYPE shortTerm;
-		TREND_TYPE mediumTerm;		
-		TREND_TYPE longTerm;
+		TREND_TYPE type;
+		int period;
+		int strength;
+		// how to measure the strength?  to use the slope of the fitting line get from local min/max..
+		int reliability;
 	};
 
 	// characteristics of a MACD/KDJ crossover

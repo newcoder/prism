@@ -147,6 +147,21 @@ namespace prism {
 		DoubleTimeList* medium_trend_;
 	};
 
+	// Count Ratio
+	// first, count how many points above / below current price in the given period, then calculate the ratio
+	class CR : public ILocalIndicator
+	{
+	public:
+		CR(int period);
+		virtual ~CR();
+		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
+		virtual void Clear();
+		DoubleTimeList* result() { return result_; }
+	private:
+		int period_;
+		DoubleTimeList* result_;
+	};
+
 
 }
 

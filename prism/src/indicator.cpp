@@ -9,6 +9,7 @@
 #include "time_series.h"
 #include "hloc_series.h"
 #include <iostream>
+#include <cassert>
 
 namespace prism 
 {
@@ -429,12 +430,61 @@ namespace prism
 		DoubleTimeList local_maxs;
 		ts.FindLocalExtremas(threshold_, &local_maxs);
 
+		// TODO....
 	}
 	
 	void TL::Clear()
 	{
 		short_trend_->clear();
 		medium_trend_->clear();
+	}
+
+	CR::CR(int period) : period_(period)
+	{
+		result_ = new DoubleTimeList();
+	}
+
+	CR::~CR()
+	{
+		delete result_;
+	}
+
+	void CR::Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end)
+	{
+		HLOCList::const_iterator it = begin;
+
+		while (it != end)
+		{	
+			HLOC hloc_current = *it;	
+			size_t num_above = 1; // initialize to 1, include itself.
+			size_t num_below = 1;
+			for (int i = 1; i <= period_; i++)
+			{
+				if (it - i >= begin)
+				{
+					HLOC hloc = *(it - i);
+					if (hloc.low >= hloc_current.high)
+						num_above++;
+					else if (hloc.high <= hloc_current.low)
+						num_below++;
+					else
+					{
+						if (hloc.high > hloc_current.high)
+							num_above++;
+						if (hloc.low < hloc_current.low)
+							num_below++;
+					}
+				}
+			}
+			double ratio = (double)num_above / (num_above + num_below);
+			result_->push_back(DoubleTimePoint(ratio, (*(it)).time));
+			it++;
+		}
+	}
+
+	void CR::Clear()
+	{
+		result_->clear();
 	}
 
 }
