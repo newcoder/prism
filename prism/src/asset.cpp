@@ -107,6 +107,18 @@ namespace prism {
 			return ema;
 		}
 
+		// CR indicators
+		if (elems[0] == "CR")
+		{
+			int period = atoi(elems[1].c_str());
+			DoubleTimeList tl;
+			CR* cr = new CR(period);
+			HLOCSeries hs(raw_data_->begin(), raw_data_->end());
+			hs.CalculateIndicator(cr);
+			indicators_.insert(std::make_pair(indicator_str, cr));
+			return cr;
+		}
+
 		return NULL;
 	}
 

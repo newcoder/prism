@@ -492,11 +492,11 @@ namespace prism {
 	void StrategyObserver::OnTransaction(const Transaction& trans)
 	{
 		transactions_.push_back(trans);
-/*		std::cout << trans.type_ << ", " 
+		std::cout << trans.type_ << ", " 
 			<< trans.asset_->symbol() << ", " 
 			<< TimeToString(trans.time_, "%Y-%m-%d, ") 
 			<< trans.price_ << ", " 
-			<< trans.shares_<< std::endl;	*/						
+			<< trans.shares_<< std::endl;	
 	}
 
 	void StrategyObserver::OnStart()

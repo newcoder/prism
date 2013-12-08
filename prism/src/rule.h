@@ -29,6 +29,7 @@ namespace prism {
 		RULE_TYPE_INDICATOR_EMA_COMPARE,
 		RULE_TYPE_INDICATOR_MACD,
 		RULE_TYPE_INDICATOR_EMAARRAY,
+		RULE_TYPE_INDICATOR_CR
 	} RULE_TYPE;
 
 	class IRule
@@ -177,6 +178,18 @@ namespace prism {
 		int second_period_;
 		int third_period_;
 		int fourth_period_;
+	};
+
+	class CRRule : public Rule
+	{
+	public:
+		CRRule();
+		virtual ~CRRule() {}
+		virtual void Serialize(JsonSerializer* serializer);
+		virtual bool Parse(JsonValue* json);
+		virtual bool Verify(Asset* asset, size_t pos);
+	private:
+		int period_;
 	};
 
 	// Rule factory

@@ -47,6 +47,8 @@ namespace prism {
 			return "INDICATOR_MACD";
 		case RULE_TYPE_INDICATOR_EMAARRAY:
 			return "INDICATOR_EMAARRAY";
+		case RULE_TYPE_INDICATOR_CR:
+			return "INDICATOR_CR";
 		default:
 			break;
 		}
@@ -71,6 +73,8 @@ namespace prism {
 			return RULE_TYPE_INDICATOR_MACD;
 		else if(type == "INDICATOR_EMAARRAY")
 			return RULE_TYPE_INDICATOR_EMAARRAY;
+		else if (type == "INDICATOR_CR")
+			return RULE_TYPE_INDICATOR_CR;
 		else
 			return RULE_TYPE_NULL;
 	}
@@ -393,6 +397,38 @@ namespace prism {
 		}
 	}
 
+	CRRule::CRRule(): Rule(RULE_TYPE_INDICATOR_CR)
+	{
+	}
+
+	void CRRule::Serialize(JsonSerializer* serializer)
+	{
+		Rule::Serialize(serializer);
+		serializer->String("period");
+		serializer->Int(period_);
+	}
+
+	bool CRRule::Parse(JsonValue* json)
+	{
+		period_ = json->operator[]("period").GetInt();
+		return true;
+	}
+
+	bool CRRule::Verify(Asset* asset, size_t pos)
+	{
+		std::string indicator_str = std::string("CR") + "_" + std::to_string(static_cast<long long>(period_));
+		CR* cr = (CR*)asset->indicators(indicator_str);
+		assert(cr != NULL);
+		DoubleTimeList* tl = cr->result();
+		int index = pos;
+		if (index < 0)
+			return false;
+		else
+		{
+			std::cout << TimeToString(tl->at(index).position, "time: %Y-%m-%d, ") << tl->at(index).value << "," << 1.0 / (double)period_<< std::endl;
+			return tl->at(index).value <=  1.0 / (double)period_;
+		}
+	}
 
 	RuleFactory::RuleFactory()
 	{
@@ -423,6 +459,8 @@ namespace prism {
 			return new MACDRule();
 		case RULE_TYPE_INDICATOR_EMAARRAY:
 			return new EMAArrayRule();
+		case RULE_TYPE_INDICATOR_CR:
+			return new CRRule();
 		default:
 			break;
 		}
