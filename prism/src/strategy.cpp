@@ -8,7 +8,6 @@
 #include "strategy.h"
 #include "rule.h"
 #include "store.h"
-#include "asset.h"
 #include <ctime>
 #include <assert.h>
 #include <set>
@@ -106,145 +105,6 @@ namespace prism {
 		return true;
 	}
 
-	AssetsProvider::AssetsProvider(IStore* store) : store_(store), loader_(nullptr)
-	{
-	}
-
-	AssetsProvider::~AssetsProvider()
-	{
-		delete loader_;
-	}
-
-	bool AssetsProvider::LoadAll(DATA_TYPE type)
-	{
-		std::vector<std::string> elems;
-		std::string symbols_str;
-		std::set<std::string> symbols_set;
-		if (!store_->GetBlock(kBlockAllAShares, symbols_str))
-			return false;
-		kyotocabinet::strsplit(symbols_str, '\n', &elems);
-		
-		if (loader_ != NULL)
-			delete loader_;
-		loader_ = new AssetsLoader(store_);
-
-		// load symbols
-		loader_->LoadAssets(elems, 1992, 2013, type, 1);
-		return true;
-	}
-
-	bool AssetsProvider::LoadForStrategy(Strategy* strategy)
-	{
-		std::vector<std::string> elems, blocks, patterns;
-		std::string stocks = strategy->stocks();
-		kyotocabinet::strsplit(stocks, ';', &elems);
-		for (size_t i = 0; i < elems.size(); ++i)
-		{
-			if (elems[i].find(kStockBlocks) != std::string::npos)
-			{
-				std::string block_list = elems[i].substr(elems[i].find("=") + 1);
-				kyotocabinet::strsplit(block_list, ',', &blocks);
-			}
-
-			if (elems[i].find(kStockPatterns) != std::string::npos)
-			{
-				std::string pattern_list = elems[i].substr(elems[i].find("=") + 1);
-				kyotocabinet::strsplit(pattern_list, ',', &patterns);
-			}
-		}
-
-		// load symbols list from blocks		
-		std::string symbols_str;
-		std::set<std::string> symbols_set;
-		if (blocks.empty())
-		{
-			blocks.push_back(kBlockAllAShares);
-		}
-		for (size_t i = 0; i < blocks.size(); ++i)
-		{
-			if (blocks[i].empty()) continue;
-			if (!store_->GetBlock(blocks[i], symbols_str))
-				return false;
-			kyotocabinet::strsplit(symbols_str, '\n', &elems);
-			for (size_t j = 0; j < elems.size(); ++j)
-			{
-				if (!elems[j].empty())
-					symbols_set.insert(elems[j]);
-			}
-		}
-
-		// filter symbols by the patterns
-		std::vector<std::string> symbols_filtered;
-		std::set<std::string>::const_iterator cit = symbols_set.begin();
-		while (cit != symbols_set.end())
-		{
-			for (size_t j = 0; j < patterns.size(); ++j)
-			{
-				boost::regex pattern(patterns[j]);
-				if (regex_match(*cit, pattern))
-				{
-					symbols_filtered.push_back(*cit);
-				}
-			}
-			cit++;
-		}
-
-		if (loader_ != NULL)
-			delete loader_;
-		loader_ = new AssetsLoader(store_);
-
-		// load symbols
-		loader_->LoadAssets(symbols_filtered,
-			GetYear(strategy->begin_time()),
-			GetYear(strategy->end_time()),
-			strategy->data_type(),
-			strategy->data_num());
-
-		return true;
-	}
-
-
-	AssetIndexer::AssetIndexer(Asset* asset, time_t begin) : asset_(asset)
-	{
-		index_ = -1;
-		MoveTo(begin);
-	}
-	
-	AssetIndexer::AssetIndexer(Asset* asset) : asset_(asset)
-	{
-		index_ = -1;
-	}
-
-	void AssetIndexer::MoveTo(time_t pos)
-	{
-		HLOCList* hloc_list = asset_->raw_data();
-		size_t i = index_ > 0? index_ : 0;
-		while (i < hloc_list->size())
-		{
-			time_t time = hloc_list->at(i).time;
-			if (time <= pos)
-			{
-				index_ = i;
-				i++;
-			} else 
-				{
-					break;
-			}
-		}
-	}
-	
-	bool AssetIndexer::at_end()
-	{
-		return index_ == asset_->raw_data()->size() - 1;
-	}
-
-	time_t AssetIndexer::GetIndexTime()
-	{
-		if (index_ < 0)
-			return -1;
-		return asset_->raw_data()->at(index_).time;
-	}
-
 	StrategyRunner::StrategyRunner(IStore* store)
 	{
 		store_ = store;
@@ -268,12 +128,16 @@ namespace prism {
 		// re-load assets
 		if (reload)
 		{
-			if (!assets_provider_->LoadForStrategy(strategy_))
+			if (!assets_provider_->LoadAssets(strategy_->stocks(), 
+				GetYear(strategy_->begin_time()), 
+				GetYear(strategy_->end_time()), 
+				strategy_->data_type(), 
+				strategy_->data_num()))
 				return false;
 		}
 		cursor_ = strategy_->begin_time();
 		init_candidates_.clear();
-		std::map<std::string, Asset*> *loaded_assets = assets_provider_->loader()->assets();
+		std::map<std::string, Asset*> *loaded_assets = assets_provider_->assets();
 		std::map<std::string, Asset*>::iterator it = loaded_assets->begin();
 		while(it != loaded_assets->end())
 		{

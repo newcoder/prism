@@ -32,7 +32,7 @@ TEST_F(AssetTest, testLoad)
 	std::vector<std::string> elems;
 	kyotocabinet::strsplit(symbols, '\n', &elems);
 	
-	AssetsLoader loader((IStore*)&store);
+	AssetsProvider loader((IStore*)&store);
 	int count = loader.LoadAssets(elems, 2011, 2013);
 	std::cout << "symbols loaded: " << count << std::endl;
 }

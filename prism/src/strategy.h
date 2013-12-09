@@ -12,6 +12,7 @@
 #include "common.h"
 #include "util.h"
 #include "time.h"
+#include "asset.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -21,8 +22,6 @@ namespace prism {
 	class IRule;
 	class IAction;
 	class IStore;
-	class Asset;
-	class AssetsLoader;
 	class StrategyObserver;
 
 	typedef std::vector<IAction*> ActionList;
@@ -112,51 +111,6 @@ namespace prism {
 		bool sell_short_;
 		IRule *screen_rule_;
 	};
-
-	class LoadedRange
-	{
-	public:
-		size_t begin_year_;
-		size_t end_year_;
-	};
-
-	// responsible for preparing asset data for strategy test
-	class AssetsProvider
-	{
-	public:
-		AssetsProvider(IStore* store);
-		~AssetsProvider();
-		// load necessary symbols for the strategy
-		bool LoadForStrategy(Strategy* strategy);
-		bool LoadAll(DATA_TYPE type = DATA_TYPE_DAILY);
-		AssetsLoader* loader() { return loader_; }
-	private:
-		// the key is SYMBOL + '_' + DATA_TYPE + '_' + DATA_NUM, e.g. SH600234_0_1, one-day hloc data
-		std::map <std::string, LoadedRange> loaded_symbols_;
-		IStore* store_;
-		AssetsLoader* loader_;
-	};
-
-	class AssetIndexer 
-	{
-	public:
-		AssetIndexer(Asset* asset, time_t begin);
-		AssetIndexer(Asset* asset);
-		void MoveTo(time_t pos);
-		time_t GetIndexTime();
-		bool valid() { return index_ >= 0; }
-		bool at_begin(){ return index_ == 0; }
-		bool at_end();
-		Asset* asset() const { return asset_; }
-		int index() const { return index_; }
-	private:
-		Asset* asset_;
-		int index_;
-	};
-
-	typedef std::map<std::string, AssetIndexer> AssetIndexerMap;
-	typedef std::map<std::string, AssetIndexer*> AssetIndexerPtrMap;
-
 
 	// the environment for strategy to run
 	class StrategyRunner

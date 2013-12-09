@@ -25,6 +25,7 @@ namespace prism {
 		Asset(const std::string& symbol);
 		~Asset();
 		bool Load(IStore* store, size_t begin_year, size_t end_year, DATA_TYPE data_type = DATA_TYPE_DAILY, int data_num = 1);
+		void ClearIndicators();
 		HLOCList* raw_data() { return raw_data_; }
 		std::string symbol() { return symbol_; }
 		DATA_TYPE data_type() { return data_type_; }
@@ -34,6 +35,12 @@ namespace prism {
 		ILocalIndicator* indicators(const std::string& indicator_str);
 	private:
 		ILocalIndicator* GenerateIndicator(const std::string& indicator_str);
+	public:
+		static std::string ToSymbolString(const std::string& symbol,
+			size_t begin_year,
+			size_t end_year,
+			DATA_TYPE data_type,
+			int data_num);
 	private:
 		std::string symbol_;
 		DATA_TYPE data_type_;
@@ -44,19 +51,56 @@ namespace prism {
 		std::map<std::string, ILocalIndicator*> indicators_;
 	};
 
-	class AssetsLoader
+	class AssetsProvider
 	{
 	public:
-		AssetsLoader(IStore* store);
-		~AssetsLoader();
+		AssetsProvider(IStore* store);
+		~AssetsProvider();
 		void Clear();
-		int LoadAssets(const std::vector<std::string>& symbols, size_t begin, size_t end, DATA_TYPE data_type = DATA_TYPE_DAILY, int data_num = 1);
-		Asset* Get(const std::string& symbol);
+		int LoadAssets(const std::string& symbols_pattern, 
+			size_t begin_year, 
+			size_t end_year, 
+			DATA_TYPE data_type = DATA_TYPE_DAILY, 
+			int data_num = 1);
+		int LoadAssets(const std::vector<std::string>& symbols, 
+			size_t begin_year, 
+			size_t end_year, 
+			DATA_TYPE data_type = DATA_TYPE_DAILY, 
+			int data_num = 1);
+		bool LoadAll(DATA_TYPE type);
+		Asset* Get(const std::string& symbol_string);
 		std::map<std::string, Asset*>* assets() { return &assets_; }
+	private:
+		std::string ToSymbolString(const std::string& symbol, 
+			size_t begin_year,
+			size_t end_year,
+			DATA_TYPE data_type,
+			int data_num);
+		bool ParseSymbolsPattern(const std::string& symbols_pattern, std::vector<std::string>& symbols);
 	private:
 		IStore* store_;
 		std::map<std::string, Asset*> assets_;
 	};
+
+	class AssetIndexer
+	{
+	public:
+		AssetIndexer(Asset* asset, time_t begin);
+		AssetIndexer(Asset* asset);
+		void MoveTo(time_t pos);
+		time_t GetIndexTime();
+		bool valid() { return index_ >= 0; }
+		bool at_begin(){ return index_ == 0; }
+		bool at_end() { return index_ == asset_->raw_data()->size() - 1; }
+		Asset* asset() const { return asset_; }
+		int index() const { return index_; }
+	private:
+		Asset* asset_;
+		int index_;
+	};
+
+	typedef std::map<std::string, AssetIndexer> AssetIndexerMap;
+	typedef std::map<std::string, AssetIndexer*> AssetIndexerPtrMap;
 }
 
 #endif

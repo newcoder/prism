@@ -460,7 +460,7 @@ namespace prism
 			size_t num_below = 1;
 			for (int i = 1; i <= period_; i++)
 			{
-				if (it - i >= begin)
+				if (it >= begin + i)
 				{
 					HLOC hloc = *(it - i);
 					if (hloc.low >= hloc_current.high)

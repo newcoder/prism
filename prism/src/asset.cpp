@@ -10,7 +10,9 @@
 #include "indicator.h"
 #include "time_series.h"
 #include "hloc_series.h"
+#include "util.h"
 #include <iostream>
+#include "boost/regex.hpp"
 
 // kc utils
 #include <kcutil.h>
@@ -28,10 +30,25 @@ namespace prism {
 	{
 		// clear HLOC raw data and its indicators.
 		delete raw_data_;
+		//std::cout << "Asset::~Asset()" << std::endl;
+		ClearIndicators();
+	}
+
+	std::string Asset::ToSymbolString(const std::string& symbol,
+		size_t begin_year,
+		size_t end_year,
+		DATA_TYPE data_type,
+		int data_num)
+	{
+		return symbol + '_' + std::to_string(data_type) + '_' + std::to_string(data_num) + '_' +
+			std::to_string(begin_year) + '_' + std::to_string(end_year);
+	}
+
+	void Asset::ClearIndicators()
+	{
 		for (std::map<std::string, ILocalIndicator*>::iterator it = indicators_.begin(); it != indicators_.end(); it++)
 			delete it->second;
-		//std::cout << "Asset::~Asset()" << std::endl;
-
+		indicators_.clear();
 	}
 
 	bool Asset::Load(IStore* store, size_t begin_year, size_t end_year, DATA_TYPE data_type, int data_num)
@@ -122,47 +139,178 @@ namespace prism {
 		return NULL;
 	}
 
-	AssetsLoader::AssetsLoader(IStore* store): store_(store)
+	AssetsProvider::AssetsProvider(IStore* store) : store_(store)
 	{
 		//std::cout << "AssetsLoader::AssetsLoader()" << std::endl;
 	}
 	
-	AssetsLoader::~AssetsLoader()
+	AssetsProvider::~AssetsProvider()
 	{
 		Clear();
 				
 		//std::cout << "AssetsLoader::~AssetsLoader()" << std::endl;
 	}
 
-	void AssetsLoader::Clear()
+	void AssetsProvider::Clear()
 	{
 		for (std::map<std::string, Asset*>::iterator it = assets_.begin(); it != assets_.end(); it++)
 			delete it->second;	
 		assets_.clear();
 	}
 
-	int AssetsLoader::LoadAssets(const std::vector<std::string>& symbols, size_t begin, size_t end, DATA_TYPE data_type, int data_num)
+	int AssetsProvider::LoadAssets(const std::vector<std::string>& symbols,
+		size_t begin_year, 
+		size_t end_year, 
+		DATA_TYPE data_type, 
+		int data_num)
 	{
 		int count = 0;
-		Clear();
 		std::vector<std::string>::const_iterator cit = symbols.begin();
 		while(cit != symbols.end())
 		{
-			Asset* asset = new Asset(*cit);
-			if (asset->Load(store_, begin, end, data_type, data_num))
+			std::string symbol_string = Asset::ToSymbolString(*cit, begin_year, end_year, data_type, data_num);
+			Asset* asset = Get(symbol_string);
+			if (asset == NULL)
 			{
-				assets_.insert(std::make_pair(*cit, asset));
-				count++;
+				// not loaded
+				asset = new Asset(*cit);
+				if (asset->Load(store_, begin_year, end_year, data_type, data_num))
+				{
+					assets_.insert(std::make_pair(symbol_string, asset));
+					count++;
+				}
 			}
 			cit++;
 		}
 		return count;
 	}
 
-	Asset* AssetsLoader::Get(const std::string& symbol)
+	Asset* AssetsProvider::Get(const std::string& symbol_string)
 	{
-		std::map<std::string, Asset*>::const_iterator cit = assets_.find(symbol);
+		std::map<std::string, Asset*>::const_iterator cit = assets_.find(symbol_string);
 		return cit == assets_.end()? NULL : cit->second;
 	}
 
+	bool AssetsProvider::LoadAll(DATA_TYPE type)
+	{
+		std::vector<std::string> elems;
+		std::string symbols_str;
+		std::set<std::string> symbols_set;
+		if (!store_->GetBlock(kBlockAllAShares, symbols_str))
+			return false;
+		kyotocabinet::strsplit(symbols_str, '\n', &elems);
+
+		// load symbols
+		LoadAssets(elems, 1992, 2013, type, 1);
+		return true;
+	}
+
+	bool AssetsProvider::ParseSymbolsPattern(const std::string& symbols_pattern, std::vector<std::string>& symbols)
+	{
+		std::vector<std::string> elems, blocks, patterns;
+		std::string stocks = symbols_pattern;
+		kyotocabinet::strsplit(stocks, ';', &elems);
+		for (size_t i = 0; i < elems.size(); ++i)
+		{
+			if (elems[i].find(kStockBlocks) != std::string::npos)
+			{
+				std::string block_list = elems[i].substr(elems[i].find("=") + 1);
+				kyotocabinet::strsplit(block_list, ',', &blocks);
+			}
+
+			if (elems[i].find(kStockPatterns) != std::string::npos)
+			{
+				std::string pattern_list = elems[i].substr(elems[i].find("=") + 1);
+				kyotocabinet::strsplit(pattern_list, ',', &patterns);
+			}
+		}
+
+		// load symbols list from blocks		
+		std::string symbols_str;
+		std::set<std::string> symbols_set;
+		if (blocks.empty())
+		{
+			blocks.push_back(kBlockAllAShares);
+		}
+		for (size_t i = 0; i < blocks.size(); ++i)
+		{
+			if (blocks[i].empty()) continue;
+			if (!store_->GetBlock(blocks[i], symbols_str))
+				return false;
+			kyotocabinet::strsplit(symbols_str, '\n', &elems);
+			for (size_t j = 0; j < elems.size(); ++j)
+			{
+				if (!elems[j].empty())
+					symbols_set.insert(elems[j]);
+			}
+		}
+
+		// filter symbols by the patterns
+		std::set<std::string>::const_iterator cit = symbols_set.begin();
+		while (cit != symbols_set.end())
+		{
+			for (size_t j = 0; j < patterns.size(); ++j)
+			{
+				boost::regex pattern(patterns[j]);
+				if (regex_match(*cit, pattern))
+				{
+					symbols.push_back(*cit);
+				}
+			}
+			cit++;
+		}
+
+		return true;
+	}
+
+	int AssetsProvider::LoadAssets(const std::string& symbols_pattern,
+		size_t begin_year,
+		size_t end_year,
+		DATA_TYPE data_type,
+		int data_num)
+	{
+		std::vector<std::string> symbols;
+		if (!ParseSymbolsPattern(symbols_pattern, symbols))
+			return -1;
+		// load symbols
+		return LoadAssets(symbols, begin_year, end_year, data_type, data_num);
+	}
+
+
+	AssetIndexer::AssetIndexer(Asset* asset, time_t begin) : asset_(asset)
+	{
+		index_ = -1;
+		MoveTo(begin);
+	}
+
+	AssetIndexer::AssetIndexer(Asset* asset) : asset_(asset)
+	{
+		index_ = -1;
+	}
+
+	void AssetIndexer::MoveTo(time_t pos)
+	{
+		HLOCList* hloc_list = asset_->raw_data();
+		size_t i = index_ > 0 ? index_ : 0;
+		while (i < hloc_list->size())
+		{
+			time_t time = hloc_list->at(i).time;
+			if (time <= pos)
+			{
+				index_ = i;
+				i++;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	time_t AssetIndexer::GetIndexTime()
+	{
+		if (index_ < 0)
+			return -1;
+		return asset_->raw_data()->at(index_).time;
+	}
 }
