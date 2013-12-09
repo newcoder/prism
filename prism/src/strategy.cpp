@@ -471,7 +471,7 @@ namespace prism {
 			AssetIndexerMap::const_iterator cit_asset = init_candidates_.find(item.asset()->symbol());
 			assert(cit_asset != init_candidates_.end());
 			AssetIndexer asset_indexer = cit_asset->second;
-			assert(item.asset() == indexed_asset.asset());
+			assert(item.asset() == asset_indexer.asset());
 			double price = item.asset()->raw_data()->at(asset_indexer.index()).close;
 			balance += price * item.amount() * (1 - kCommissionRate);
 			cit++;
