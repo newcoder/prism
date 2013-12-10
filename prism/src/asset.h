@@ -1,7 +1,7 @@
 // Copyright 2013, QT Inc.
 // All rights reserved.
 //
-// Author: wndproc@google.com (Ray Ni)
+// Author: wndproc@gmail.com (Ray Ni)
 //
 // routines and classes for asset, stock is a kind of asset..
 

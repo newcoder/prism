@@ -1,7 +1,7 @@
 // Copyright 2013, QT Inc.
 // All rights reserved.
 //
-// Author: wndproc@google.com (Ray Ni)
+// Author: wndproc@gmail.com (Ray Ni)
 //
 // for trade implementation.
 
@@ -70,6 +70,21 @@ namespace prism {
 		for (auto it : portfolios_)
 			delete it.second;
 		portfolios_.clear();
+	}
+
+	bool PortfolioManager::GetValue(time_t time, double& value)
+	{
+		value = 0.0;
+		for (auto it : portfolios_)
+		{
+			double portfolio_value;
+			bool ret = it.second->GetValue(time, portfolio_value);
+			if (ret)
+				value += portfolio_value;
+			else
+				return false;
+		}
+		return true;
 	}
 
 }

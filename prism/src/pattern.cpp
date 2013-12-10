@@ -1,7 +1,7 @@
 // Copyright 2013, QT Inc.
 // All rights reserved.
 //
-// Author: wndproc@google.com (Ray Ni)
+// Author: wndproc@gmail.com (Ray Ni)
 //
 // structure and classes for pattern.
 
@@ -17,7 +17,7 @@ namespace prism
 
 	bool PointsGroup::CheckAdjacence(DoubleList* list) const
 	{
-		DoubleList::const_iterator cit = list->begin();
+		auto cit = list->begin();
 		if (list->size() < 2) return true;
 		double max = -DBL_MAX, min = DBL_MAX;
 		while (cit != list->end())
@@ -35,7 +35,7 @@ namespace prism
 
 	size_t Pattern::Size() const
 	{
-		std::vector<PointsGroup>::const_iterator gcit = groups_.begin();
+		auto gcit = groups_.begin();
 		size_t sum = 0;
 		while (gcit != groups_.end())
 		{
@@ -48,7 +48,7 @@ namespace prism
 	void Pattern::Generate(const DoubleTimeList::const_iterator& begin, const DoubleTimeList::const_iterator& end)
 	{
 		DoubleTimeList points;
-		DoubleTimeList::const_iterator cit = begin;
+		auto cit = begin;
 		size_t i = 0;
 		
 		if (end - begin < 2)
@@ -109,7 +109,7 @@ namespace prism
 	{
 		DoubleTimeList points;
 		size_t positionCount = Size();
-		DoubleTimeList::const_iterator cit = current;
+		auto cit = current;
 		size_t i = 0;
 		while(i < positionCount && cit != end)
 		{
@@ -130,8 +130,8 @@ namespace prism
 		std::sort(points.begin(), points.end(), compareObj);
 
 		// check each groups
-		std::vector<PointsGroup>::const_iterator gcit = groups_.begin();
-		DoubleTimeList::const_iterator pcit = points.begin();
+		auto gcit = groups_.begin();
+		auto pcit = points.begin();
 		double max_in_last_group = -DBL_MAX;
 
 		while(gcit != groups_.end() && pcit != points.end())
@@ -180,7 +180,7 @@ namespace prism
 
 	Pattern* PatternFactory::GetPattern(PATTERN_TYPE type)
 	{
-		std::map<PATTERN_TYPE, Pattern*>::const_iterator cit = sPatterns.find(type);
+		auto cit = sPatterns.find(type);
 		if (cit != sPatterns.end())
 		{
 			return (*cit).second;

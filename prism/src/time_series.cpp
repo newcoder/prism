@@ -1,7 +1,7 @@
 // Copyright 2013, QT Inc.
 // All righTimeSeries reserved.
 //
-// Author: wndproc@google.com (Ray Ni)
+// Author: wndproc@gmail.com (Ray Ni)
 //
 // routines and classes for time series processing.
 
@@ -215,7 +215,7 @@ namespace prism
 
 	DoubleTimeList* TLUtils::Populate(HLOCList::const_iterator cit_begin, HLOCList::const_iterator cit_end, PRICE_TYPE type, DoubleTimeList *result)
 	{
-		HLOCList::const_iterator citBegin = cit_begin;
+		auto citBegin = cit_begin;
 		result->clear();
 		while (citBegin != cit_end)
 		{
@@ -298,7 +298,7 @@ namespace prism
 	double TimeSeries::Average() const
 	{
 		double sum = 0.0F;
-		DoubleTimeList::const_iterator cit = begin_;
+		auto cit = begin_;
 		while (cit != end_)
 		{
 			sum += (*cit).value;
@@ -311,7 +311,7 @@ namespace prism
 	{
 		double miu = Average();
 		double sum = 0.0F;
-		DoubleTimeList::const_iterator cit = begin_;
+		auto cit = begin_;
 		while (cit != end_)
 		{
 			sum += std::pow(((*cit).value - miu), 2);
@@ -380,7 +380,7 @@ namespace prism
 
 		result->clear();
 
-		DoubleTimeList::const_iterator cit = begin_;
+		auto cit = begin_;
 		DoubleTimeList unit;
 
 		// keep the first point and last point in
@@ -499,7 +499,7 @@ namespace prism
 	int TimeSeries::MatchPattern(IPattern* pattern, DoubleTimeList* result) const
 	{
 		result->clear();
-		DoubleTimeList::const_iterator cit = begin_;
+		auto cit = begin_;
 		while (cit != end_)
 		{
 			if (pattern->Match(cit, end_))
@@ -593,7 +593,7 @@ namespace prism
 			size_t index;
 			if (!use_previous_index)
 			{
-				DoubleTimeList::iterator cit = std::min_element(cost.begin(), cost.end(), compareObj);
+				auto cit = std::min_element(cost.begin(), cost.end(), compareObj);
 				index = cit - cost.begin();
 			}
 			else

@@ -1,7 +1,7 @@
 // Copyright 2013, QT Inc.
 // All rights reserved.
 //
-// Author: wndproc@google.com (Ray Ni)
+// Author: wndproc@gmail.com (Ray Ni)
 //
 // for asset and asset loader implementation.
 
@@ -88,7 +88,7 @@ namespace prism {
 
 	ILocalIndicator* Asset::indicators(const std::string& indicator_str)
 	{
-		std::map<std::string, ILocalIndicator*>::iterator it = indicators_.find(indicator_str);
+		auto it = indicators_.find(indicator_str);
 		return it == indicators_.end() ? GenerateIndicator(indicator_str): it->second;
 	}
 
@@ -153,8 +153,8 @@ namespace prism {
 
 	void AssetsProvider::Clear()
 	{
-		for (std::map<std::string, Asset*>::iterator it = assets_.begin(); it != assets_.end(); it++)
-			delete it->second;	
+		for (auto it : assets_)
+			delete it.second;	
 		assets_.clear();
 	}
 
@@ -165,7 +165,7 @@ namespace prism {
 		int data_num)
 	{
 		int count = 0;
-		std::vector<std::string>::const_iterator cit = symbols.begin();
+		auto cit = symbols.begin();
 		while(cit != symbols.end())
 		{
 			std::string symbol_string = Asset::ToSymbolString(*cit, begin_year, end_year, data_type, data_num);
@@ -187,7 +187,7 @@ namespace prism {
 
 	Asset* AssetsProvider::Get(const std::string& symbol_string) const
 	{
-		std::map<std::string, Asset*>::const_iterator cit = assets_.find(symbol_string);
+		auto cit = assets_.find(symbol_string);
 		return cit == assets_.end()? NULL : cit->second;
 	}
 
@@ -246,7 +246,7 @@ namespace prism {
 		}
 
 		// filter symbols by the patterns
-		std::set<std::string>::const_iterator cit = symbols_set.begin();
+		auto cit = symbols_set.begin();
 		while (cit != symbols_set.end())
 		{
 			for (size_t j = 0; j < patterns.size(); ++j)

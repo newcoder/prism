@@ -1,7 +1,7 @@
 // Copyright 2013, QT Inc.
 // All rights reserved.
 //
-// Author: wndproc@google.com (Ray Ni)
+// Author: wndproc@gmail.com (Ray Ni)
 //
 // for rules implementation.
 
@@ -140,7 +140,7 @@ namespace prism {
 
 	bool OrGroup::Verify(Asset* asset, size_t pos)
 	{
-		RuleList::const_iterator cit = rules_.begin();
+		auto cit = rules_.begin();
 		bool result = false;
 		while (cit != rules_.end())
 		{
@@ -156,7 +156,7 @@ namespace prism {
 
 	bool AndGroup::Verify(Asset* asset, size_t pos)
 	{
-		RuleList::const_iterator cit = rules_.begin();
+		auto cit = rules_.begin();
 		bool result = true;
 		while (cit != rules_.end())
 		{

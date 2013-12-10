@@ -1,7 +1,7 @@
 // Copyright 2013, QT Inc.
 // All rights reserved.
 //
-// Author: wndproc@google.com (Ray Ni)
+// Author: wndproc@gmail.com (Ray Ni)
 //
 // routines and classes for indicators, such as moving average,MACD, etc...
 
@@ -34,7 +34,7 @@ namespace prism
 
 	void SMA::Generate(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end)
 	{
-		DoubleTimeList::const_iterator cit = begin;
+		auto cit = begin;
 		Clear();
 		while(cit != end)
 		{
@@ -158,8 +158,8 @@ namespace prism
 	void MACD::GenerateCrossOvers(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end)
 	{
 		cross_overs_->clear();
-		DoubleTimeList::const_iterator cit = histogram_->begin();
-		DoubleTimeList::const_iterator cit_price = begin;
+		auto cit = histogram_->begin();
+		auto cit_price = begin;
 
 		if (cit == histogram_->end())
 			return;
@@ -270,7 +270,7 @@ namespace prism
 
 	void RSI::Generate(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end)
 	{
-		DoubleTimeList::const_iterator cit = begin;
+		auto cit = begin;
 		DoubleTimeList gain, loss;
 		SMA gain_ma(period_), loss_ma(period_); // google finance use SMA to smooth, may use EMA...
 		double previous = (*cit).value;
@@ -322,7 +322,7 @@ namespace prism
 
 	void RSV::Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end)
 	{
-		HLOCList::const_iterator it = begin;
+		auto it = begin;
 		if (end - begin < period_)
 			return;
 		
@@ -451,7 +451,7 @@ namespace prism
 
 	void CR::Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end)
 	{
-		HLOCList::const_iterator it = begin;
+		auto it = begin;
 
 		while (it != end)
 		{	

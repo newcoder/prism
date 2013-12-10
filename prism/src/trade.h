@@ -1,7 +1,7 @@
 // Copyright 2013, QT Inc.
 // All rights reserved.
 //
-// Author: wndproc@google.com (Ray Ni)
+// Author: wndproc@gmail.com (Ray Ni)
 //
 // routines and classes for trade
 // transaction, portfolio manager, etc..
@@ -82,6 +82,7 @@ namespace prism {
 	public:
 		void Buy(AssetIndexer* asset_indexer, double amount);
 		void Sell(AssetIndexer* asset_indexer, double amount);
+		bool GetValue(time_t time, double& value);
 		void Clear();
 	private:
 		std::map<std::string, Portfolio*> portfolios_;
