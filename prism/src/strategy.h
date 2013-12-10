@@ -20,12 +20,8 @@
 namespace prism {
 	
 	class IRule;
-	class IAction;
 	class IStore;
 	class StrategyObserver;
-
-	typedef std::vector<IAction*> ActionList;
-	typedef std::vector<Asset*> AssetList;
 
 	typedef enum
 	{

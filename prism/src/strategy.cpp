@@ -269,16 +269,16 @@ namespace prism {
 	{
 		if (cash_ < kEpsilon)
 			return;
-		int num_can_buy = strategy_->num_portfolios() - portfolios_.size();
-		int num_to_buy = num_can_buy < buy_candidates_.size() ? num_can_buy : buy_candidates_.size();
+		unsigned int num_can_buy = strategy_->num_portfolios() - portfolios_.size();
+		unsigned int num_to_buy = num_can_buy < buy_candidates_.size() ? num_can_buy : buy_candidates_.size();
 		if (num_to_buy <= 0)
 			return;
 
-		srand(time(NULL));		
+		srand((unsigned int)time(NULL));		
 		double money = cash_ / num_to_buy;			
-		for (int i = 0; i < num_to_buy; ++i)
+		for (unsigned int i = 0; i < num_to_buy; ++i)
 		{	
-			size_t k = rand() % buy_candidates_.size();
+			unsigned int k = rand() % buy_candidates_.size();
 			AssetIndexerPtrMap::const_iterator cit = buy_candidates_.begin();
 			while (k > 0) { cit++; k--; }
 			AssetIndexer *asset_indexer = cit->second;

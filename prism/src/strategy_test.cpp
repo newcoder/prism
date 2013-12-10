@@ -56,7 +56,7 @@ TEST_F(StrategyTest, testRun)
 
 	TLUtils::Dump(kDataPath + "perf.csv", &observer.performance_series());
 	std::vector<Transaction> trans = observer.transactions();
-	for (int i = 0; i < trans.size(); i++)
+	for (size_t i = 0; i < trans.size(); i++)
 	{
 		std::cout << trans[i].type_ << ", "
 		<< trans[i].asset_->symbol() << ", "

@@ -185,7 +185,7 @@ namespace prism {
 		return count;
 	}
 
-	Asset* AssetsProvider::Get(const std::string& symbol_string)
+	Asset* AssetsProvider::Get(const std::string& symbol_string) const
 	{
 		std::map<std::string, Asset*>::const_iterator cit = assets_.find(symbol_string);
 		return cit == assets_.end()? NULL : cit->second;
@@ -307,10 +307,19 @@ namespace prism {
 		}
 	}
 
-	time_t AssetIndexer::GetIndexTime()
+	time_t AssetIndexer::GetIndexTime() const
 	{
 		if (index_ < 0)
 			return -1;
 		return asset_->raw_data()->at(index_).time;
 	}
+
+	bool AssetIndexer::GetIndexData(HLOC* data) const
+	{
+		if (!valid())
+			return false;
+		data = &(asset_->raw_data()->at(index_));
+		return true;
+	}
+
 }
