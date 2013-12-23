@@ -166,13 +166,29 @@ namespace prism {
 		return result;
 	}
 
-	EMARule::EMARule() : Rule(RULE_TYPE_INDICATOR_EMA)
+	void IndicatorRule::Serialize(JsonSerializer* serializer)
+	{
+		Rule::Serialize(serializer);
+		serializer->String("data_type");
+		serializer->Int((int)data_type_);
+		serializer->String("data_num");
+		serializer->Int(data_num_);
+	}
+
+	bool IndicatorRule::Parse(JsonValue* json)
+	{
+		data_type_ = (DATA_TYPE)json->operator[]("data_type").GetInt();
+		data_num_ = json->operator[]("data_num").GetInt();
+		return true;
+	}
+
+	EMARule::EMARule() : IndicatorRule(RULE_TYPE_INDICATOR_EMA)
 	{
 	}
 
 	void EMARule::Serialize(JsonSerializer* serializer)
 	{
-		Rule::Serialize(serializer);
+		IndicatorRule::Serialize(serializer);
 		serializer->String("period");
 		serializer->Int(period_);
 	}
@@ -185,8 +201,9 @@ namespace prism {
 
 	bool EMARule::Verify(Asset* asset, size_t pos)
 	{
-		std::string indicator_str = std::string("EMA") + "_" + std::to_string(static_cast<long long>(period_));
-		EMA* ema = (EMA*)asset->indicators(indicator_str);
+		std::string indicator_str = std::string("EMA") + "_" + std::to_string(period_);
+		AssetScale* scale = asset->scales(data_type(), data_num());
+		EMA* ema = (EMA*)scale->indicators(indicator_str);
 		assert(ema != NULL);
 		DoubleTimeList* tl = ema->result();
 		int index = pos - period_;
@@ -199,13 +216,13 @@ namespace prism {
 		}
 	}
 
-	EMACompareRule::EMACompareRule() : Rule(RULE_TYPE_INDICATOR_EMA_COMPARE)
+	EMACompareRule::EMACompareRule() : IndicatorRule(RULE_TYPE_INDICATOR_EMA_COMPARE)
 	{
 	}
 
 	void EMACompareRule::Serialize(JsonSerializer* serializer)
 	{
-		Rule::Serialize(serializer);
+		IndicatorRule::Serialize(serializer);
 		serializer->String("period_one");
 		serializer->Int(period_one_);
 		serializer->String("period_two");
@@ -221,10 +238,11 @@ namespace prism {
 
 	bool EMACompareRule::Verify(Asset* asset, size_t pos)
 	{
-		std::string indicator_str = std::string("EMA") + "_" + std::to_string(static_cast<long long>(period_one_));
-		EMA* ema_one = (EMA*)asset->indicators(indicator_str);
-		indicator_str = std::string("EMA") + "_" + std::to_string(static_cast<long long>(period_two_));
-		EMA* ema_two = (EMA*)asset->indicators(indicator_str);
+		std::string indicator_str = std::string("EMA") + "_" + std::to_string(period_one_);
+		AssetScale* scale = asset->scales(data_type(), data_num());
+		EMA* ema_one = (EMA*)scale->indicators(indicator_str);
+		indicator_str = std::string("EMA") + "_" + std::to_string(period_two_);
+		EMA* ema_two = (EMA*)scale->indicators(indicator_str);
 		assert(ema_one != NULL);
 		assert(ema_two != NULL);
 
@@ -240,7 +258,7 @@ namespace prism {
 		}
 	}
 
-	MACDRule::MACDRule() : Rule(RULE_TYPE_INDICATOR_MACD)
+	MACDRule::MACDRule() : IndicatorRule(RULE_TYPE_INDICATOR_MACD)
 	{
 		linear_predict_ = true;
 		look_back_ = kMacdLookBack;
@@ -249,7 +267,7 @@ namespace prism {
 
 	void MACDRule::Serialize(JsonSerializer* serializer)
 	{
-		Rule::Serialize(serializer);
+		IndicatorRule::Serialize(serializer);
 		serializer->String("short_period");
 		serializer->Int(short_period_);
 		serializer->String("long_period");
@@ -278,10 +296,11 @@ namespace prism {
 
 	bool MACDRule::Verify(Asset* asset, size_t pos)
 	{
-		std::string indicator_str = std::string("MACD") + "_" + std::to_string(static_cast<long long>(short_period_)) + "_" +
-			std::to_string(static_cast<long long>(long_period_)) + "_" + 
-			std::to_string(static_cast<long long>(signal_period_));
-		MACD* macd = (MACD*)asset->indicators(indicator_str);
+		std::string indicator_str = std::string("MACD") + "_" + std::to_string(short_period_) + "_" +
+			std::to_string(long_period_) + "_" + 
+			std::to_string(signal_period_);
+		AssetScale* scale = asset->scales(data_type(), data_num());
+		MACD* macd = (MACD*)scale->indicators(indicator_str);
 		assert(macd != NULL);
 		DoubleTimeList* tl = macd->histogram();
 		//align the index for HLOC and for indicator...		
@@ -321,13 +340,13 @@ namespace prism {
 		}
 	}
 
-	EMAArrayRule::EMAArrayRule(): Rule(RULE_TYPE_INDICATOR_EMAARRAY)
+	EMAArrayRule::EMAArrayRule(): IndicatorRule(RULE_TYPE_INDICATOR_EMAARRAY)
 	{
 	}
 
 	void EMAArrayRule::Serialize(JsonSerializer* serializer)
 	{
-		Rule::Serialize(serializer);
+		IndicatorRule::Serialize(serializer);
 		serializer->String("first_period");
 		serializer->Int(first_period_);
 		serializer->String("second_period");
@@ -350,15 +369,17 @@ namespace prism {
 	
 	bool EMAArrayRule::Verify(Asset* asset, size_t pos)
 	{
-		std::string indicator_str1 = std::string("EMA") + "_" + std::to_string(static_cast<long long>(first_period_));
-		std::string indicator_str2 = std::string("EMA") + "_" + std::to_string(static_cast<long long>(second_period_));
-		std::string indicator_str3 = std::string("EMA") + "_" + std::to_string(static_cast<long long>(third_period_));
-		std::string indicator_str4 = std::string("EMA") + "_" + std::to_string(static_cast<long long>(fourth_period_));
+		std::string indicator_str1 = std::string("EMA") + "_" + std::to_string(first_period_);
+		std::string indicator_str2 = std::string("EMA") + "_" + std::to_string(second_period_);
+		std::string indicator_str3 = std::string("EMA") + "_" + std::to_string(third_period_);
+		std::string indicator_str4 = std::string("EMA") + "_" + std::to_string(fourth_period_);
+		
+		AssetScale* scale = asset->scales(data_type(), data_num());
 
-		EMA* ema1 = (EMA*)asset->indicators(indicator_str1);
-		EMA* ema2 = (EMA*)asset->indicators(indicator_str2);
-		EMA* ema3 = (EMA*)asset->indicators(indicator_str3);
-		EMA* ema4 = (EMA*)asset->indicators(indicator_str4);
+		EMA* ema1 = (EMA*)scale->indicators(indicator_str1);
+		EMA* ema2 = (EMA*)scale->indicators(indicator_str2);
+		EMA* ema3 = (EMA*)scale->indicators(indicator_str3);
+		EMA* ema4 = (EMA*)scale->indicators(indicator_str4);
 
 		assert(ema1 != NULL);
 		assert(ema2 != NULL);
@@ -397,13 +418,13 @@ namespace prism {
 		}
 	}
 
-	CRRule::CRRule(): Rule(RULE_TYPE_INDICATOR_CR)
+	CRRule::CRRule(): IndicatorRule(RULE_TYPE_INDICATOR_CR)
 	{
 	}
 
 	void CRRule::Serialize(JsonSerializer* serializer)
 	{
-		Rule::Serialize(serializer);
+		IndicatorRule::Serialize(serializer);
 		serializer->String("period");
 		serializer->Int(period_);
 	}
@@ -416,8 +437,9 @@ namespace prism {
 
 	bool CRRule::Verify(Asset* asset, size_t pos)
 	{
-		std::string indicator_str = std::string("CR") + "_" + std::to_string(static_cast<long long>(period_));
-		CR* cr = (CR*)asset->indicators(indicator_str);
+		std::string indicator_str = std::string("CR") + "_" + std::to_string(period_);
+		AssetScale* scale = asset->scales(data_type(), data_num());
+		CR* cr = (CR*)scale->indicators(indicator_str);
 		assert(cr != NULL);
 		DoubleTimeList* tl = cr->result();
 		int index = pos;

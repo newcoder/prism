@@ -19,57 +19,56 @@
 
 namespace prism {
 
-	Asset::Asset(const std::string& symbol): symbol_(symbol)
+	AssetScale::AssetScale(Asset* asset) : asset_(asset)
 	{
-		raw_data_ = new HLOCList();
-		//std::cout << "Asset::Asset()" << std::endl;
-
+		raw_data_ = nullptr;
+		data_type_ = DATA_TYPE::DATA_TYPE_DAILY;
+		data_num_ = 1;
 	}
 
-	Asset::~Asset()
+	AssetScale::~AssetScale()
 	{
 		// clear HLOC raw data and its indicators.
 		delete raw_data_;
-		//std::cout << "Asset::~Asset()" << std::endl;
 		ClearIndicators();
 	}
 
-	std::string Asset::ToSymbolString(const std::string& symbol,
-		size_t begin_year,
-		size_t end_year,
-		DATA_TYPE data_type,
-		int data_num)
+	void AssetScale::ClearIndicators()
 	{
-		return symbol + '_' + std::to_string(data_type) + '_' + std::to_string(data_num) + '_' +
-			std::to_string(begin_year) + '_' + std::to_string(end_year);
-	}
-
-	void Asset::ClearIndicators()
-	{
-		for (std::map<std::string, ILocalIndicator*>::iterator it = indicators_.begin(); it != indicators_.end(); it++)
-			delete it->second;
+		for (auto it : indicators_)
+			delete it.second;
 		indicators_.clear();
 	}
 
-	bool Asset::Load(IStore* store, size_t begin_year, size_t end_year, DATA_TYPE data_type, int data_num)
+	std::string AssetScale::ToString(DATA_TYPE data_type, int data_num)
 	{
-		if (!store->Get(symbol_, begin_year, end_year, raw_data_))
-			return false;
+		return std::to_string((int)data_type) + '_' + std::to_string(data_num);
+	}
+
+	void AssetScale::Create(DATA_TYPE data_type, int data_num)
+	{
+		HLOCList* base_data = asset_->raw_data();
+		assert(base_data);
+		data_type_ = data_type;
+		data_num_ = data_num;
+
+		if (data_type_ == DATA_TYPE_DAILY && data_num_ == 1)
+		{
+			// the base scale, use the raw data in Asset
+			raw_data_ = base_data;
+			return;
+		}
 		if (data_type == DATA_TYPE_WEEKLY)
 		{
-			HLOCSeries hs(raw_data_->begin(), raw_data_->end());
-			HLOCList* weekly_data = new HLOCList();
-			hs.ShrinkByWeek(weekly_data);
-			delete raw_data_;
-			raw_data_ = weekly_data;
+			HLOCSeries hs(base_data->begin(), base_data->end());
+			raw_data_ = new HLOCList();
+			hs.ShrinkByWeek(raw_data_);
 		}
 		if (data_type == DATA_TYPE_MONTHLY)
 		{
-			HLOCSeries hs(raw_data_->begin(), raw_data_->end());
-			HLOCList* monthly_data = new HLOCList();
-			hs.ShrinkByWeek(monthly_data);
-			delete raw_data_;
-			raw_data_ = monthly_data;
+			HLOCSeries hs(base_data->begin(), base_data->end());
+			raw_data_ = new HLOCList();
+			hs.ShrinkByMonth(raw_data_);
 		}
 		if (data_num > 1)
 		{
@@ -79,20 +78,15 @@ namespace prism {
 			delete raw_data_;
 			raw_data_ = shrinked_data;
 		}
-		data_type_ = data_type;
-		data_num_ = data_num;
-		begin_year_ = begin_year;
-		end_year_ = end_year;
-		return true;
 	}
 
-	ILocalIndicator* Asset::indicators(const std::string& indicator_str)
+	ILocalIndicator* AssetScale::indicators(const std::string& indicator_str)
 	{
 		auto it = indicators_.find(indicator_str);
 		return it == indicators_.end() ? GenerateIndicator(indicator_str): it->second;
 	}
 
-	ILocalIndicator* Asset::GenerateIndicator(const std::string& indicator_str)
+	ILocalIndicator* AssetScale::GenerateIndicator(const std::string& indicator_str)
 	{
 		std::vector<std::string> elems;
 		kyotocabinet::strsplit(indicator_str, '_', &elems);
@@ -139,16 +133,66 @@ namespace prism {
 		return NULL;
 	}
 
+	Asset::Asset(const std::string& symbol) : symbol_(symbol)
+	{
+	}
+
+	Asset::~Asset()
+	{
+		ClearScales();
+	}
+
+	void Asset::ClearScales()
+	{
+		for (auto it : scales_)
+			delete it.second;
+		scales_.clear();
+	}
+
+	bool Asset::Load(IStore* store, size_t begin_year, size_t end_year)
+	{
+		raw_data_ = new HLOCList();
+		if (!store->Get(symbol_, begin_year, end_year, raw_data_))
+			return false;
+		begin_year_ = begin_year;
+		end_year_ = end_year;
+		// create the base scale
+		CreateScale(DATA_TYPE_DAILY, 1);
+		return true;
+	}
+
+	bool Asset::Update(IStore* store, size_t begin_year, size_t end_year)
+	{
+		if (begin_year >= begin_year_ && end_year <= end_year_)
+		{
+			return true;
+		}
+		ClearScales();
+		return Load(store, begin_year, end_year);
+	}
+
+	AssetScale* Asset::CreateScale(DATA_TYPE data_type, int data_num)
+	{
+		AssetScale* scale = new AssetScale(this);
+		scale->Create(data_type, data_num);
+		scales_.insert(std::make_pair(scale->to_string(), scale));
+		return scale;
+	}
+	
+	AssetScale* Asset::scales(DATA_TYPE data_type, int data_num)
+	{
+		std::string scale_str = AssetScale::ToString(data_type, data_num);
+		auto it = scales_.find(scale_str);
+		return it == scales_.end() ? CreateScale(data_type, data_num) : it->second;
+	}
+
 	AssetsProvider::AssetsProvider(IStore* store) : store_(store)
 	{
-		//std::cout << "AssetsLoader::AssetsLoader()" << std::endl;
 	}
 	
 	AssetsProvider::~AssetsProvider()
 	{
-		Clear();
-				
-		//std::cout << "AssetsLoader::~AssetsLoader()" << std::endl;
+		Clear();				
 	}
 
 	void AssetsProvider::Clear()
@@ -158,40 +202,40 @@ namespace prism {
 		assets_.clear();
 	}
 
-	int AssetsProvider::LoadAssets(const std::vector<std::string>& symbols,
-		size_t begin_year, 
-		size_t end_year, 
-		DATA_TYPE data_type, 
-		int data_num)
+	int AssetsProvider::LoadAssets(const std::vector<std::string>& symbols, size_t begin_year, size_t end_year)
 	{
 		int count = 0;
 		auto cit = symbols.begin();
 		while(cit != symbols.end())
 		{
-			std::string symbol_string = Asset::ToSymbolString(*cit, begin_year, end_year, data_type, data_num);
-			Asset* asset = Get(symbol_string);
+			std::string symbol = *cit;
+			Asset* asset = Get(symbol);
 			if (asset == NULL)
 			{
 				// not loaded
 				asset = new Asset(*cit);
-				if (asset->Load(store_, begin_year, end_year, data_type, data_num))
+				if (asset->Load(store_, begin_year, end_year))
 				{
-					assets_.insert(std::make_pair(symbol_string, asset));
+					assets_.insert(std::make_pair(symbol, asset));
 					count++;
 				}
+			}
+			else
+			{
+				asset->Update(store_, begin_year, end_year);
 			}
 			cit++;
 		}
 		return count;
 	}
 
-	Asset* AssetsProvider::Get(const std::string& symbol_string) const
+	Asset* AssetsProvider::Get(const std::string& asset_string) const
 	{
-		auto cit = assets_.find(symbol_string);
+		auto cit = assets_.find(asset_string);
 		return cit == assets_.end()? NULL : cit->second;
 	}
 
-	bool AssetsProvider::LoadAll(DATA_TYPE type)
+	bool AssetsProvider::LoadAll()
 	{
 		std::vector<std::string> elems;
 		std::string symbols_str;
@@ -201,7 +245,7 @@ namespace prism {
 		kyotocabinet::strsplit(symbols_str, '\n', &elems);
 
 		// load symbols
-		LoadAssets(elems, 1992, 2013, type, 1);
+		LoadAssets(elems, 1992, GetYear(time(NULL)));
 		return true;
 	}
 
@@ -263,17 +307,13 @@ namespace prism {
 		return true;
 	}
 
-	int AssetsProvider::LoadAssets(const std::string& symbols_pattern,
-		size_t begin_year,
-		size_t end_year,
-		DATA_TYPE data_type,
-		int data_num)
+	int AssetsProvider::LoadAssets(const std::string& symbols_pattern, size_t begin_year, size_t end_year)
 	{
 		std::vector<std::string> symbols;
 		if (!ParseSymbolsPattern(symbols_pattern, symbols))
 			return -1;
 		// load symbols
-		return LoadAssets(symbols, begin_year, end_year, data_type, data_num);
+		return LoadAssets(symbols, begin_year, end_year);
 	}
 
 

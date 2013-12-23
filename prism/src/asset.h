@@ -18,37 +18,54 @@ namespace prism {
 
 	class ILocalIndicator;
 	class IStore;
+	class Asset;
+
+	class AssetScale
+	{
+	public:
+		AssetScale(Asset* asset);
+		~AssetScale();
+		void Create(DATA_TYPE data_type, int data_num);
+		void ClearIndicators();
+		HLOCList* raw_data() const { return raw_data_; }
+		std::string to_string() const {
+			return std::to_string((int)data_type_) + '_' + std::to_string(data_num_);
+		}
+		DATA_TYPE data_type() const { return data_type_; }
+		int data_num() const { return data_num_; }
+		ILocalIndicator* indicators(const std::string& indicator_str);
+	public:
+		ILocalIndicator* GenerateIndicator(const std::string& indicator_str);
+		static std::string ToString(DATA_TYPE data_type, int data_num);
+	private:
+		Asset* asset_;
+		DATA_TYPE data_type_;
+		int data_num_;
+		HLOCList* raw_data_;
+		std::map<std::string, ILocalIndicator*> indicators_;
+	};
 
 	class Asset
 	{
 	public:
 		Asset(const std::string& symbol);
 		~Asset();
-		bool Load(IStore* store, size_t begin_year, size_t end_year, DATA_TYPE data_type = DATA_TYPE_DAILY, int data_num = 1);
-		void ClearIndicators();
+		bool Load(IStore* store, size_t begin_year, size_t end_year);
+		bool Update(IStore* store, size_t begin_year, size_t end_year);
+		AssetScale* scales(DATA_TYPE data_type, int data_num);
+		void ClearScales();
 		HLOCList* raw_data() const { return raw_data_; }
 		std::string symbol() const { return symbol_; }
-		DATA_TYPE data_type() const { return data_type_; }
-		int data_num() const { return data_num_; }
 		size_t begin_year() const { return begin_year_; }
 		size_t end_year() const { return end_year_; }
-		ILocalIndicator* indicators(const std::string& indicator_str);
-	private:
-		ILocalIndicator* GenerateIndicator(const std::string& indicator_str);
 	public:
-		static std::string ToSymbolString(const std::string& symbol,
-			size_t begin_year,
-			size_t end_year,
-			DATA_TYPE data_type,
-			int data_num);
+		AssetScale* CreateScale(DATA_TYPE data_type, int data_num);
 	private:
 		std::string symbol_;
-		DATA_TYPE data_type_;
-		int data_num_;
 		size_t begin_year_;
 		size_t end_year_;
 		HLOCList* raw_data_;
-		std::map<std::string, ILocalIndicator*> indicators_;
+		std::map<std::string, AssetScale*> scales_;
 	};
 
 	class AssetsProvider
@@ -57,25 +74,12 @@ namespace prism {
 		AssetsProvider(IStore* store);
 		~AssetsProvider();
 		void Clear();
-		int LoadAssets(const std::string& symbols_pattern, 
-			size_t begin_year, 
-			size_t end_year, 
-			DATA_TYPE data_type = DATA_TYPE_DAILY, 
-			int data_num = 1);
-		int LoadAssets(const std::vector<std::string>& symbols, 
-			size_t begin_year, 
-			size_t end_year, 
-			DATA_TYPE data_type = DATA_TYPE_DAILY, 
-			int data_num = 1);
-		bool LoadAll(DATA_TYPE type);
+		int LoadAssets(const std::string& symbols_pattern, size_t begin_year, size_t end_year);
+		int LoadAssets(const std::vector<std::string>& symbols, size_t begin_year, size_t end_year);
+		bool LoadAll();
 		Asset* Get(const std::string& symbol_string) const;
 		std::map<std::string, Asset*>* assets() { return &assets_; }
 	private:
-		std::string ToSymbolString(const std::string& symbol, 
-			size_t begin_year,
-			size_t end_year,
-			DATA_TYPE data_type,
-			int data_num);
 		bool ParseSymbolsPattern(const std::string& symbols_pattern, std::vector<std::string>& symbols);
 	private:
 		IStore* store_;
