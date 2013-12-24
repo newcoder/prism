@@ -35,7 +35,7 @@ namespace prism {
 		asset_indexer_->MoveTo(time);
 		if (!asset_indexer_->valid())
 			return false;
-		HLOC *hloc;
+		HLOC *hloc = nullptr;
 		bool ret = asset_indexer_->GetIndexData(hloc);
 		if (!ret) return false;
 		value = hloc->close * amount_;

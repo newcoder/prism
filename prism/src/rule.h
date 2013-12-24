@@ -102,7 +102,21 @@ namespace prism {
 		virtual bool Verify(Asset* asset, size_t pos);
 	};
 
-	class EMARule: public Rule
+	class IndicatorRule : public Rule
+	{
+	public:
+		IndicatorRule(RULE_TYPE type) : Rule(type), data_type_(DATA_TYPE_DAILY), data_num_(1) {}
+		virtual void Serialize(JsonSerializer* serializer);
+		virtual bool Parse(JsonValue* json);
+		// getter
+		DATA_TYPE data_type() { return data_type_; }
+		int data_num() { return data_num_; }
+	protected:
+		DATA_TYPE data_type_;
+		int data_num_;
+	};
+
+	class EMARule : public IndicatorRule
 	{
 	public:
 		EMARule();
@@ -117,7 +131,7 @@ namespace prism {
 		int period_;
 	};
 
-	class EMACompareRule : public Rule
+	class EMACompareRule : public IndicatorRule
 	{
 	public:
 		EMACompareRule();
@@ -135,7 +149,7 @@ namespace prism {
 		int period_two_;
 	};
 
-	class MACDRule: public Rule
+	class MACDRule : public IndicatorRule
 	{
 	public:
 		MACDRule();
@@ -165,7 +179,7 @@ namespace prism {
 		double threshold_;
 	};
 
-	class EMAArrayRule: public Rule
+	class EMAArrayRule : public IndicatorRule
 	{
 	public:
 		EMAArrayRule();
@@ -180,7 +194,7 @@ namespace prism {
 		int fourth_period_;
 	};
 
-	class CRRule : public Rule
+	class CRRule : public IndicatorRule
 	{
 	public:
 		CRRule();

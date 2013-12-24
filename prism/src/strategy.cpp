@@ -130,9 +130,7 @@ namespace prism {
 		{
 			if (!assets_provider_->LoadAssets(strategy_->stocks(), 
 				GetYear(strategy_->begin_time()), 
-				GetYear(strategy_->end_time()), 
-				strategy_->data_type(), 
-				strategy_->data_num()))
+				GetYear(strategy_->end_time())))
 				return false;
 		}
 		cursor_ = strategy_->begin_time();
