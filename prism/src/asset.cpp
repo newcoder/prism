@@ -317,49 +317,77 @@ namespace prism {
 	}
 
 
-	AssetIndexer::AssetIndexer(Asset* asset, time_t begin) : asset_(asset)
+	AssetScaleIndexer::AssetScaleIndexer(AssetScale* scale, time_t begin) : scale_(scale)
 	{
 		index_ = -1;
 		MoveTo(begin);
 	}
 
-	AssetIndexer::AssetIndexer(Asset* asset) : asset_(asset)
+	AssetScaleIndexer::AssetScaleIndexer(AssetScale* scale) : scale_(scale)
 	{
 		index_ = -1;
 	}
 
-	void AssetIndexer::MoveTo(time_t pos)
+	void AssetScaleIndexer::MoveTo(time_t pos)
 	{
-		HLOCList* hloc_list = asset_->raw_data();
+		HLOCList* hloc_list = scale_->raw_data();
 		size_t i = index_ > 0 ? index_ : 0;
 		while (i < hloc_list->size())
 		{
 			time_t time = hloc_list->at(i).time;
-			if (time <= pos)
-			{
-				index_ = i;
-				i++;
-			}
-			else
-			{
-				break;
-			}
+			if (time > pos) break;
+			index_ = i;
+			i++;
 		}
 	}
 
-	time_t AssetIndexer::GetIndexTime() const
+	time_t AssetScaleIndexer::GetIndexTime() const
 	{
 		if (index_ < 0)
 			return -1;
-		return asset_->raw_data()->at(index_).time;
+		return scale_->raw_data()->at(index_).time;
 	}
 
-	bool AssetIndexer::GetIndexData(HLOC* data) const
+	bool AssetScaleIndexer::GetIndexData(HLOC* data) const
 	{
 		if (!valid())
 			return false;
-		data = &(asset_->raw_data()->at(index_));
+		data = &(scale_->raw_data()->at(index_));
 		return true;
 	}
+
+	AssetIndexer::AssetIndexer(Asset* asset, time_t begin) : AssetIndexer(asset)
+	{
+		MoveTo(begin);
+	}
+
+	AssetIndexer::AssetIndexer(Asset* asset) : asset_(asset)
+	{
+		base_scale_indexer_ = scale_indexers(asset_->base_scale());
+		assert(base_scale_indexer_);
+	}
+
+	void AssetIndexer::MoveTo(time_t pos)
+	{
+		for (auto it : scale_indexers_)
+			it.second->MoveTo(pos);
+	}
+
+	AssetScaleIndexer* AssetIndexer::scale_indexers(DATA_TYPE data_type, int data_num)
+	{
+		AssetScale* scale = asset_->scales(data_type, data_num);
+		return scale ? nullptr : scale_indexers(scale);
+	}
+
+	AssetScaleIndexer* AssetIndexer::scale_indexers(AssetScale* scale)
+	{
+		auto cit = scale_indexers_.find(scale);
+		if (cit != scale_indexers_.end())
+			return cit->second;
+		AssetScaleIndexer* scale_indexer = new AssetScaleIndexer(scale);
+		scale_indexers_.insert(std::make_pair(scale, scale_indexer));
+		return scale_indexer;
+	}
+
 
 }

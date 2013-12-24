@@ -212,7 +212,7 @@ namespace prism {
 		else
 		{
 		//	std::cout << TimeToString(tl->at(index).position, "time: %Y-%m-%d") << "," << index << "," << indicator_str << ", close:" << asset->raw_data()->at(pos).close << ", value:" << tl->at(index).value << std::endl;
-			return tl->at(index).value < asset->raw_data()->at(pos).close;
+			return tl->at(index).value < scale->raw_data()->at(pos).close;
 		}
 	}
 
@@ -400,7 +400,7 @@ namespace prism {
 			double period2_value = tl2->at(pos - second_period_).value;
 			double period3_value = tl3->at(pos - third_period_).value;
 			double period4_value = tl4->at(pos - fourth_period_).value;
-			double close = asset->raw_data()->at(pos).close;
+			double close = scale->raw_data()->at(pos).close;
 			/*
 			std::cout << TimeToString(tl1->at(pos - period1_).position, "time: %Y-%m-%d") 
 				<< "," << asset->raw_data()->at(pos).close 
