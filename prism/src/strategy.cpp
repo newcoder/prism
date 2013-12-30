@@ -157,7 +157,7 @@ namespace prism {
 			time_t time = asset_indexer->GetIndexTime();
 			if (time > 0)
 			{
-				if (!asset_indexer->at_end() && rule->Verify(asset_indexer->asset(), asset_indexer->index()))
+				if (!asset_indexer->at_end() && rule->Verify(*asset_indexer))
 				{
 					buy_candidates_.insert(std::make_pair(asset_indexer->asset()->symbol(), asset_indexer));
 				}

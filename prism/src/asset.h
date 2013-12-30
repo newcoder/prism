@@ -93,6 +93,8 @@ namespace prism {
 		AssetScaleIndexer(AssetScale* scale, time_t begin);
 		AssetScaleIndexer(AssetScale* scale);
 		void MoveTo(time_t pos);
+		void ToBegin() { index_ = 0; }
+		void ToEnd() { index_ = scale_->raw_data()->size() - 1; }
 		time_t GetIndexTime() const;
 		bool GetIndexData(HLOC* data) const;
 		bool valid() const { return index_ >= 0; }
@@ -110,7 +112,10 @@ namespace prism {
 	public:
 		AssetIndexer(Asset* asset, time_t begin);
 		AssetIndexer(Asset* asset);
+	public:
 		void MoveTo(time_t pos);
+		void ToBegin();
+		void ToEnd();
 		Asset* asset() const { return asset_; }
 		time_t GetIndexTime() const { return base_scale_indexer_->GetIndexTime(); }
 		bool GetIndexData(HLOC* data) const { return base_scale_indexer_->GetIndexData(data); }
@@ -125,6 +130,8 @@ namespace prism {
 		AssetScaleIndexer* base_scale_indexer_;
 		std::map<AssetScale*, AssetScaleIndexer*> scale_indexers_;
 	};
+
+	typedef std::vector<AssetIndexer> AssetIndexerList;
 
 	typedef std::map<std::string, AssetIndexer> AssetIndexerMap;
 	typedef std::map<std::string, AssetIndexer*> AssetIndexerPtrMap;

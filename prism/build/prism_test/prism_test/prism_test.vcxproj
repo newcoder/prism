@@ -94,6 +94,7 @@
     <ClInclude Include="..\..\..\src\indicator.h" />
     <ClInclude Include="..\..\..\src\pattern.h" />
     <ClInclude Include="..\..\..\src\rule.h" />
+    <ClInclude Include="..\..\..\src\screener.h" />
     <ClInclude Include="..\..\..\src\stdafx.h" />
     <ClInclude Include="..\..\..\src\store.h" />
     <ClInclude Include="..\..\..\src\strategy.h" />
@@ -123,6 +124,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\..\src\rule.cpp" />
+    <ClCompile Include="..\..\..\src\screener.cpp" />
     <ClCompile Include="..\..\..\src\stdafx.cpp" />
     <ClCompile Include="..\..\..\src\store.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>

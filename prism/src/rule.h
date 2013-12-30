@@ -16,7 +16,7 @@
 
 namespace prism {
 
-	class Asset;
+	class AssetIndexer;
 
 	typedef enum
 	{
@@ -38,7 +38,7 @@ namespace prism {
 		virtual ~IRule() {}
 		virtual void Serialize(JsonSerializer* serializer) = 0;
 		virtual bool Parse(JsonValue* json) = 0;
-		virtual bool Verify(Asset* asset, size_t pos) = 0;
+		virtual bool Verify(AssetIndexer& asset_indexer) = 0;
 		virtual RULE_TYPE type() = 0;
 	};
 
@@ -51,7 +51,7 @@ namespace prism {
 		virtual ~Rule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
-		virtual bool Verify(Asset* asset, size_t pos) { return true; }
+		virtual bool Verify(AssetIndexer& asset_indexer) { return true; }
 		// getter
 		virtual RULE_TYPE type() { return type_; }
 	public:
@@ -65,14 +65,14 @@ namespace prism {
 	{
 	public:
 		TrueRule();
-		virtual bool Verify(Asset* asset, size_t pos) { return true; }
+		virtual bool Verify(AssetIndexer& asset_indexer) { return true; }
 	};
 
 	class FalseRule : public Rule
 	{
 	public:
 		FalseRule();
-		virtual bool Verify(Asset* asset, size_t pos) { return false; }
+		virtual bool Verify(AssetIndexer& asset_indexer) { return false; }
 	};
 
 	class RuleGroup : public Rule
@@ -82,7 +82,7 @@ namespace prism {
 		virtual ~RuleGroup();
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
-		virtual bool Verify(Asset* asset, size_t pos) = 0;
+		virtual bool Verify(AssetIndexer& asset_indexer) = 0;
 		void Clear();
 	protected:
 		RuleList rules_;
@@ -92,14 +92,14 @@ namespace prism {
 	{
 	public:
 		OrGroup();
-		virtual bool Verify(Asset* asset, size_t pos);
+		virtual bool Verify(AssetIndexer& asset_indexer);
 	};
 
 	class AndGroup : public RuleGroup
 	{
 	public:
 		AndGroup();
-		virtual bool Verify(Asset* asset, size_t pos);
+		virtual bool Verify(AssetIndexer& asset_indexer);
 	};
 
 	class IndicatorRule : public Rule
@@ -123,7 +123,7 @@ namespace prism {
 		virtual ~EMARule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
-		virtual bool Verify(Asset* asset, size_t pos);
+		virtual bool Verify(AssetIndexer& asset_indexer);
 	public:
 		int period() { return period_; }
 		void set_period(int period) { period_ = period; }
@@ -138,7 +138,7 @@ namespace prism {
 		virtual ~EMACompareRule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
-		virtual bool Verify(Asset* asset, size_t pos);
+		virtual bool Verify(AssetIndexer& asset_indexer);
 	public:
 		int period_one() { return period_one_; }
 		int period_two() { return period_two_; }
@@ -156,7 +156,7 @@ namespace prism {
 		virtual ~MACDRule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
-		virtual bool Verify(Asset* asset, size_t pos);
+		virtual bool Verify(AssetIndexer& asset_indexer);
 	public:
 		int short_period() { return short_period_; }
 		int long_period() { return long_period_; }
@@ -186,7 +186,7 @@ namespace prism {
 		virtual ~EMAArrayRule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
-		virtual bool Verify(Asset* asset, size_t pos);
+		virtual bool Verify(AssetIndexer& asset_indexer);
 	private:
 		int first_period_;
 		int second_period_;
@@ -201,7 +201,7 @@ namespace prism {
 		virtual ~CRRule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
-		virtual bool Verify(Asset* asset, size_t pos);
+		virtual bool Verify(AssetIndexer& asset_indexer);
 	private:
 		int period_;
 	};

@@ -373,6 +373,18 @@ namespace prism {
 			it.second->MoveTo(pos);
 	}
 
+	void AssetIndexer::ToBegin()
+	{
+		for (auto it : scale_indexers_)
+			it.second->ToBegin();
+	}
+	
+	void AssetIndexer::ToEnd()
+	{
+		for (auto it : scale_indexers_)
+			it.second->ToEnd();
+	}
+
 	AssetScaleIndexer* AssetIndexer::scale_indexers(DATA_TYPE data_type, int data_num)
 	{
 		AssetScale* scale = asset_->scales(data_type, data_num);
