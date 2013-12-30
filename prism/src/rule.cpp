@@ -128,7 +128,7 @@ namespace prism {
 		{
 			assert(jsonRules[i].IsObject());
 			IRule* rule = RuleFactory::CreateRule(&jsonRules[i]);
-			assert(rule != NULL);
+			assert(rule != nullptr);
 			rules_.push_back(rule);
 		}
 		return true;
@@ -204,7 +204,7 @@ namespace prism {
 		std::string indicator_str = std::string("EMA") + "_" + std::to_string(period_);
 		AssetScale* scale = asset_indexer.asset()->scales(data_type(), data_num());
 		EMA* ema = (EMA*)scale->indicators(indicator_str);
-		assert(ema != NULL);
+		assert(ema != nullptr);
 		DoubleTimeList* tl = ema->result();
 		size_t pos = asset_indexer.scale_indexers(scale)->index();
 		int index = pos - period_;
@@ -244,8 +244,8 @@ namespace prism {
 		EMA* ema_one = (EMA*)scale->indicators(indicator_str);
 		indicator_str = std::string("EMA") + "_" + std::to_string(period_two_);
 		EMA* ema_two = (EMA*)scale->indicators(indicator_str);
-		assert(ema_one != NULL);
-		assert(ema_two != NULL);
+		assert(ema_one != nullptr);
+		assert(ema_two != nullptr);
 
 		DoubleTimeList* tl_one = ema_one->result();
 		DoubleTimeList* tl_two = ema_two->result();
@@ -303,7 +303,7 @@ namespace prism {
 			std::to_string(signal_period_);
 		AssetScale* scale = asset_indexer.asset()->scales(data_type(), data_num());
 		MACD* macd = (MACD*)scale->indicators(indicator_str);
-		assert(macd != NULL);
+		assert(macd != nullptr);
 		DoubleTimeList* tl = macd->histogram();
 		//align the index for HLOC and for indicator...		
 		size_t pos = asset_indexer.scale_indexers(scale)->index();
@@ -384,10 +384,10 @@ namespace prism {
 		EMA* ema3 = (EMA*)scale->indicators(indicator_str3);
 		EMA* ema4 = (EMA*)scale->indicators(indicator_str4);
 
-		assert(ema1 != NULL);
-		assert(ema2 != NULL);
-		assert(ema3 != NULL);
-		assert(ema4 != NULL);
+		assert(ema1 != nullptr);
+		assert(ema2 != nullptr);
+		assert(ema3 != nullptr);
+		assert(ema4 != nullptr);
 
 		DoubleTimeList* tl1 = ema1->result();
 		DoubleTimeList* tl2 = ema2->result();
@@ -444,7 +444,7 @@ namespace prism {
 		std::string indicator_str = std::string("CR") + "_" + std::to_string(period_);
 		AssetScale* scale = asset_indexer.asset()->scales(data_type(), data_num());
 		CR* cr = (CR*)scale->indicators(indicator_str);
-		assert(cr != NULL);
+		assert(cr != nullptr);
 		DoubleTimeList* tl = cr->result();
 
 		size_t pos = asset_indexer.scale_indexers(scale)->index();
@@ -492,7 +492,7 @@ namespace prism {
 		default:
 			break;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	IRule* RuleFactory::CreateRule(JsonValue* json)
@@ -501,7 +501,7 @@ namespace prism {
 		std::string type = json->operator[]("type").GetString();
 		RULE_TYPE ruleType = Rule::StrToType(type);
 		IRule* rule = CreateRuleType(ruleType);
-		assert(rule != NULL);
+		assert(rule != nullptr);
 		bool ret = rule->Parse(json);
 		assert(ret);
 		return rule;

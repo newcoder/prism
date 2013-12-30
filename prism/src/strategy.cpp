@@ -21,7 +21,7 @@ namespace prism {
 	
 	Strategy::Strategy(const std::string& name): name_(name)
 	{
-		screen_rule_ = NULL;
+		screen_rule_ = nullptr;
 		//std::cout << "Strategy::Strategy()" << std::endl;
 	}
 
@@ -108,7 +108,7 @@ namespace prism {
 	StrategyRunner::StrategyRunner(IStore* store)
 	{
 		store_ = store;
-		strategy_ = NULL;
+		strategy_ = nullptr;
 		assets_provider_ = new AssetsProvider(store);
 		//std::cout << "StrategyRunner::StrategyRunner()" << std::endl;
 	}

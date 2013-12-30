@@ -72,10 +72,13 @@ namespace prism {
 		}
 		if (data_num > 1)
 		{
+			if (data_type_ == DATA_TYPE_DAILY)
+				raw_data_ = base_data;
 			HLOCSeries hs(raw_data_->begin(), raw_data_->end());
 			HLOCList* shrinked_data = new HLOCList();
 			hs.ShrinkByNum(data_num, shrinked_data);
-			delete raw_data_;
+			if (data_type_ != DATA_TYPE_DAILY)
+				delete raw_data_;
 			raw_data_ = shrinked_data;
 		}
 	}
@@ -130,7 +133,7 @@ namespace prism {
 			return cr;
 		}
 
-		return NULL;
+		return nullptr;
 	}
 
 	Asset::Asset(const std::string& symbol) : symbol_(symbol)
@@ -210,7 +213,7 @@ namespace prism {
 		{
 			std::string symbol = *cit;
 			Asset* asset = Get(symbol);
-			if (asset == NULL)
+			if (asset == nullptr)
 			{
 				// not loaded
 				asset = new Asset(*cit);
@@ -232,7 +235,7 @@ namespace prism {
 	Asset* AssetsProvider::Get(const std::string& asset_string) const
 	{
 		auto cit = assets_.find(asset_string);
-		return cit == assets_.end()? NULL : cit->second;
+		return cit == assets_.end()? nullptr : cit->second;
 	}
 
 	bool AssetsProvider::LoadAll()
@@ -388,7 +391,7 @@ namespace prism {
 	AssetScaleIndexer* AssetIndexer::scale_indexers(DATA_TYPE data_type, int data_num)
 	{
 		AssetScale* scale = asset_->scales(data_type, data_num);
-		return scale ? nullptr : scale_indexers(scale);
+		return scale ? scale_indexers(scale) : nullptr;
 	}
 
 	AssetScaleIndexer* AssetIndexer::scale_indexers(AssetScale* scale)

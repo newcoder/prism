@@ -199,7 +199,7 @@ namespace prism
 				break;
 			}
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	Pattern* PatternFactory::CreatePattern(PATTERN_TYPE type, const int *arr, int size)
