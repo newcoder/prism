@@ -155,7 +155,7 @@ namespace prism {
 	bool Asset::Load(IStore* store, size_t begin_year, size_t end_year)
 	{
 		raw_data_ = new HLOCList();
-		if (!store->Get(symbol_, begin_year, end_year, raw_data_))
+		if (!store->Get(symbol_, begin_year, end_year, raw_data_) || raw_data_->empty())
 			return false;
 		begin_year_ = begin_year;
 		end_year_ = end_year;
@@ -222,6 +222,10 @@ namespace prism {
 					assets_.insert(std::make_pair(symbol, asset));
 					count++;
 				}
+				else
+				{
+					delete asset;
+				}
 			}
 			else
 			{
@@ -238,18 +242,17 @@ namespace prism {
 		return cit == assets_.end()? nullptr : cit->second;
 	}
 
-	bool AssetsProvider::LoadAll()
+	int AssetsProvider::LoadAll()
 	{
 		std::vector<std::string> elems;
 		std::string symbols_str;
 		std::set<std::string> symbols_set;
 		if (!store_->GetBlock(kBlockAllAShares, symbols_str))
-			return false;
+			return -1;
 		kyotocabinet::strsplit(symbols_str, '\n', &elems);
 
 		// load symbols
-		LoadAssets(elems, 1992, GetYear(time(NULL)));
-		return true;
+		return LoadAssets(elems, 1992, GetYear(time(NULL)));
 	}
 
 	bool AssetsProvider::ParseSymbolsPattern(const std::string& symbols_pattern, std::vector<std::string>& symbols)
@@ -323,7 +326,7 @@ namespace prism {
 	AssetScaleIndexer::AssetScaleIndexer(AssetScale* scale, time_t begin) : scale_(scale)
 	{
 		index_ = -1;
-		MoveTo(begin);
+		ForwardTo(begin);
 	}
 
 	AssetScaleIndexer::AssetScaleIndexer(AssetScale* scale) : scale_(scale)
@@ -331,8 +334,9 @@ namespace prism {
 		index_ = -1;
 	}
 
-	void AssetScaleIndexer::MoveTo(time_t pos)
+	void AssetScaleIndexer::ForwardTo(time_t pos)
 	{
+		if (pos < 0) return;
 		HLOCList* hloc_list = scale_->raw_data();
 		size_t i = index_ > 0 ? index_ : 0;
 		while (i < hloc_list->size())
@@ -351,29 +355,41 @@ namespace prism {
 		return scale_->raw_data()->at(index_).time;
 	}
 
-	bool AssetScaleIndexer::GetIndexData(HLOC* data) const
+	bool AssetScaleIndexer::GetIndexData(HLOC& data) const
 	{
 		if (!valid())
 			return false;
-		data = &(scale_->raw_data()->at(index_));
+		data = scale_->raw_data()->at(index_);
 		return true;
 	}
 
 	AssetIndexer::AssetIndexer(Asset* asset, time_t begin) : AssetIndexer(asset)
 	{
-		MoveTo(begin);
+		ForwardTo(begin);
 	}
 
-	AssetIndexer::AssetIndexer(Asset* asset) : asset_(asset)
+	AssetIndexer::AssetIndexer(Asset* asset) : asset_(asset), base_scale_indexer_(nullptr)
 	{
 		base_scale_indexer_ = scale_indexers(asset_->base_scale());
 		assert(base_scale_indexer_);
 	}
 
-	void AssetIndexer::MoveTo(time_t pos)
+	void AssetIndexer::ForwardTo(time_t pos)
 	{
 		for (auto it : scale_indexers_)
-			it.second->MoveTo(pos);
+			it.second->ForwardTo(pos);
+	}
+
+	void AssetIndexer::Forward()
+	{
+		for (auto it : scale_indexers_)
+			it.second->Forward();
+	}
+	
+	void AssetIndexer::Backward()
+	{
+		for (auto it : scale_indexers_)
+			it.second->Backward();
 	}
 
 	void AssetIndexer::ToBegin()
@@ -381,7 +397,7 @@ namespace prism {
 		for (auto it : scale_indexers_)
 			it.second->ToBegin();
 	}
-	
+
 	void AssetIndexer::ToEnd()
 	{
 		for (auto it : scale_indexers_)
@@ -399,7 +415,9 @@ namespace prism {
 		auto cit = scale_indexers_.find(scale);
 		if (cit != scale_indexers_.end())
 			return cit->second;
-		AssetScaleIndexer* scale_indexer = new AssetScaleIndexer(scale);
+		// align the initial index with the base scale
+		time_t init_time = base_scale_indexer_ ? GetIndexTime() : -1;
+		AssetScaleIndexer* scale_indexer = new AssetScaleIndexer(scale, init_time);
 		scale_indexers_.insert(std::make_pair(scale, scale_indexer));
 		return scale_indexer;
 	}

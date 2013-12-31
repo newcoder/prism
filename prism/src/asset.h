@@ -77,7 +77,7 @@ namespace prism {
 		void Clear();
 		int LoadAssets(const std::string& symbols_pattern, size_t begin_year, size_t end_year);
 		int LoadAssets(const std::vector<std::string>& symbols, size_t begin_year, size_t end_year);
-		bool LoadAll();
+		int LoadAll();
 		Asset* Get(const std::string& symbol_string) const;
 		std::map<std::string, Asset*>* assets() { return &assets_; }
 	private:
@@ -92,11 +92,14 @@ namespace prism {
 	public:
 		AssetScaleIndexer(AssetScale* scale, time_t begin);
 		AssetScaleIndexer(AssetScale* scale);
-		void MoveTo(time_t pos);
+		void MoveTo(time_t pos) { ToBegin(); ForwardTo(pos); }
+		void ForwardTo(time_t pos);
+		void Forward() { if (!at_end()) index_++; }
+		void Backward() { if (!at_begin()) index_--; }
 		void ToBegin() { index_ = 0; }
 		void ToEnd() { index_ = scale_->raw_data()->size() - 1; }
 		time_t GetIndexTime() const;
-		bool GetIndexData(HLOC* data) const;
+		bool GetIndexData(HLOC& data) const;
 		bool valid() const { return index_ >= 0; }
 		bool at_begin() const { return index_ == 0; }
 		bool at_end() const { return index_ == scale_->raw_data()->size() - 1; }
@@ -113,12 +116,15 @@ namespace prism {
 		AssetIndexer(Asset* asset, time_t begin);
 		AssetIndexer(Asset* asset);
 	public:
-		void MoveTo(time_t pos);
+		void MoveTo(time_t pos) { ToBegin(); ForwardTo(pos); }
+		void ForwardTo(time_t pos);
+		void Forward();
+		void Backward();
 		void ToBegin();
 		void ToEnd();
 		Asset* asset() const { return asset_; }
 		time_t GetIndexTime() const { return base_scale_indexer_->GetIndexTime(); }
-		bool GetIndexData(HLOC* data) const { return base_scale_indexer_->GetIndexData(data); }
+		bool GetIndexData(HLOC& data) const { return base_scale_indexer_->GetIndexData(data); }
 		bool valid() const { return base_scale_indexer_->valid(); }
 		bool at_begin() const { return base_scale_indexer_->at_begin(); }
 		bool at_end() const { return base_scale_indexer_->at_end(); }

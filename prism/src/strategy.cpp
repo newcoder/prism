@@ -198,8 +198,8 @@ namespace prism {
 		AssetIndexerMap::iterator it = init_candidates_.begin();
 		while (it != init_candidates_.end())
 		{
-			it->second.MoveTo(cursor_);
-			//std::cout << "after MoveTo, index: " << it->second.index() << TimeToString(cursor_, ", cursor: %Y-%m-%d") << std::endl;
+			it->second.ForwardTo(cursor_);
+			//std::cout << "after ForwardTo, index: " << it->second.index() << TimeToString(cursor_, ", cursor: %Y-%m-%d") << std::endl;
 			it++;
 		}
 	}

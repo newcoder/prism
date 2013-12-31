@@ -30,15 +30,19 @@ namespace prism {
 
 	unsigned int TransactionManager::id = 0;
 
-	bool Portfolio::GetValue(time_t time, double& value)
+	bool Portfolio::GetValue(double& value, time_t pos)
 	{
-		asset_indexer_->MoveTo(time);
+		if (pos > 0)
+		{
+			asset_indexer_->ToBegin();
+			asset_indexer_->ForwardTo(pos);
+		}
 		if (!asset_indexer_->valid())
 			return false;
-		HLOC *hloc = nullptr;
+		HLOC hloc;
 		bool ret = asset_indexer_->GetIndexData(hloc);
 		if (!ret) return false;
-		value = hloc->close * amount_;
+		value = hloc.close * amount_;
 		return true;
 	}
 
@@ -72,19 +76,25 @@ namespace prism {
 		portfolios_.clear();
 	}
 
-	bool PortfolioManager::GetValue(time_t time, double& value)
+	bool PortfolioManager::GetValue(double& value, time_t pos)
 	{
 		value = 0.0;
 		for (auto it : portfolios_)
 		{
 			double portfolio_value;
-			bool ret = it.second->GetValue(time, portfolio_value);
+			bool ret = it.second->GetValue(portfolio_value, pos);
 			if (ret)
 				value += portfolio_value;
 			else
 				return false;
 		}
 		return true;
+	}
+
+	Portfolio* PortfolioManager::Get(const std::string& symbol)
+	{
+		auto cit = portfolios_.find(symbol);
+		return cit == portfolios_.end() ? nullptr : cit->second;
 	}
 
 }

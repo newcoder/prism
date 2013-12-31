@@ -50,8 +50,9 @@ namespace prism {
 		void Add(Transaction& trans);
 		// get transactions for a single symbol
 		void GetTransactions(const std::string& symbol, TransactionList* symbol_transactions);
-	private:
+	public:
 		static unsigned int id;
+	private:	
 		TransactionList transacitons_;
 	};
 
@@ -63,7 +64,7 @@ namespace prism {
 	public:
 		void Buy(double amount) { amount_ += amount; }
 		void Sell(double amount) { amount_ -= amount; }
-		bool GetValue(time_t time, double& value);		
+		bool GetValue(double& value, time_t pos);		
 		std::string symbol() { return asset_indexer_->asset()->symbol(); }
 		AssetIndexer* asset_indexer() const { return asset_indexer_; }
 		double amount() const { return amount_; }
@@ -82,8 +83,10 @@ namespace prism {
 	public:
 		void Buy(AssetIndexer* asset_indexer, double amount);
 		void Sell(AssetIndexer* asset_indexer, double amount);
-		bool GetValue(time_t time, double& value);
+		// move to the pos if pos > 0, then evaluate the value
+		bool GetValue(double& value, time_t pos = -1);
 		void Clear();
+		Portfolio* Get(const std::string& symbol);
 	private:
 		std::map<std::string, Portfolio*> portfolios_;
 	};

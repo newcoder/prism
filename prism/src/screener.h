@@ -21,7 +21,7 @@ namespace prism {
 		Screener(IRule* rule) : rule_(rule) {}
 		~Screener() {}
 	public:
-		void Screen(AssetIndexerList& asset_index_list, time_t pos, std::vector<int>* result);
+		void Screen(AssetIndexerList& asset_index_list, std::vector<int>* result, time_t pos = -1);
 	private:
 		IRule *rule_;
 	};

@@ -125,6 +125,7 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\rule.cpp" />
     <ClCompile Include="..\..\..\src\screener.cpp" />
+    <ClCompile Include="..\..\..\src\screener_test.cpp" />
     <ClCompile Include="..\..\..\src\stdafx.cpp" />
     <ClCompile Include="..\..\..\src\store.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -135,6 +136,7 @@
     <ClCompile Include="..\..\..\src\time_series.cpp" />
     <ClCompile Include="..\..\..\src\time_series_test.cpp" />
     <ClCompile Include="..\..\..\src\trade.cpp" />
+    <ClCompile Include="..\..\..\src\trade_test.cpp" />
     <ClCompile Include="..\..\..\src\util.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -13,7 +13,10 @@ int main(int argc, char* argv[])
 	//::testing::GTEST_FLAG(filter) = "ImportTest.testImportBlock";
 	//::testing::GTEST_FLAG(filter) = "TestTimeSeries.testFindTurningPoints";
 	//::testing::GTEST_FLAG(filter) = "ImportTest.testImportDir";
-	::testing::GTEST_FLAG(filter) = "AssetTest.*";
+	::testing::GTEST_FLAG(filter) = "ScreenerTest.*";
+	::testing::GTEST_FLAG(filter) = "AssetTest.testScales";
+	::testing::GTEST_FLAG(filter) = "TradeTest.*:ScreenerTest.*:AssetTest.*";
+
 
 	testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

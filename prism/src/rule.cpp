@@ -185,6 +185,10 @@ namespace prism {
 	EMARule::EMARule() : IndicatorRule(RULE_TYPE_INDICATOR_EMA)
 	{
 	}
+	
+	EMARule::EMARule(int period) : period_(period), IndicatorRule(RULE_TYPE_INDICATOR_EMA)
+	{
+	}
 
 	void EMARule::Serialize(JsonSerializer* serializer)
 	{
@@ -218,6 +222,11 @@ namespace prism {
 	}
 
 	EMACompareRule::EMACompareRule() : IndicatorRule(RULE_TYPE_INDICATOR_EMA_COMPARE)
+	{
+	}
+
+	EMACompareRule::EMACompareRule(int period_one, int period_two) : period_one_(period_one), period_two_(period_two),
+		IndicatorRule(RULE_TYPE_INDICATOR_EMA_COMPARE)
 	{
 	}
 
@@ -265,6 +274,13 @@ namespace prism {
 		linear_predict_ = true;
 		look_back_ = kMacdLookBack;
 		threshold_ = kMacdThreshold;
+	}
+
+	MACDRule::MACDRule(int short_period, int long_period, int signal_period) : 
+		short_period_(short_period), long_period_(long_period), signal_period_(signal_period),
+		IndicatorRule(RULE_TYPE_INDICATOR_MACD)
+	{
+		MACDRule();
 	}
 
 	void MACDRule::Serialize(JsonSerializer* serializer)
@@ -347,6 +363,12 @@ namespace prism {
 	{
 	}
 
+	EMAArrayRule::EMAArrayRule(int first_period, int second_period, int third_period, int fourth_period) :
+		first_period_(first_period), second_period_(second_period), third_period_(third_period), fourth_period_(fourth_period),
+		IndicatorRule(RULE_TYPE_INDICATOR_EMAARRAY)
+	{
+	}
+
 	void EMAArrayRule::Serialize(JsonSerializer* serializer)
 	{
 		IndicatorRule::Serialize(serializer);
@@ -426,6 +448,10 @@ namespace prism {
 	{
 	}
 
+	CRRule::CRRule(int period) : period_(period), IndicatorRule(RULE_TYPE_INDICATOR_CR)
+	{
+	}
+
 	void CRRule::Serialize(JsonSerializer* serializer)
 	{
 		IndicatorRule::Serialize(serializer);
@@ -453,7 +479,7 @@ namespace prism {
 			return false;
 		else
 		{
-			std::cout << TimeToString(tl->at(index).position, "time: %Y-%m-%d, ") << tl->at(index).value << "," << 1.0 / (double)period_<< std::endl;
+		//	std::cout << asset_indexer.asset()->symbol() << TimeToString(tl->at(index).position, ", time: %Y-%m-%d, ") << tl->at(index).value << "," << 1.0 / (double)period_<< std::endl;
 			return tl->at(index).value <=  1.0 / (double)period_;
 		}
 	}

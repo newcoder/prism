@@ -3,7 +3,7 @@
 //
 // Author: wndproc@gmail.com (Ray Ni)
 //
-// routines and classes rules..
+// routines and classes rules for screening assets
 
 #ifndef RULES_H
 #define RULES_H
@@ -111,6 +111,8 @@ namespace prism {
 		// getter
 		DATA_TYPE data_type() { return data_type_; }
 		int data_num() { return data_num_; }
+		void set_data_type(DATA_TYPE data_type) { data_type_ = data_type; }
+		void set_data_num(int data_num) { data_num_ = data_num; }
 	protected:
 		DATA_TYPE data_type_;
 		int data_num_;
@@ -120,6 +122,7 @@ namespace prism {
 	{
 	public:
 		EMARule();
+		EMARule(int period);
 		virtual ~EMARule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
@@ -135,6 +138,7 @@ namespace prism {
 	{
 	public:
 		EMACompareRule();
+		EMACompareRule(int period_one, int period_two);
 		virtual ~EMACompareRule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
@@ -153,6 +157,7 @@ namespace prism {
 	{
 	public:
 		MACDRule();
+		MACDRule(int short_period, int long_period, int signal_period);
 		virtual ~MACDRule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
@@ -183,6 +188,7 @@ namespace prism {
 	{
 	public:
 		EMAArrayRule();
+		EMAArrayRule(int first_period, int second_period, int third_period, int fourth_period);
 		virtual ~EMAArrayRule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
@@ -198,10 +204,14 @@ namespace prism {
 	{
 	public:
 		CRRule();
+		CRRule(int period);
 		virtual ~CRRule() {}
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
 		virtual bool Verify(AssetIndexer& asset_indexer);
+	public:
+		int period() const { return period_; }
+		void set_period(int period) { period_ = period; }
 	private:
 		int period_;
 	};

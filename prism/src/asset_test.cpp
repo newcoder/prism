@@ -42,19 +42,28 @@ TEST_F(AssetTest, testLoad)
 TEST_F(AssetTest, testLoadAll)
 {
 	AssetsProvider loader((IStore*)&store);
-	bool ret = loader.LoadAll();
-	EXPECT_TRUE(ret);
+	int count = loader.LoadAll();
 
-	std::cout << "symbols loaded: " << loader.assets()->size() << std::endl;
+	std::cout << "symbols loaded: " << count << std::endl;
 	
+}
+
+TEST_F(AssetTest, testLoadPatterns)
+{
+	AssetsProvider loader((IStore*)&store);
+	// load symbols in the blocks and match the patterns...
+	int count = loader.LoadAssets("patterns=SH600\\d{3},SZ001\\d{3};blocks=行业\\医药,行业\\计算机", 2010, 2012);
+
+	std::cout << "symbols loaded: " << count << std::endl;
+
 }
 
 TEST_F(AssetTest, testScales)
 {
 	AssetsProvider loader((IStore*)&store);
 
-	std::string symbol = "SH600196";
-	std::string another_symbol = "SZ002010";
+	std::string symbol = "SH600198";
+	std::string another_symbol = "SZ002015";
 	std::vector<std::string> elems;
 	elems.push_back(symbol);
 	elems.push_back(another_symbol);
@@ -80,6 +89,8 @@ TEST_F(AssetTest, testScales)
 	EXPECT_TRUE(macd != nullptr);
 	EMA* ema = (EMA*)weekly->indicators("EMA_10");
 	EXPECT_TRUE(ema != nullptr);
+	macd = (MACD*)weekly->indicators("MACD_12_26_9");
+	EXPECT_TRUE(macd != nullptr);
 	CR* cr = (CR*)two_days->indicators("CR_20");
 	EXPECT_TRUE(cr != nullptr);
 
@@ -97,8 +108,8 @@ TEST_F(AssetTest, testAssetIndexer)
 {
 	AssetsProvider loader((IStore*)&store);
 
-	std::string symbol = "SH600196";
-	std::string another_symbol = "SZ002010";
+	std::string symbol = "SH600198";
+	std::string another_symbol = "SZ002015";
 	std::vector<std::string> elems;
 	elems.push_back(symbol);
 	elems.push_back(another_symbol);
@@ -110,7 +121,7 @@ TEST_F(AssetTest, testAssetIndexer)
 	for (int i = 0; i < 33; i++)
 	{
 		day = day + 24 * 3600;		
-		asset_indexer->MoveTo(day);		
+		asset_indexer->ForwardTo(day);
 		time_t date = asset_indexer->GetIndexTime();
 		std::string date_str = TimeToString(date, "%Y-%m-%d");
 		std::cout << date_str << std::endl;
@@ -120,7 +131,7 @@ TEST_F(AssetTest, testAssetIndexer)
 	AssetScaleIndexer* scale_indexer_two_days = asset_indexer->scale_indexers(DATA_TYPE_DAILY, 2);
 	AssetScaleIndexer* scale_indexer_weekly = asset_indexer->scale_indexers(DATA_TYPE_WEEKLY, 1);
 	
-	asset_indexer->MoveTo(day);
+	asset_indexer->ForwardTo(day);
 	std::string date_str = TimeToString(day, "%Y-%m-%d");
 	std::cout << "move to: " << date_str << std::endl;
 	
