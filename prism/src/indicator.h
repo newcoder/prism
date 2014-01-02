@@ -34,13 +34,13 @@ namespace prism {
 		virtual ~SMA();
 		virtual void Generate(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end);
 		virtual void Clear();
-		DoubleTimeList* result() const { return result_; }
+		std::shared_ptr<DoubleTimeList> result() const { return result_; }
 		int period() const { return period_; }
 	protected:
 		virtual bool Move(DoubleTimeList::const_iterator current, DoubleTimeList::const_iterator end);
 	protected:
 		int period_;
-		DoubleTimeList *result_;
+		std::shared_ptr<DoubleTimeList> result_;
 	};
 
 	// exponential moving average
@@ -66,20 +66,20 @@ namespace prism {
 		virtual void Clear();
 		void GenerateCrossOvers(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end);
 
-		DoubleTimeList* macd();
-		DoubleTimeList* signal();
-		DoubleTimeList* histogram();
-		CrossOverList* cross_overs();
+		std::shared_ptr<DoubleTimeList> macd();
+		std::shared_ptr<DoubleTimeList> signal();
+		std::shared_ptr<DoubleTimeList> histogram();
+		std::shared_ptr<CrossOverList> cross_overs();
 	private:
 		int long_period_;
 		int short_period_;
 		int signal_period_;
-		EMA* long_ema_;
-		EMA* short_ema_;
-		EMA* signal_ema_;
-		DoubleTimeList *macd_;
-		DoubleTimeList *histogram_;
-		CrossOverList *cross_overs_;
+		std::shared_ptr<EMA> long_ema_;
+		std::shared_ptr<EMA> short_ema_;
+		std::shared_ptr<EMA> signal_ema_;
+		std::shared_ptr<DoubleTimeList> macd_;
+		std::shared_ptr<DoubleTimeList> histogram_;
+		std::shared_ptr<CrossOverList> cross_overs_;
 	};
 
 	// relative strength index
@@ -90,10 +90,10 @@ namespace prism {
 		virtual ~RSI();
 		virtual void Generate(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end);
 		virtual void Clear(); 
-		DoubleTimeList* result() { return result_; }
+		std::shared_ptr<DoubleTimeList> result() { return result_; }
 	private:
 		int period_;
-		DoubleTimeList* result_;
+		std::shared_ptr<DoubleTimeList> result_;
 	};
 
 	// RSV, Raw Stochastic Value
@@ -104,10 +104,10 @@ namespace prism {
 		virtual ~RSV();
 		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
 		virtual void Clear(); 
-		DoubleTimeList* result() { return result_; }
+		std::shared_ptr<DoubleTimeList> result() { return result_; }
 	private:
 		int period_;
-		DoubleTimeList* result_;
+		std::shared_ptr<DoubleTimeList> result_;
 	};
 
 	// KDJ indicator
@@ -118,17 +118,17 @@ namespace prism {
 		virtual ~KDJ();
 		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
 		virtual void Clear(); 
-		DoubleTimeList* k();
-		DoubleTimeList* d();
-		DoubleTimeList* j();
+		std::shared_ptr<DoubleTimeList> k();
+		std::shared_ptr<DoubleTimeList> d();
+		std::shared_ptr<DoubleTimeList> j();
 	private:
 		int period_;
 		int smooth1_;
 		int smooth2_;
-		RSV* rsv_;
-		EMA* k_ema_;
-		EMA* d_ema_;
-		DoubleTimeList* j_;
+		std::shared_ptr<RSV> rsv_;
+		std::shared_ptr<EMA> k_ema_;
+		std::shared_ptr<EMA> d_ema_;
+		std::shared_ptr<DoubleTimeList> j_;
 	};
 
 	// Trend Line, by local min/max
@@ -139,12 +139,12 @@ namespace prism {
 		virtual ~TL();
 		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
 		virtual void Clear();
-		DoubleTimeList* short_trend() { return short_trend_; }
-		DoubleTimeList* medium_trend() { return medium_trend_; }
+		std::shared_ptr<DoubleTimeList> short_trend() { return short_trend_; }
+		std::shared_ptr<DoubleTimeList> medium_trend() { return medium_trend_; }
 	private:
 		double threshold_;
-		DoubleTimeList* short_trend_;
-		DoubleTimeList* medium_trend_;
+		std::shared_ptr<DoubleTimeList> short_trend_;
+		std::shared_ptr<DoubleTimeList> medium_trend_;
 	};
 
 	// Count Ratio
@@ -156,10 +156,10 @@ namespace prism {
 		virtual ~CR();
 		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
 		virtual void Clear();
-		DoubleTimeList* result() { return result_; }
+		std::shared_ptr<DoubleTimeList> result() { return result_; }
 	private:
 		int period_;
-		DoubleTimeList* result_;
+		std::shared_ptr<DoubleTimeList> result_;
 	};
 
 

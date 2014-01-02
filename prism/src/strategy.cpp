@@ -105,7 +105,7 @@ namespace prism {
 		return true;
 	}
 
-	StrategyRunner::StrategyRunner(IStore* store)
+	StrategyRunner::StrategyRunner(std::shared_ptr<IStore> store)
 	{
 		store_ = store;
 		strategy_ = nullptr;
@@ -135,9 +135,9 @@ namespace prism {
 		}
 		cursor_ = strategy_->begin_time();
 		init_candidates_.clear();
-		std::map<std::string, Asset*> *loaded_assets = assets_provider_->assets();
-		std::map<std::string, Asset*>::iterator it = loaded_assets->begin();
-		while(it != loaded_assets->end())
+		auto loaded_assets = assets_provider_->assets();
+		auto it = loaded_assets.begin();
+		while(it != loaded_assets.end())
 		{
 			init_candidates_.insert(std::make_pair(it->second->symbol(),AssetIndexer(it->second, cursor_)));
 			it++;
@@ -238,7 +238,7 @@ namespace prism {
 		AssetIndexerMap::const_iterator cit = init_candidates_.find(item.asset()->symbol());
 		assert(cit != init_candidates_.end());
 		AssetIndexer asset_indexer = cit->second;
-		assert(item.asset() == asset_indexer.asset());
+		//assert(item.asset() == asset_indexer.asset());
 		if (asset_indexer.GetIndexTime() == cursor_)
 		{
 			// the stock was on trade at the time
@@ -290,7 +290,7 @@ namespace prism {
 					double shares = 100*amount_hands;
 					money = shares * price;
 					Transaction trans;
-					trans.asset_ = asset_indexer->asset();
+					trans.asset_ = asset_indexer->asset().get();
 					trans.price_ = price;
 					trans.shares_ = shares;
 					trans.time_ = asset_indexer->GetIndexTime();
@@ -333,7 +333,7 @@ namespace prism {
 			AssetIndexerMap::const_iterator cit_asset = init_candidates_.find(item.asset()->symbol());
 			assert(cit_asset != init_candidates_.end());
 			AssetIndexer asset_indexer = cit_asset->second;
-			assert(item.asset() == asset_indexer.asset());
+			//assert(item.asset() == asset_indexer.asset());
 			double price = item.asset()->raw_data()->at(asset_indexer.index()).close;
 			balance += price * item.amount() * (1 - kCommissionRate);
 			cit++;

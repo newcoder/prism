@@ -22,7 +22,7 @@
 namespace prism
 {
 	////////////////////////////////////////////////////////////////////////
-	void TLUtils::Dump(const std::string& file, DoubleTimeList *tl)
+	void TLUtils::Dump(const std::string& file, std::shared_ptr<DoubleTimeList> tl)
 	{
 		std::ofstream of;
 		of.open(file, std::ios::out);
@@ -35,7 +35,7 @@ namespace prism
 		of.close();
 	}
 
-	void TLUtils::Dump(const std::string& file, DoubleTimeList *tl1, DoubleTimeList *tl2)
+	void TLUtils::Dump(const std::string& file, std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2)
 	{
 		std::ofstream of;
 		of.open(file, std::ios::out);
@@ -70,7 +70,8 @@ namespace prism
 		of.close();
 	}
 
-	void TLUtils::Dump(const std::string& file, DoubleTimeList *tl1, DoubleTimeList *tl2, DoubleTimeList* tl3)
+	void TLUtils::Dump(const std::string& file, std::shared_ptr<DoubleTimeList> tl1, 
+		std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> tl3)
 	{
 		std::ofstream of;
 		of.open(file, std::ios::out);
@@ -130,7 +131,7 @@ namespace prism
 		return point1.value + (point2.value - point1.value)*(position - point1.position) / (point2.position - point1.position);
 	}
 
-	double TLUtils::Distance(DoubleTimeList *tl1, DoubleTimeList *tl2) 
+	double TLUtils::Distance(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2)
 	{
 		size_t count1, count2;
 		count1 = tl1->size();
@@ -177,7 +178,7 @@ namespace prism
 		return std::sqrt(sum);
 	}
 
-	DoubleTimeList* TLUtils::Add(DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* result)
+	std::shared_ptr<DoubleTimeList> TLUtils::Add(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> result)
 	{
 		struct Adder {
 			double operator() (double p1, double p2) { return p1 + p2; }
@@ -186,7 +187,7 @@ namespace prism
 		return BinaryOpHelper(tl1, tl2, result, adder);
 	}
 
-	DoubleTimeList* TLUtils::Subtract(DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* result)
+	std::shared_ptr<DoubleTimeList> TLUtils::Subtract(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> result)
 	{
 		struct Subtracter {
 			double operator() (double p1, double p2) { return p1 - p2; }
@@ -195,7 +196,7 @@ namespace prism
 		return BinaryOpHelper(tl1, tl2, result, subtracter);
 	}
 
-	DoubleTimeList* TLUtils::Multiply(DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* result)
+	std::shared_ptr<DoubleTimeList> TLUtils::Multiply(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> result)
 	{
 		struct Multiplyer {
 			double operator() (double p1, double p2) { return p1 * p2; }
@@ -204,7 +205,7 @@ namespace prism
 		return BinaryOpHelper(tl1, tl2, result, multiplyer);
 	}
 
-	DoubleTimeList* TLUtils::Divide(DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* result)
+	std::shared_ptr<DoubleTimeList> TLUtils::Divide(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> result)
 	{
 		struct Divider {
 			double operator() (double p1, double p2) { return p1 / p2; }
@@ -213,7 +214,7 @@ namespace prism
 		return BinaryOpHelper(tl1, tl2, result, divider);
 	}
 
-	DoubleTimeList* TLUtils::Populate(HLOCList::const_iterator cit_begin, HLOCList::const_iterator cit_end, PRICE_TYPE type, DoubleTimeList *result)
+	std::shared_ptr<DoubleTimeList> TLUtils::Populate(HLOCList::const_iterator cit_begin, HLOCList::const_iterator cit_end, PRICE_TYPE type, std::shared_ptr<DoubleTimeList> result)
 	{
 		auto citBegin = cit_begin;
 		result->clear();
@@ -244,12 +245,12 @@ namespace prism
 		return result;
 	}
 
-	DoubleTimeList* TLUtils::Populate(HLOCList* hlocList, PRICE_TYPE type, DoubleTimeList *result)
+	std::shared_ptr<DoubleTimeList> TLUtils::Populate(std::shared_ptr<HLOCList> hlocList, PRICE_TYPE type, std::shared_ptr<DoubleTimeList> result)
 	{
 		return TLUtils::Populate(hlocList->begin(), hlocList->end(), type, result);
 	}
 
-	void TLUtils::Remove(DoubleTimeList *result, size_t num, bool head)
+	void TLUtils::Remove(std::shared_ptr<DoubleTimeList> result, size_t num, bool head)
 	{
 		if (num > result->size())
 			return;
@@ -320,7 +321,7 @@ namespace prism
 		return std::sqrt(sum / (double)(Count()));
 	}
 
-	int TimeSeries::FindLocalExtremas(double threshold, DoubleTimeList* result) const
+	int TimeSeries::FindLocalExtremas(double threshold, std::shared_ptr<DoubleTimeList> result) const
 	{
 		DoubleTimeList::const_iterator window_begin, window_end;
 		size_t count = Count();
@@ -372,7 +373,7 @@ namespace prism
 	cit--; \
 	} while (0); \
 
-	int TimeSeries::FindTurningPoints(double thresholdP, double thresholdT, DoubleTimeList* result) const
+	int TimeSeries::FindTurningPoints(double thresholdP, double thresholdT, std::shared_ptr<DoubleTimeList> result) const
 	{
 		size_t count = Count();
 		if (count < 4)
@@ -496,7 +497,7 @@ namespace prism
 		return result->size();
 	}
 
-	int TimeSeries::MatchPattern(IPattern* pattern, DoubleTimeList* result) const
+	int TimeSeries::MatchPattern(std::shared_ptr<IPattern> pattern, std::shared_ptr<DoubleTimeList> result) const
 	{
 		result->clear();
 		auto cit = begin_;
@@ -511,21 +512,21 @@ namespace prism
 		return result->size();
 	}
 
-	IPattern* TimeSeries::ExtractPattern(int begin, int end, double fixed_delta, double adjacent_delta) const
+	std::shared_ptr<IPattern> TimeSeries::ExtractPattern(int begin, int end, double fixed_delta, double adjacent_delta) const
 	{
-		Pattern* pattern = new Pattern(fixed_delta, adjacent_delta);
+		auto pattern = std::make_shared<Pattern>(fixed_delta, adjacent_delta);
 		// generate the pattern from the given segment
 		pattern->Generate(begin_ + begin, begin_ + end);
 		return pattern;
 	}
 
 		
-	void TimeSeries::CalculateIndicator(ILocalIndicator* indicator) const
+	void TimeSeries::CalculateIndicator(std::shared_ptr<ILocalIndicator> indicator) const
 	{
 		indicator->Generate(begin_, end_);
 	}
 
-	LRCoef TimeSeries::LinearRegression(DoubleTimeList* result)
+	LRCoef TimeSeries::LinearRegression(std::shared_ptr<DoubleTimeList> result)
 	{
 		int count = Count();
 
@@ -554,7 +555,7 @@ namespace prism
 		return LRCoef(coeffs.x(), coeffs.y());
 	}
 
-	int TimeSeries::PieceWise(double rate, DoubleTimeList* result)
+	int TimeSeries::PieceWise(double rate, std::shared_ptr<DoubleTimeList> result)
 	{
 		DoubleTimeList cost;
 		DoubleTimePoint p;

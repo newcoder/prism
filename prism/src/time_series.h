@@ -33,14 +33,15 @@ namespace prism {
 	public:
 		// unary operations		
 		template <typename T>
-		static DoubleTimeList* UnaryOpHelper(DoubleTimeList* tl, T functor)
+		static std::shared_ptr<DoubleTimeList> UnaryOpHelper(std::shared_ptr<DoubleTimeList> tl, T functor)
 		{
 			std::for_each(tl->begin(), tl->end(), functor);
 			return tl;
 		}
 		// binary operations, these functions are NOT responsible for memory allocation and release.
 		template <typename T>
-		static DoubleTimeList* BinaryOpHelper(DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* result, T functor)
+		static std::shared_ptr<DoubleTimeList> BinaryOpHelper(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, 
+			std::shared_ptr<DoubleTimeList> result, T functor)
 		{
 			size_t count1 = tl1->size();
 			size_t count2 = tl2->size();
@@ -60,26 +61,27 @@ namespace prism {
 
 	public:
 		// populate from HLOC series
-		static DoubleTimeList* Populate(HLOCList::const_iterator cit_begin, HLOCList::const_iterator cit_end, PRICE_TYPE type, DoubleTimeList *result);
-		static DoubleTimeList* Populate(HLOCList* hlocList, PRICE_TYPE type, DoubleTimeList *result);
+		static std::shared_ptr<DoubleTimeList> Populate(HLOCList::const_iterator cit_begin, HLOCList::const_iterator cit_end, 
+			PRICE_TYPE type, std::shared_ptr<DoubleTimeList> result);
+		static std::shared_ptr<DoubleTimeList> Populate(std::shared_ptr<HLOCList> hlocList, PRICE_TYPE type, std::shared_ptr<DoubleTimeList> result);
 		// remove n elment from head or rear
-		static void TLUtils::Remove(DoubleTimeList *result, size_t num, bool head = true);
+		static void TLUtils::Remove(std::shared_ptr<DoubleTimeList> result, size_t num, bool head = true);
 		// calculate the Euclidean distance between two time series
-		static double Distance(DoubleTimeList *tl1, DoubleTimeList *tl2);
+		static double Distance(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2);
 		// linear interpolate
 		static double LinearInterpolate(const DoubleTimePoint& point1, const DoubleTimePoint& point2, time_t position);
 	
-		static DoubleTimeList* Add(DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* result);
-		static DoubleTimeList* Subtract(DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* result);
-		static DoubleTimeList* Divide(DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* result);
-		static DoubleTimeList* Multiply(DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* result);	
+		static std::shared_ptr<DoubleTimeList> Add(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> result);
+		static std::shared_ptr<DoubleTimeList> Subtract(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> result);
+		static std::shared_ptr<DoubleTimeList> Divide(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> result);
+		static std::shared_ptr<DoubleTimeList> Multiply(std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> result);
 		
 		// dump a single DoubleTimeList to csv file
-		static void Dump(const std::string& file, DoubleTimeList* tl);
+		static void Dump(const std::string& file, std::shared_ptr<DoubleTimeList> tl);
 		// dump two DoubleTimeLists to csv file, series2 is a subset of series1.
-		static void Dump(const std::string& file, DoubleTimeList* tl1, DoubleTimeList* tl2);
+		static void Dump(const std::string& file, std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2);
 		// dump three DoubleTimeLists to csv file, series2 is a subset of series1.
-		static void Dump(const std::string& file, DoubleTimeList* tl1, DoubleTimeList* tl2, DoubleTimeList* tl3);
+		static void Dump(const std::string& file, std::shared_ptr<DoubleTimeList> tl1, std::shared_ptr<DoubleTimeList> tl2, std::shared_ptr<DoubleTimeList> tl3);
 	};
 
 	// the time series class, encapsulate a set of operations for the time points in [begin, end)
@@ -104,19 +106,19 @@ namespace prism {
 		// get the deviation
 		double Deviation() const;
 		// find local maxs and mins
-		int FindLocalExtremas(double threshold, DoubleTimeList* result) const;
+		int FindLocalExtremas(double threshold, std::shared_ptr<DoubleTimeList> result) const;
 		// find turning points, to remove noise point in local extremas
-		int FindTurningPoints(double thresholdP, double thresholdT, DoubleTimeList* result) const;
+		int FindTurningPoints(double thresholdP, double thresholdT, std::shared_ptr<DoubleTimeList> result) const;
 		// match a given pattern
-		int MatchPattern(IPattern* pattern, DoubleTimeList* result) const;
+		int MatchPattern(std::shared_ptr<IPattern> pattern, std::shared_ptr<DoubleTimeList> result) const;
 		// extract the pattern from range [begin, end], the function will return a new pattern, the caller need to release it
-		IPattern* ExtractPattern(int begin, int end, double fixed_delta, double adjacent_delta) const;
+		std::shared_ptr<IPattern> ExtractPattern(int begin, int end, double fixed_delta, double adjacent_delta) const;
 		// calculate indicators
-		void CalculateIndicator(ILocalIndicator* indicator) const;
+		void CalculateIndicator(std::shared_ptr<ILocalIndicator> indicator) const;
 		// do the linear regression for the time series
-		LRCoef LinearRegression(DoubleTimeList* result);
+		LRCoef LinearRegression(std::shared_ptr<DoubleTimeList> result);
 		// bottom-up piece wise, traditional method calcuate the cost to merge adjacent segment, we instead caculate the cost to remove individual point
-		int PieceWise(double rate, DoubleTimeList* result);
+		int PieceWise(double rate, std::shared_ptr<DoubleTimeList> result);
 		// get count
 		size_t Count() const { return end_ - begin_;  }
 	private:

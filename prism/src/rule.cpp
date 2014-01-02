@@ -206,10 +206,11 @@ namespace prism {
 	bool EMARule::Verify(AssetIndexer& asset_indexer)
 	{
 		std::string indicator_str = std::string("EMA") + "_" + std::to_string(period_);
-		AssetScale* scale = asset_indexer.asset()->scales(data_type(), data_num());
-		EMA* ema = (EMA*)scale->indicators(indicator_str);
+		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
+		auto indicator = scale->indicators(indicator_str);
+		auto ema = std::static_pointer_cast<EMA>(indicator);
 		assert(ema != nullptr);
-		DoubleTimeList* tl = ema->result();
+		auto tl = ema->result();
 		size_t pos = asset_indexer.scale_indexers(scale)->index();
 		int index = pos - period_;
 		if (index < 0)
@@ -249,15 +250,15 @@ namespace prism {
 	bool EMACompareRule::Verify(AssetIndexer& asset_indexer)
 	{
 		std::string indicator_str = std::string("EMA") + "_" + std::to_string(period_one_);
-		AssetScale* scale = asset_indexer.asset()->scales(data_type(), data_num());
-		EMA* ema_one = (EMA*)scale->indicators(indicator_str);
+		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
+		auto ema_one = std::static_pointer_cast<EMA>(scale->indicators(indicator_str));
 		indicator_str = std::string("EMA") + "_" + std::to_string(period_two_);
-		EMA* ema_two = (EMA*)scale->indicators(indicator_str);
+		auto ema_two = std::static_pointer_cast<EMA>(scale->indicators(indicator_str));
 		assert(ema_one != nullptr);
 		assert(ema_two != nullptr);
 
-		DoubleTimeList* tl_one = ema_one->result();
-		DoubleTimeList* tl_two = ema_two->result();
+		auto tl_one = ema_one->result();
+		auto tl_two = ema_two->result();
 		
 		size_t pos = asset_indexer.scale_indexers(scale)->index();
 		int index = pos - std::max(period_one_, period_two_);
@@ -317,10 +318,10 @@ namespace prism {
 		std::string indicator_str = std::string("MACD") + "_" + std::to_string(short_period_) + "_" +
 			std::to_string(long_period_) + "_" + 
 			std::to_string(signal_period_);
-		AssetScale* scale = asset_indexer.asset()->scales(data_type(), data_num());
-		MACD* macd = (MACD*)scale->indicators(indicator_str);
+		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
+		auto macd = std::static_pointer_cast<MACD>(scale->indicators(indicator_str));
 		assert(macd != nullptr);
-		DoubleTimeList* tl = macd->histogram();
+		auto tl = macd->histogram();
 		//align the index for HLOC and for indicator...		
 		size_t pos = asset_indexer.scale_indexers(scale)->index();
 		int index = pos - long_period_ - signal_period_;	
@@ -336,7 +337,8 @@ namespace prism {
 			{
 				// for now, predict next macd histogram value by linear interpolating
 				// TODO: to find a better way to predict next macd value based on historical data... worthwhile researching
-				DoubleTimeList fit_points, result;
+				DoubleTimeList fit_points;
+				auto result = std::make_shared<DoubleTimeList>();
 				for (int i = 0; i < look_back_; ++i)
 				{
 					if (index - i >= 0)
@@ -351,7 +353,7 @@ namespace prism {
 				if (fit_points.size() > 1)
 				{
 					TimeSeries ts(fit_points.begin(), fit_points.end());
-					LRCoef coef = ts.LinearRegression(&result);
+					LRCoef coef = ts.LinearRegression(result);
 					predict_value = coef.A * (index + 1) + coef.B;
 				}
 			}
@@ -399,22 +401,22 @@ namespace prism {
 		std::string indicator_str3 = std::string("EMA") + "_" + std::to_string(third_period_);
 		std::string indicator_str4 = std::string("EMA") + "_" + std::to_string(fourth_period_);
 		
-		AssetScale* scale = asset_indexer.asset()->scales(data_type(), data_num());
+		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
 
-		EMA* ema1 = (EMA*)scale->indicators(indicator_str1);
-		EMA* ema2 = (EMA*)scale->indicators(indicator_str2);
-		EMA* ema3 = (EMA*)scale->indicators(indicator_str3);
-		EMA* ema4 = (EMA*)scale->indicators(indicator_str4);
+		auto ema1 = std::static_pointer_cast<EMA>(scale->indicators(indicator_str1));
+		auto ema2 = std::static_pointer_cast<EMA>(scale->indicators(indicator_str2));
+		auto ema3 = std::static_pointer_cast<EMA>(scale->indicators(indicator_str3));
+		auto ema4 = std::static_pointer_cast<EMA>(scale->indicators(indicator_str4));
 
 		assert(ema1 != nullptr);
 		assert(ema2 != nullptr);
 		assert(ema3 != nullptr);
 		assert(ema4 != nullptr);
 
-		DoubleTimeList* tl1 = ema1->result();
-		DoubleTimeList* tl2 = ema2->result();
-		DoubleTimeList* tl3 = ema3->result();
-		DoubleTimeList* tl4 = ema4->result();
+		auto tl1 = ema1->result();
+		auto tl2 = ema2->result();
+		auto tl3 = ema3->result();
+		auto tl4 = ema4->result();
 
 		size_t pos = asset_indexer.scale_indexers(scale)->index();
 		int index = pos - fourth_period_;
@@ -468,10 +470,10 @@ namespace prism {
 	bool CRRule::Verify(AssetIndexer& asset_indexer)
 	{
 		std::string indicator_str = std::string("CR") + "_" + std::to_string(period_);
-		AssetScale* scale = asset_indexer.asset()->scales(data_type(), data_num());
-		CR* cr = (CR*)scale->indicators(indicator_str);
+		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
+		auto cr = std::static_pointer_cast<CR>(scale->indicators(indicator_str));
 		assert(cr != nullptr);
-		DoubleTimeList* tl = cr->result();
+		auto tl = cr->result();
 
 		size_t pos = asset_indexer.scale_indexers(scale)->index();
 		int index = pos;

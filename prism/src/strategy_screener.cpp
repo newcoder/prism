@@ -14,7 +14,7 @@
 
 namespace prism {
 	
-	StrategyScreener::StrategyScreener(IStore* store, const std::string& strategy_file) : store_(store), strategy_file_(strategy_file)
+	StrategyScreener::StrategyScreener(std::shared_ptr<IStore> store, const std::string& strategy_file) : store_(store), strategy_file_(strategy_file)
 	{
 		runner_ = new StrategyRunner(store_);
 		observer_ = new StrategyObserver(runner_);
@@ -78,7 +78,7 @@ namespace prism {
 			perf.win_transactions_ = observer_->GetTransactionsNum(true);
 			perf.win_rate_ = perf.win_transactions_ * 2.0 * 100 / (double)perf.num_transactions_;
 			
-			HLOCList* raw_data = observer_->transactions().at(0).asset_->raw_data();
+			HLOCList* raw_data = observer_->transactions().at(0).asset_->raw_data().get();
 			size_t num_points = raw_data->size();
 			size_t i = 0;
 			while (i < num_points)
@@ -154,7 +154,7 @@ namespace prism {
 		of.close();
 	}
 
-	MACDStrategyScreener::MACDStrategyScreener(IStore* store, 
+	MACDStrategyScreener::MACDStrategyScreener(std::shared_ptr<IStore> store, 
 		const std::string& strategy_file, 
 		int short_period, 
 		int long_period, 

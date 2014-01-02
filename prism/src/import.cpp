@@ -53,7 +53,7 @@ namespace prism {
 	}
 
 	template <typename C, typename F>
-	CSVImporter<C, F>::CSVImporter(IStore* store) : store_(store)
+	CSVImporter<C, F>::CSVImporter(std::shared_ptr<IStore> store) : store_(store)
 	{
 	}
 
@@ -83,7 +83,7 @@ namespace prism {
 		std::string symbol = GetSymbol(csvfile);
 		std::string line;
 		char buf[100];
-		HLOCList group;
+		std::shared_ptr<HLOCList> group(std::make_shared<HLOCList>());
 		int previous;
 		int count = 0;
 		// skip first line, the header
@@ -100,27 +100,27 @@ namespace prism {
 			if (!converter_.Convert(line, &point, &year))
 				return -2;
 
-			if (group.empty())
+			if (group->empty())
 			{
-				group.push_back(point);
+				group->push_back(point);
 				previous = year;
 			}
 			else if (year == previous)
 			{
-				group.push_back(point);
+				group->push_back(point);
 			} 
 			else 
 			{
-				if (!store_->Put(symbol, &group))
+				if (!store_->Put(symbol, group))
 					return -3;
-				group.clear();
-				group.push_back(point);
+				group->clear();
+				group->push_back(point);
 				previous = year;
 			}
 			count++;
 		}
 
-		if (!store_->Put(symbol, &group))
+		if (!store_->Put(symbol, group))
 			return -3;
 
 		infile.close();
@@ -155,7 +155,7 @@ namespace prism {
 
 	template class CSVImporter<WSCSVConverter, AShareFilter>;
 
-	BlockImporter::BlockImporter(IStore* store) : store_(store)
+	BlockImporter::BlockImporter(std::shared_ptr<IStore> store) : store_(store)
 	{
 	}
 	

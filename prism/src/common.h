@@ -9,6 +9,7 @@
 #define COMMON_H
 
 #include <time.h>
+#include <memory>
 #include <vector>
 
 namespace prism {

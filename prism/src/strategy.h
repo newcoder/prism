@@ -112,7 +112,7 @@ namespace prism {
 	class StrategyRunner
 	{
 	public:
-		StrategyRunner(IStore* store);
+		StrategyRunner(std::shared_ptr<IStore> store);
 		~StrategyRunner();
 	public:
 		bool Load(const std::string& strategy_file);
@@ -133,7 +133,7 @@ namespace prism {
 		void Sell(std::vector<PortfolioItem>& portfolios);
 		bool SellPortfolioItem(const PortfolioItem& item);
 	private:
-		IStore* store_;
+		std::shared_ptr<IStore> store_;
 		AssetsProvider* assets_provider_;
 		Strategy* strategy_;
 		StrategyObserver* observer_;

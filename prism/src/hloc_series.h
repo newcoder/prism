@@ -36,22 +36,22 @@ namespace prism {
 		~HLOCSeries();
 	public:
 		// load from iStore
-		bool Load(const std::string& symbol, IStore* store);
+		bool Load(const std::string& symbol, std::shared_ptr<IStore> store);
 		// restore the price from split, forward = true, means keep current price fixed, adjust the price before the split date
 		void RestoreSplit(const SplitOptions& options, bool forward = true);
 		// normalize all prices to 0.0-1.0
 		void Normalize();
 		// shrink
-		void ShrinkByNum(size_t num, HLOCList *result);
+		void ShrinkByNum(size_t num, std::shared_ptr<HLOCList> result);
 		// shrink to weekly
-		void ShrinkByWeek(HLOCList *result);
+		void ShrinkByWeek(std::shared_ptr<HLOCList> result);
 		// shrink to monthly
-		void ShrinkByMonth(HLOCList *result);
+		void ShrinkByMonth(std::shared_ptr<HLOCList> result);
 		// calcuate local indicators
-		void CalculateIndicator(ILocalIndicator* indicator) const;
+		void CalculateIndicator(std::shared_ptr<ILocalIndicator> indicator) const;
 	private:
 		template <typename T>
-			void ShrinkByTime(HLOCList *result, T& functor);
+			void ShrinkByTime(std::shared_ptr<HLOCList> result, T& functor);
 		HLOC ShrinkToOne(const HLOCList& list);
 	private:
 		HLOCList::iterator begin_;

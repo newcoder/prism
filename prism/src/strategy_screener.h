@@ -29,7 +29,7 @@ namespace prism {
 	class StrategyScreener
 	{
 	public:
-		StrategyScreener(IStore* store, const std::string& strategy_file);
+		StrategyScreener(std::shared_ptr<IStore> store, const std::string& strategy_file);
 		virtual ~StrategyScreener();
 	public:
 		virtual void SetStrategyParam(Strategy* strategy);
@@ -40,7 +40,7 @@ namespace prism {
 		bool TestOnSymbol(const std::string& symbol);		
 		void GetSymbols(std::vector<std::string>& symbols);
 	private:
-		IStore* store_;
+		std::shared_ptr<IStore> store_;
 		StrategyRunner* runner_;
 		StrategyObserver* observer_;
 		std::string strategy_file_;
@@ -50,7 +50,7 @@ namespace prism {
 	class MACDStrategyScreener: public StrategyScreener
 	{
 	public:
-		MACDStrategyScreener(IStore* store, const std::string& strategy_file, 
+		MACDStrategyScreener(std::shared_ptr<IStore> store, const std::string& strategy_file, 
 			int short_period, int long_period, int signal_period, 
 			bool linear_predict, int look_back, double threshold);
 		~MACDStrategyScreener();

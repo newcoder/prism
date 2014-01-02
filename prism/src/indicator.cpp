@@ -15,16 +15,11 @@ namespace prism
 {
 	SMA::SMA(int period): period_(period)
 	{
-		result_ = new DoubleTimeList();
-		//std::cout << "SMA::SMA()" << std::endl;
-
+		result_ = std::make_shared<DoubleTimeList>();
 	}
 
 	SMA::~SMA()
 	{
-		delete result_;
-		//std::cout << "SMA::~SMA()" << std::endl;
-
 	}
 
 	void SMA::Clear()
@@ -72,14 +67,10 @@ namespace prism
 
 	EMA::EMA(int period, double weight): SMA(period), weight_(weight)
 	{
-		//std::cout << "EMA::EMA()" << std::endl;
-
 	}
 
 	EMA::~EMA()
 	{
-		//std::cout << "EMA::~EMA()" << std::endl;
-
 	}
 
 	bool EMA::Move(DoubleTimeList::const_iterator current, DoubleTimeList::const_iterator end)
@@ -112,36 +103,26 @@ namespace prism
 
 	MACD::MACD(int shortPeriod, int longPeriod, int signalPeriod): short_period_(shortPeriod), long_period_(longPeriod), signal_period_(signalPeriod)
 	{
-		long_ema_ = new EMA(long_period_);
-		short_ema_ = new EMA(short_period_);
-		signal_ema_ = new EMA(signal_period_);
-		macd_ = new DoubleTimeList();
-		histogram_ = new DoubleTimeList();
-		cross_overs_ = new CrossOverList();
-
-		//std::cout << "MACD::MACD()" << std::endl;
+		long_ema_ = std::make_shared<EMA>(long_period_);
+		short_ema_ = std::make_shared<EMA>(short_period_);
+		signal_ema_ = std::make_shared<EMA>(signal_period_);
+		macd_ = std::make_shared<DoubleTimeList>();
+		histogram_ = std::make_shared<DoubleTimeList>();
+		cross_overs_ = std::make_shared<CrossOverList>();
 	}
 
 	MACD::~MACD()
 	{
-		delete long_ema_;
-		delete short_ema_;
-		delete signal_ema_;
-		delete macd_;
-		delete histogram_;
-		delete cross_overs_;
-		//std::cout << "MACD::~MACD()" << std::endl;
-
 	}
 	
 	void MACD::Generate(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end)
 	{
 		// generate long EMA
 		long_ema_->Generate(begin, end);
-		DoubleTimeList* long_result = long_ema_->result();
+		auto long_result = long_ema_->result();
 		// generate short EMA
 		short_ema_->Generate(begin, end);
-		DoubleTimeList* short_result = short_ema_->result();
+		auto short_result = short_ema_->result();
 		// get the MACD by differing the long and short EMA
 		TLUtils::Remove(short_result, short_result->size() - long_result->size());
 		TLUtils::Subtract(short_result, long_result, macd_);
@@ -228,22 +209,22 @@ namespace prism
 		cross_overs_->push_back(co);
 	}
 
-	DoubleTimeList* MACD::macd()
+	std::shared_ptr<DoubleTimeList> MACD::macd()
 	{
 		return macd_;
 	}
 	
-	DoubleTimeList* MACD::signal()
+	std::shared_ptr<DoubleTimeList> MACD::signal()
 	{
 		return signal_ema_->result();
 	}
 	
-	DoubleTimeList* MACD::histogram()
+	std::shared_ptr<DoubleTimeList> MACD::histogram()
 	{
 		return histogram_;
 	}
 
-	CrossOverList* MACD::cross_overs()
+	std::shared_ptr<CrossOverList> MACD::cross_overs()
 	{
 		return cross_overs_;
 	}
@@ -260,19 +241,19 @@ namespace prism
 
 	RSI::RSI(int period) : period_(period)
 	{
-		result_ = new DoubleTimeList();
+		result_ = std::make_shared<DoubleTimeList>();
 	}
 
 	RSI::~RSI()
 	{
-		delete result_;
 	}
 
 	void RSI::Generate(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end)
 	{
 		auto cit = begin;
 		DoubleTimeList gain, loss;
-		SMA gain_ma(period_), loss_ma(period_); // google finance use SMA to smooth, may use EMA...
+		auto gain_ma = std::make_shared<SMA>(period_);
+		auto loss_ma = std::make_shared<SMA>(period_); // google finance use SMA to smooth, may use EMA...
 		double previous = (*cit).value;
 		cit++;
 		while (cit != end)
@@ -292,10 +273,10 @@ namespace prism
 		}
 
 		TimeSeries gain_ts(gain.begin(), gain.end());
-		gain_ts.CalculateIndicator(&gain_ma);
+		gain_ts.CalculateIndicator(gain_ma);
 		TimeSeries loss_ts(loss.begin(), loss.end());
-		loss_ts.CalculateIndicator(&loss_ma);
-		TLUtils::Divide(gain_ma.result(), loss_ma.result(), result_);
+		loss_ts.CalculateIndicator(loss_ma);
+		TLUtils::Divide(gain_ma->result(), loss_ma->result(), result_);
 
 		struct RSIndex {
 			void operator() (DoubleTimePoint& p) { p.value = 100 - 100 / (1 + p.value); }
@@ -312,12 +293,11 @@ namespace prism
 
 	RSV::RSV(int period): period_(period)
 	{
-		result_ = new DoubleTimeList();
+		result_ = std::make_shared<DoubleTimeList>();
 	}
 
 	RSV::~RSV()
 	{
-		delete result_;
 	}
 
 	void RSV::Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end)
@@ -354,25 +334,21 @@ namespace prism
 
 	KDJ::KDJ(int period, int smooth1, int smooth2): period_(period), smooth1_(smooth1), smooth2_(smooth2)
 	{
-		rsv_ = new RSV(period_);
-		k_ema_ = new EMA(smooth1, ((double)smooth1 - 1) /(smooth1 + 1));
-		d_ema_ = new EMA(smooth2, ((double)smooth2 - 1) /(smooth2 + 1));
-		j_ = new DoubleTimeList();
+		rsv_ = std::make_shared<RSV>(period_);
+		k_ema_ = std::make_shared<EMA>(smooth1, ((double)smooth1 - 1) /(smooth1 + 1));
+		d_ema_ = std::make_shared<EMA>(smooth2, ((double)smooth2 - 1) /(smooth2 + 1));
+		j_ = std::make_shared<DoubleTimeList>();
 	}
 
 	KDJ::~KDJ()
 	{
-		delete rsv_;
-		delete k_ema_;
-		delete d_ema_;
-		delete j_;
 	}
 
 	void KDJ::Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end)
 	{
 		// generate RSV from HLOC series
 		rsv_->Generate(begin, end);
-		DoubleTimeList *rsv = rsv_->result();
+		auto rsv = rsv_->result();
 		// generate K and D from RSV
 		k_ema_->Generate(rsv->begin(), rsv->end());
 		d_ema_->Generate(k()->begin(), k()->end());
@@ -385,17 +361,17 @@ namespace prism
 		TLUtils::BinaryOpHelper(k(), d(), j_, Jcalc);
 	}
 
-	DoubleTimeList* KDJ::k() 
+	std::shared_ptr<DoubleTimeList> KDJ::k()
 	{
 		return k_ema_->result(); 
 	}
 	
-	DoubleTimeList* KDJ::d() 
+	std::shared_ptr<DoubleTimeList> KDJ::d()
 	{ 
 		return d_ema_->result(); 
 	}
 
-	DoubleTimeList* KDJ::j() 
+	std::shared_ptr<DoubleTimeList> KDJ::j()
 	{ 
 		return j_; 
 	}
@@ -410,25 +386,23 @@ namespace prism
 
 	TL::TL(double threshold) : threshold_(threshold)
 	{
-		short_trend_ = new DoubleTimeList();
-		medium_trend_ = new DoubleTimeList();
+		short_trend_ = std::make_shared<DoubleTimeList>();
+		medium_trend_ = std::make_shared<DoubleTimeList>();
 	}
 
 	TL::~TL()
 	{
-		delete short_trend_;
-		delete medium_trend_;
 	}
 
 	void TL::Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end)
 	{
-		DoubleTimeList tl;
-		TLUtils::Populate(begin, end, PRICE_TYPE_H, &tl);
-		TimeSeries ts(tl.begin(), tl.end());
+		auto tl = std::make_shared<DoubleTimeList>();
+		TLUtils::Populate(begin, end, PRICE_TYPE_H, tl);
+		TimeSeries ts(tl->begin(), tl->end());
 
 		// find local min/max
-		DoubleTimeList local_maxs;
-		ts.FindLocalExtremas(threshold_, &local_maxs);
+		auto local_maxs = std::make_shared<DoubleTimeList>();
+		ts.FindLocalExtremas(threshold_, local_maxs);
 
 		// TODO....
 	}
@@ -441,12 +415,11 @@ namespace prism
 
 	CR::CR(int period) : period_(period)
 	{
-		result_ = new DoubleTimeList();
+		result_ = std::make_shared<DoubleTimeList>();
 	}
 
 	CR::~CR()
 	{
-		delete result_;
 	}
 
 	void CR::Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end)

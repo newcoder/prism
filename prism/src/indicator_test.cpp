@@ -14,34 +14,34 @@ class TestIndicator : public testing::Test
 public:
 	KCStore store;
 	int count;
-	HLOCList *hloc_list;
-	DoubleTimeList tl;
+	std::shared_ptr<HLOCList> hloc_list;
+	std::shared_ptr<DoubleTimeList> tl;
 
 	virtual void SetUp()
 	{
 		bool ret = store.Open(kDataPath + "TestData8.kch");
-		hloc_list = new prism::HLOCList();
+		hloc_list = std::make_shared<HLOCList>();
+		tl = std::make_shared<DoubleTimeList>();
 		ret = store.GetAll("SH600658", hloc_list);
 		EXPECT_TRUE(ret);
 		EXPECT_TRUE(hloc_list->size() > 0);
 
-		TLUtils::Populate(hloc_list, PRICE_TYPE_C, &tl);
-		EXPECT_TRUE(tl.size() > 0);
-		EXPECT_EQ(tl.size(), hloc_list->size());
+		TLUtils::Populate(hloc_list, PRICE_TYPE_C, tl);
+		EXPECT_TRUE(tl->size() > 0);
+		EXPECT_EQ(tl->size(), hloc_list->size());
 	}
 
 	virtual void TearDown()
 	{
 		store.Close();
-		delete hloc_list;
 	}
 };
 
 
 TEST_F(TestIndicator, testSMA)
 {
-	SMA* sma = new SMA(20);
-	TimeSeries ts(tl.begin(), tl.end());
+	auto sma = std::make_shared<SMA>(20);
+	TimeSeries ts(tl->begin(), tl->end());
 	ts.CalculateIndicator(sma);
 	std::cout << "count after SMA: " << sma->result()->size() << std::endl;
 
@@ -50,9 +50,9 @@ TEST_F(TestIndicator, testSMA)
 
 TEST_F(TestIndicator, testEMA)
 {
-	EMA* ema12 = new EMA(12);
-	EMA* ema26 = new EMA(26);
-	TimeSeries ts(tl.begin(), tl.end());
+	auto ema12 = std::make_shared<EMA>(12);
+	auto ema26 = std::make_shared<EMA>(26);
+	TimeSeries ts(tl->begin(), tl->end());
 	ts.CalculateIndicator(ema12);
 	ts.CalculateIndicator(ema26);
 
@@ -67,8 +67,8 @@ TEST_F(TestIndicator, testEMA)
 
 TEST_F(TestIndicator, testMACD)
 {
-	MACD* macd = new MACD(12, 26, 9);
-	TimeSeries ts(tl.begin(), tl.end());
+	auto macd = std::make_shared<MACD>(12, 26, 9);
+	TimeSeries ts(tl->begin(), tl->end());
 	ts.CalculateIndicator(macd);
 	std::cout << "count after MACD: " << macd->macd()->size() << std::endl;
 
@@ -77,12 +77,12 @@ TEST_F(TestIndicator, testMACD)
 	std::cout << "count after MACD, histogram: " << macd->histogram()->size() << std::endl;
 	TLUtils::Dump(kDataPath + "MACD-Histogram.csv", macd->histogram());
 
-	CrossOverList* co = macd->cross_overs();
+	auto co = macd->cross_overs();
 	std::cout << "count of crossovers: " << co->size() << std::endl;
-	DoubleTimeList crossOverProfit;
+	auto crossOverProfit = std::make_shared<DoubleTimeList>();
 	for (size_t i = 0; i < co->size(); i++)
 	{
-		crossOverProfit.push_back(DoubleTimePoint(co->at(i).profit, co->at(i).time));
+		crossOverProfit->push_back(DoubleTimePoint(co->at(i).profit, co->at(i).time));
 	}
 
 	struct positive_counter {
@@ -90,7 +90,7 @@ TEST_F(TestIndicator, testMACD)
 			return profit.value > 0;
 		}
 	};
-	int count = std::count_if(crossOverProfit.begin(), crossOverProfit.end(), positive_counter());
+	int count = std::count_if(crossOverProfit->begin(), crossOverProfit->end(), positive_counter());
 	std::cout << "num of positive profit:" << count << std::endl;
 
 	int win_length = 0, loss_length = 0;
@@ -114,14 +114,14 @@ TEST_F(TestIndicator, testMACD)
 	std::cout << "total area of wins:" << win_area << std::endl;
 	std::cout << "total area of loss:" << loss_area << std::endl;
 
-	TLUtils::Dump(kDataPath + "MACD-Crossover-Histogram.csv", macd->histogram(), &crossOverProfit);
-	TLUtils::Dump(kDataPath + "MACD-Profit.csv", &crossOverProfit);
+	TLUtils::Dump(kDataPath + "MACD-Crossover-Histogram.csv", macd->histogram(), crossOverProfit);
+	TLUtils::Dump(kDataPath + "MACD-Profit.csv", crossOverProfit);
 }
 
 TEST_F(TestIndicator, testRSI)
 {
-	RSI* rsi = new RSI(12);
-	TimeSeries ts(tl.begin(), tl.end());
+	auto rsi = std::make_shared<RSI>(12);
+	TimeSeries ts(tl->begin(), tl->end());
 
 	ts.CalculateIndicator(rsi);
 	std::cout << "count after rsi: " << rsi->result()->size() << std::endl;
@@ -130,7 +130,7 @@ TEST_F(TestIndicator, testRSI)
 
 TEST_F(TestIndicator, testKDJ)
 {
-	KDJ* kdj = new KDJ(9, 2, 2);
+	auto kdj = std::make_shared<KDJ>(9, 2, 2);
 	HLOCSeries hs(hloc_list->begin(), hloc_list->end());
 	hs.CalculateIndicator(kdj);
 
@@ -144,7 +144,7 @@ TEST_F(TestIndicator, testKDJ)
 
 TEST_F(TestIndicator, testCR)
 {
-	CR* cr = new CR(20);
+	auto cr = std::make_shared<CR>(20);
 	HLOCSeries hs(hloc_list->begin(), hloc_list->end());
 	hs.CalculateIndicator(cr);
 

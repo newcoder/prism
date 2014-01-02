@@ -173,12 +173,12 @@ namespace prism
 		return first_->Match(current, end) && second_->Match(current + first_->Size() - 2, end);
 	}
 
-	std::map<PATTERN_TYPE, Pattern*> PatternFactory::sPatterns;
+	std::map<PATTERN_TYPE, std::shared_ptr<Pattern>> PatternFactory::sPatterns;
 
 	#define CREATE_PATTERN(type) \
 		CreatePattern(PATTERN_##type, type, sizeof(type) / sizeof(int));
 
-	Pattern* PatternFactory::GetPattern(PATTERN_TYPE type)
+	std::shared_ptr<Pattern> PatternFactory::GetPattern(PATTERN_TYPE type)
 	{
 		auto cit = sPatterns.find(type);
 		if (cit != sPatterns.end())
@@ -202,9 +202,9 @@ namespace prism
 		return nullptr;
 	}
 
-	Pattern* PatternFactory::CreatePattern(PATTERN_TYPE type, const int *arr, int size)
+	std::shared_ptr<Pattern> PatternFactory::CreatePattern(PATTERN_TYPE type, const int *arr, int size)
 	{
-		Pattern* pattern = new Pattern();
+		auto pattern = std::make_shared<Pattern>();
 		const int *p = arr;
 		bool group_start = false;
 		std::set<int> points_set;
@@ -216,7 +216,7 @@ namespace prism
 				// start of a group
 				if (group_start)
 				{
-					pattern->AddGroup(PointsGroup(pattern, points_set, adjacent));
+					pattern->AddGroup(PointsGroup(pattern.get(), points_set, adjacent));
 				}
 				group_start = true;
 				points_set.clear();
@@ -234,7 +234,7 @@ namespace prism
 		}
 		if (points_set.size() > 0)
 		{
-			pattern->AddGroup(PointsGroup(pattern, points_set, adjacent));
+			pattern->AddGroup(PointsGroup(pattern.get(), points_set, adjacent));
 		}
 
 		sPatterns.insert(std::make_pair(type, pattern));

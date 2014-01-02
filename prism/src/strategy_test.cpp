@@ -13,16 +13,17 @@ const std::string kDataPath = "D:\\project\\prism\\data\\";
 class StrategyTest : public testing::Test
 {
 public:
-	KCStore store;
-
+	std::shared_ptr<KCStore> store_;
 	virtual void SetUp()
 	{
-		bool ret = store.Open(kDataPath + "TestData8.kch");
+		store_ = std::make_shared<KCStore>();
+		bool ret = store_->Open(kDataPath + "TestData8.kch");
+		EXPECT_TRUE(ret);
 	}
 
 	virtual void TearDown()
 	{
-		store.Close();
+		store_->Close();
 	}
 };
 
@@ -45,7 +46,7 @@ TEST_F(StrategyTest, testParse)
 
 TEST_F(StrategyTest, testRun)
 {
-	StrategyRunner runner(&store);
+	StrategyRunner runner(store_);
 	bool ret = runner.Load(kDataPath + "strategy.txt");
 	EXPECT_TRUE(ret);
 
@@ -54,7 +55,7 @@ TEST_F(StrategyTest, testRun)
 	runner.Initialize();
 	runner.Run();
 
-	TLUtils::Dump(kDataPath + "perf.csv", &observer.performance_series());
+	//TLUtils::Dump(kDataPath + "perf.csv", &observer.performance_series());
 	std::vector<Transaction> trans = observer.transactions();
 	for (size_t i = 0; i < trans.size(); i++)
 	{
@@ -71,7 +72,7 @@ TEST_F(StrategyTest, testScreener)
 {
 //	StrategyScreener screener(&store, kDataPath + "strategy.txt");
 				
-	MACDStrategyScreener* macd_screener = new MACDStrategyScreener(&store, kDataPath + "strategy.txt", 12, 26, 9, true, 4, 0.000001);
+	MACDStrategyScreener* macd_screener = new MACDStrategyScreener(store_, kDataPath + "strategy.txt", 12, 26, 9, true, 4, 0.000001);
 	macd_screener->Test();
 	macd_screener->DumpResult(kDataPath + "screen_perf.csv");
 	delete macd_screener;
@@ -100,7 +101,7 @@ TEST_F(StrategyTest, testMACDScreener)
 			if (i >= j) continue;
 			for (int k = 8; k <= 10; k++)
 			{ // signal
-				MACDStrategyScreener* macd_screener = new MACDStrategyScreener(&store, kDataPath + "strategy.txt", i, j, k, false, 3, 0.000001);
+				MACDStrategyScreener* macd_screener = new MACDStrategyScreener(store_, kDataPath + "strategy.txt", i, j, k, false, 3, 0.000001);
 				macd_screener->Test();
 				int num_positive = macd_screener->GetPositiveNum();
 				

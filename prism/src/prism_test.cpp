@@ -9,13 +9,13 @@ int main(int argc, char* argv[])
 	//::testing::GTEST_FLAG(filter) = "StrategyTest.testRun";
 	//::testing::GTEST_FLAG(filter) = "StrategyTest.testScreener";
 	//::testing::GTEST_FLAG(filter) = "StrategyTest.testMACDScreener";
-	//::testing::GTEST_FLAG(filter) = "LibTest.testBoostFile";
+	//::testing::GTEST_FLAG(filter) = "LibTest.*";
 	//::testing::GTEST_FLAG(filter) = "ImportTest.testImportBlock";
 	//::testing::GTEST_FLAG(filter) = "TestTimeSeries.testFindTurningPoints";
 	//::testing::GTEST_FLAG(filter) = "ImportTest.testImportDir";
-	::testing::GTEST_FLAG(filter) = "ScreenerTest.*";
-	::testing::GTEST_FLAG(filter) = "AssetTest.testScales";
-	::testing::GTEST_FLAG(filter) = "TradeTest.*:ScreenerTest.*:AssetTest.*";
+	//::testing::GTEST_FLAG(filter) = "ScreenerTest.*";
+	//::testing::GTEST_FLAG(filter) = "AssetTest.*";
+	//::testing::GTEST_FLAG(filter) = "TradeTest.*:ScreenerTest.*:AssetTest.*";
 
 
 	testing::InitGoogleTest(&argc, argv);

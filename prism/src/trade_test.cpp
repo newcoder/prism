@@ -12,29 +12,29 @@ const std::string kDataPath = "D:\\project\\prism\\data\\";
 class TradeTest : public testing::Test
 {
 public:
-	KCStore store;	
-
+	std::shared_ptr<KCStore> store_;
 	virtual void SetUp()
 	{
-		bool ret = store.Open(kDataPath + "TestData8.kch");
+		store_ = std::make_shared<KCStore>();
+		bool ret = store_->Open(kDataPath + "TestData8.kch");
 		EXPECT_TRUE(ret);
 	}
 
 	virtual void TearDown()
 	{
-		store.Close();
+		store_->Close();
 	}
 };
 
 
 TEST_F(TradeTest, testTransactions)
 {
-	AssetsProvider loader((IStore*)&store);
+	AssetsProvider loader(store_);
 
 	std::vector<std::string> elems{ "SH600198", "SZ002015" };
 	int count = loader.LoadAssets(elems, 2011, 2013);
 
-	Asset* asset = loader.Get("SH600198");
+	auto asset = loader.Get("SH600198");
 	AssetIndexer *asset_indexer = new AssetIndexer(asset);
 
 	TransactionManager trans_manager;
@@ -64,17 +64,17 @@ TEST_F(TradeTest, testTransactions)
 }
 TEST_F(TradeTest, testPortfolios)
 {
-	AssetsProvider loader((IStore*)&store);
+	AssetsProvider loader(store_);
 	std::string symbol1 = "SH600198";
 	std::string symbol2 = "SZ002015";
 
 	std::vector<std::string> elems{symbol1, symbol2 };
 	int count = loader.LoadAssets(elems, 2011, 2013);
 
-	Asset* asset1 = loader.Get(symbol1);
+	auto asset1 = loader.Get(symbol1);
 	AssetIndexer *asset_indexer1 = new AssetIndexer(asset1);
 
-	Asset* asset2 = loader.Get(symbol2);
+	auto asset2 = loader.Get(symbol2);
 	AssetIndexer *asset_indexer2 = new AssetIndexer(asset2);
 
 	PortfolioManager portfolio_manager;

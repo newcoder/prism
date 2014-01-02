@@ -13,30 +13,31 @@ const std::string kDataPath = "D:\\project\\prism\\data\\";
 class ScreenerTest : public testing::Test
 {
 public:
-	KCStore store;
+	std::shared_ptr<KCStore> store_;
 	virtual void SetUp()
 	{
-		bool ret = store.Open(kDataPath + "TestData8.kch");
+		store_ = std::make_shared<KCStore>();
+		bool ret = store_->Open(kDataPath + "TestData8.kch");
 		EXPECT_TRUE(ret);
 	}
 
 	virtual void TearDown()
 	{
-		store.Close();
+		store_->Close();
 	}
 };
 
 
 TEST_F(ScreenerTest, testScreen)
 {
-	AssetsProvider loader((IStore*)&store);
+	AssetsProvider loader(store_);
 	int count = loader.LoadAll();
 
 	std::cout << "symbols loaded: " << count << std::endl;
 	
 	AssetIndexerList asset_indexer_list;
 	auto assets = loader.assets();
-	for (auto a : *assets)
+	for (auto a : assets)
 	{
 		asset_indexer_list.push_back(AssetIndexer(a.second));
 	}

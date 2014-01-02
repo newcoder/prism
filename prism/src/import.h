@@ -8,6 +8,7 @@
 #ifndef IMPORT_H
 #define IMPORT_H
 
+#include "common.h"
 #include <string>
 
 namespace prism {
@@ -34,7 +35,7 @@ namespace prism {
 	template <typename C, typename F>
 	class CSVImporter {
 	public:
-		CSVImporter(IStore* store);
+		CSVImporter(std::shared_ptr<IStore> store);
 		~CSVImporter();
 	public:
 		// import the csv file to data store
@@ -49,7 +50,7 @@ namespace prism {
 	private:
 		std::string GetSymbol(const std::string& file_name);
 	private:
-		IStore *store_;
+		std::shared_ptr<IStore> store_;
 		C converter_;
 		F filter_;
 	};
@@ -60,14 +61,14 @@ namespace prism {
 	class BlockImporter
 	{
 	public:
-		BlockImporter(IStore* store);
+		BlockImporter(std::shared_ptr<IStore> store);
 		~BlockImporter();
 	public:
 		// import all blocks data in the folder
 		// return the number of imported blocks
 		int ImportDir(const std::string& root);
 	private:
-		IStore *store_;
+		std::shared_ptr<IStore> store_;
 	};
 }
 

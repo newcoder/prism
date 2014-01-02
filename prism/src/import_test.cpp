@@ -10,55 +10,57 @@ const std::string kDataPath = "D:\\project\\prism\\data\\";
 class ImportTest : public testing::Test
 {
 public:
-	KCStore store;
-	Importer *importer;
+	//std::shared_ptr<int> test(std::make_shared<int>);
+	std::shared_ptr<KCStore> store_;
+	std::shared_ptr<Importer> importer_;
 	int count;
 
 	virtual void SetUp()
 	{
-		importer = new Importer(&store);
-		bool ret = store.Open(kDataPath + "TestData8.kch");
+		store_ = std::make_shared<KCStore>();
+		importer_ = std::make_shared<Importer>(store_);
+		bool ret = store_->Open(kDataPath + "TestData8.kch");
 		std::cout << "ImportTest setup" << std::endl;
 	}
 
 	virtual void TearDown()
 	{
-		store.Close();
+		store_->Close();
 		std::cout << "ImportTest teardown" << std::endl;
 	}
 };
 
 TEST_F(ImportTest, testVerifyNumber)
 {
-	count = importer->Import(kDataPath + "SH600623.csv");	
-	HLOCList *hloc_list = new HLOCList();
-	store.GetAll("SH600623", hloc_list);
+	count = importer_->Import(kDataPath + "SH600623.csv");	
+	auto hloc_list = std::make_shared<HLOCList>();
+	store_->GetAll("SH600623", hloc_list);
 	EXPECT_EQ(count, hloc_list->size());
 }
 
 TEST_F(ImportTest, testImport)
 {
-	count = importer->Import(kDataPath + "SH600633.csv");
+	count = importer_->Import(kDataPath + "SH600633.csv");
 	std::cout << count << std::endl;
 	EXPECT_GT(count, 0);
 }
 
 TEST_F(ImportTest, testImportDir)
 {
-	count = importer->ImportDir(kDataPath + "raw\\");
+	count = importer_->ImportDir(kDataPath + "raw\\");
 	std::cout << count << " files imported."<< std::endl;
 	EXPECT_GT(count, 0);
 }
 
 TEST_F(ImportTest, testImportBlock)
 {
-	BlockImporter importer(&store);
+	BlockImporter importer(store_);
 	count = importer.ImportDir(kDataPath + "blocks\\");
 	std::cout << count << " files imported." << std::endl;
 	EXPECT_GT(count, 0);
 
 	std::string blocks;
-	bool ret = store.GetBlockList(blocks);
+	bool ret = store_->GetBlockList(blocks);
 	EXPECT_TRUE(ret);
 	std::cout << "blocks: " << blocks << std::endl;
 	std::cout << "blocks size: " << blocks.size() << std::endl;
@@ -66,12 +68,12 @@ TEST_F(ImportTest, testImportBlock)
 	std::vector<std::string> elems;
 	kyotocabinet::strsplit(blocks, '\n', &elems);
 	std::string symbols;
-	ret = store.GetBlock(elems[10], symbols);
+	ret = store_->GetBlock(elems[10], symbols);
 	std::cout << "block name: " << elems[10] << std::endl;
 	EXPECT_TRUE(ret);
 	std::cout << "symbols: " << symbols << std::endl;
 
-	ret = store.GetBlock("其它板块\\A股板块", symbols);
+	ret = store_->GetBlock("其它板块\\A股板块", symbols);
 	std::cout << "block name: " << "其它板块\\A股板块" << std::endl;
 	EXPECT_TRUE(ret);
 	std::cout << "symbols: " << symbols << std::endl;
@@ -80,20 +82,20 @@ TEST_F(ImportTest, testImportBlock)
 
 TEST_F(ImportTest, testGetAll)
 {
-	HLOCList *hloc_list = new HLOCList();
-	bool ret = store.GetAll("SH600623", hloc_list);
+	auto hloc_list = std::make_shared<HLOCList>();
+	bool ret = store_->GetAll("SH600623", hloc_list);
 	EXPECT_TRUE(ret);
 }
 
 TEST(StoreTest, testStoreOpenClose)
 {
-	KCStore store;
-	Importer *importer = new Importer(&store);
+	std::shared_ptr<KCStore> store = std::make_shared<KCStore>();
+	std::unique_ptr<Importer> importer = std::make_unique<Importer>(store);
 
-	bool ret = store.Open(kDataPath + "TestData.kch");
+	bool ret = store->Open(kDataPath + "TestData.kch");
 	EXPECT_TRUE(ret);
 
-	store.Close();
+	store->Close();
 
 }
 
@@ -101,20 +103,21 @@ TEST(StoreTest, testStoreOpenClose)
 class ImportFileListTest : public testing::TestWithParam<std::string>
 {
 public:
-	KCStore store;
-	Importer *importer;
+	std::shared_ptr<KCStore> store_;
+	std::shared_ptr<Importer> importer_;
 	int count;
 
 	virtual void SetUp()
 	{
-		importer = new Importer(&store);
-		bool ret = store.Open(kDataPath + "TestData.kch");
+		store_ = std::make_shared<KCStore>();
+		importer_ = std::make_shared<Importer>(store_);
+		bool ret = store_->Open(kDataPath + "TestData.kch");
 		std::cout << "ImportFileListTest setup" << std::endl;
 	}
 
 	virtual void TearDown()
 	{
-		store.Close();
+		store_->Close();
 		std::cout << "ImportFileListTest teardown" << std::endl;
 	}
 };
@@ -126,7 +129,7 @@ INSTANTIATE_TEST_CASE_P(MyImportFileListTest,
 TEST_P(ImportFileListTest, importFileList)
 {
 	// Test loading a list of files...
-	count = importer->Import(kDataPath + GetParam());
+	count = importer_->Import(kDataPath + GetParam());
 	std::cout << count << std::endl;
 	EXPECT_GT(count, 0);
 }

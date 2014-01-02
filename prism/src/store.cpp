@@ -48,37 +48,37 @@ namespace prism {
 		return symbol + "_FIRST_POINT";
 	}
 
-	bool KCStore::GetLast(const std::string& symbol, HLOC* point)
+	bool KCStore::GetLast(const std::string& symbol, std::shared_ptr<HLOC> point)
 	{
 		std::string key = GenerateLastKey(symbol);
-		return -1 != db_.get(key.c_str(), key.size(), (char *)point, sizeof(HLOC));
+		return -1 != db_.get(key.c_str(), key.size(), (char *)point.get(), sizeof(HLOC));
 	}
 	
-	bool KCStore::GetFirst(const std::string& symbol, HLOC* point)
+	bool KCStore::GetFirst(const std::string& symbol, std::shared_ptr<HLOC> point)
 	{
 		std::string key = GenerateFirstKey(symbol);
-		return -1 != db_.get(key.c_str(), key.size(), (char *)point, sizeof(HLOC));
+		return -1 != db_.get(key.c_str(), key.size(), (char *)point.get(), sizeof(HLOC));
 	}
 
-	bool KCStore::UpdateLast(const std::string& symbol, HLOC* point)
+	bool KCStore::UpdateLast(const std::string& symbol, std::shared_ptr<HLOC> point)
 	{
 		std::string key = GenerateLastKey(symbol);
-		return db_.set(key.c_str(), key.size(), (const char*)point, sizeof(HLOC));
+		return db_.set(key.c_str(), key.size(), (const char*)point.get(), sizeof(HLOC));
 	}
 
-	bool KCStore::UpdateFirst(const std::string& symbol, HLOC* point)
+	bool KCStore::UpdateFirst(const std::string& symbol, std::shared_ptr<HLOC> point)
 	{
 		std::string key = GenerateFirstKey(symbol);
-		return db_.set(key.c_str(), key.size(), (const char*)point, sizeof(HLOC));
+		return db_.set(key.c_str(), key.size(), (const char*)point.get(), sizeof(HLOC));
 	}
 
-	bool KCStore::Append(const std::string& symbol, HLOCList* points)
+	bool KCStore::Append(const std::string& symbol, std::shared_ptr<HLOCList> points)
 	{
 		std::string key = GenerateKey(symbol, points->at(0).time);
 		return db_.append(key.c_str(), key.size(), (const char*)&points->at(0), sizeof(HLOC)*points->size());
 	}
 
-	bool KCStore::Put(const std::string& symbol, HLOCList *points)
+	bool KCStore::Put(const std::string& symbol, std::shared_ptr<HLOCList> points)
 	{
 		HLOC last;
 		if (points->empty()) return true;
@@ -88,11 +88,11 @@ namespace prism {
 		{
 			// first time
 			return Append(symbol, points) &&
-				UpdateFirst(symbol, &points->at(0)) &&
-				UpdateLast(symbol, &points->at(points->size() - 1));
+				UpdateFirst(symbol, std::shared_ptr<HLOC>(&points->at(0))) &&
+				UpdateLast(symbol, std::shared_ptr<HLOC>(&points->at(points->size() - 1)));
 		}
 
-		if (GetLast(symbol, &last)) {
+		if (GetLast(symbol, std::shared_ptr<HLOC>(&last))) {
 			if (last.time > points->at(0).time)
 			{
 				return false;
@@ -100,14 +100,14 @@ namespace prism {
 			else
 			{
 				return Append(symbol, points) &&
-					UpdateLast(symbol, &points->at(points->size() - 1));
+					UpdateLast(symbol, std::shared_ptr<HLOC>(&points->at(points->size() - 1)));
 			}
 		}
 
 		return false;
 	}
 
-	bool KCStore::Get(const std::string& symbol, size_t begin_year, size_t end_year, HLOCList* result)
+	bool KCStore::Get(const std::string& symbol, size_t begin_year, size_t end_year, std::shared_ptr<HLOCList> result)
 	{	
 		int32_t vsize;
 		HLOC vbuf[300];
@@ -131,15 +131,16 @@ namespace prism {
 		return true;
 	}
 
-	bool KCStore::GetAll(const std::string& symbol, HLOCList* result)
+	bool KCStore::GetAll(const std::string& symbol, std::shared_ptr<HLOCList> result)
 	{
-		HLOC first, last;
-		if (GetFirst(symbol, &first) && GetLast(symbol, &last))
+		auto first = std::make_shared<HLOC>();
+		auto last = std::make_shared<HLOC>();
+		if (GetFirst(symbol, first) && GetLast(symbol, last))
 		{
 			std::tm timeInfo;
-			localtime_s(&timeInfo, &(first.time));
+			localtime_s(&timeInfo, &(first->time));
 			size_t yearBegin = timeInfo.tm_year + 1900;
-			localtime_s(&timeInfo, &(last.time));
+			localtime_s(&timeInfo, &(last->time));
 			size_t yearEnd = timeInfo.tm_year + 1900;
 			return Get(symbol, yearBegin, yearEnd, result);
 		}
