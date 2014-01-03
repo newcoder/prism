@@ -373,6 +373,8 @@ namespace prism {
 		int i = 0;
 		while (start - i >= 0)
 		{
+			if (i > duration_)
+				return false;
 			if (CheckOnePoint(tl, start - i))
 				i++;
 			else
