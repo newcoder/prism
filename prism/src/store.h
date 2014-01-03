@@ -30,8 +30,8 @@ namespace prism {
 		virtual bool Put(const std::string& symbol, std::shared_ptr<HLOCList> points) = 0;
 		virtual bool Get(const std::string& symbol, size_t begin_year, size_t end_year, std::shared_ptr<HLOCList> result) = 0;
 		virtual bool GetAll(const std::string& symbol, std::shared_ptr<HLOCList> result) = 0;
-		virtual bool GetLast(const std::string& symbol, std::shared_ptr<HLOC> point) = 0;
-		virtual bool GetFirst(const std::string& symbol, std::shared_ptr<HLOC> point) = 0;
+		virtual bool GetLast(const std::string& symbol, HLOC& point) = 0;
+		virtual bool GetFirst(const std::string& symbol, HLOC& point) = 0;
 		virtual bool GetBlockList(std::string& block_list) = 0;
 		virtual bool PutBlock(const std::string& block_name, const std::string& symbols) = 0;
 		virtual bool GetBlock(const std::string& block_name, std::string& symbols) = 0;
@@ -67,8 +67,8 @@ namespace prism {
 		bool Put(const std::string& symbol, std::shared_ptr<HLOCList> points);
 		bool Get(const std::string& symbol, size_t begin_year, size_t end_year, std::shared_ptr<HLOCList> result);
 		bool GetAll(const std::string& symbol, std::shared_ptr<HLOCList> result);
-		bool GetLast(const std::string& symbol, std::shared_ptr<HLOC> point);
-		bool GetFirst(const std::string& symbol, std::shared_ptr<HLOC> point);
+		bool GetLast(const std::string& symbol, HLOC& point);
+		bool GetFirst(const std::string& symbol, HLOC& point);
 		// blocks
 		bool GetBlockList(std::string& block_list);
 		bool PutBlock(const std::string& block_name, const std::string& symbols);
@@ -77,8 +77,8 @@ namespace prism {
 		std::string GenerateKey(const std::string& symbol, const time_t time);
 		std::string GenerateLastKey(const std::string& symbol);
 		std::string GenerateFirstKey(const std::string& symbol);
-		bool UpdateLast(const std::string& symbol, std::shared_ptr<HLOC> point);
-		bool UpdateFirst(const std::string& symbol, std::shared_ptr<HLOC> point);
+		bool UpdateLast(const std::string& symbol, const HLOC& point);
+		bool UpdateFirst(const std::string& symbol, const HLOC& point);
 		bool Append(const std::string& symbol, std::shared_ptr<HLOCList> points);
 	private:
 		kyotocabinet::PolyDB db_;

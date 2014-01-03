@@ -111,11 +111,14 @@ namespace prism {
 		// getter
 		DATA_TYPE data_type() { return data_type_; }
 		int data_num() { return data_num_; }
+		int duration() { return duration_; }
 		void set_data_type(DATA_TYPE data_type) { data_type_ = data_type; }
 		void set_data_num(int data_num) { data_num_ = data_num; }
+		void set_duration(int duration) { duration_ = duration; }
 	protected:
 		DATA_TYPE data_type_;
 		int data_num_;
+		int duration_; // number of consecutive points with same verify result
 	};
 
 	class EMARule : public IndicatorRule
@@ -162,6 +165,9 @@ namespace prism {
 		virtual void Serialize(JsonSerializer* serializer);
 		virtual bool Parse(JsonValue* json);
 		virtual bool Verify(AssetIndexer& asset_indexer);
+	private:
+		bool CheckOnePoint(std::shared_ptr<DoubleTimeList> tl, int index);
+		bool CheckDuration(std::shared_ptr<DoubleTimeList> tl, int start);
 	public:
 		int short_period() { return short_period_; }
 		int long_period() { return long_period_; }

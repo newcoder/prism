@@ -172,12 +172,15 @@ namespace prism {
 		serializer->Int((int)data_type_);
 		serializer->String("data_num");
 		serializer->Int(data_num_);
+		serializer->String("duration");
+		serializer->Int(duration_);
 	}
 
 	bool IndicatorRule::Parse(JsonValue* json)
 	{
 		data_type_ = (DATA_TYPE)json->operator[]("data_type").GetInt();
 		data_num_ = json->operator[]("data_num").GetInt();
+		duration_ = json->operator[]("duration").GetInt();
 		return true;
 	}
 
@@ -330,34 +333,52 @@ namespace prism {
 			return false;
 		else
 		{
-			//std::cout << TimeToString(tl->at(index).position, "time: %Y-%m-%d") << "," << index << ","<< indicator_str << ", value:" << tl->at(index).value << std::endl;
-			double predict_value = tl->at(index).value;
-			if (linear_predict_)
+			return CheckDuration(tl, index);
+		}
+	}
+
+	bool MACDRule::CheckOnePoint(std::shared_ptr<DoubleTimeList> tl, int index)
+	{
+		//std::cout << TimeToString(tl->at(index).position, "time: %Y-%m-%d") << "," << index << ","<< indicator_str << ", value:" << tl->at(index).value << std::endl;
+		double predict_value = tl->at(index).value;
+		if (linear_predict_)
+		{
+			// for now, predict next macd histogram value by linear interpolating
+			// TODO: to find a better way to predict next macd value based on historical data... worthwhile researching
+			DoubleTimeList fit_points;
+			auto result = std::make_shared<DoubleTimeList>();
+			for (int i = 0; i < look_back_; ++i)
 			{
-				// for now, predict next macd histogram value by linear interpolating
-				// TODO: to find a better way to predict next macd value based on historical data... worthwhile researching
-				DoubleTimeList fit_points;
-				auto result = std::make_shared<DoubleTimeList>();
-				for (int i = 0; i < look_back_; ++i)
+				if (index - i >= 0)
 				{
-					if (index - i >= 0)
+					double value = tl->at(index - i).value;
+					if (value * predict_value > 0) // same sign with current value
 					{
-						double value = tl->at(index - i).value;
-						if (value * predict_value > 0) // same sign with current value
-						{
-							fit_points.push_back(DoubleTimePoint(value,index - i));
-						}
+						fit_points.push_back(DoubleTimePoint(value, index - i));
 					}
 				}
-				if (fit_points.size() > 1)
-				{
-					TimeSeries ts(fit_points.begin(), fit_points.end());
-					LRCoef coef = ts.LinearRegression(result);
-					predict_value = coef.A * (index + 1) + coef.B;
-				}
 			}
-			return predict_value > threshold_;
+			if (fit_points.size() > 1)
+			{
+				TimeSeries ts(fit_points.begin(), fit_points.end());
+				LRCoef coef = ts.LinearRegression(result);
+				predict_value = coef.A * (index + 1) + coef.B;
+			}
 		}
+		return predict_value > threshold_;
+	}
+
+	bool MACDRule::CheckDuration(std::shared_ptr<DoubleTimeList> tl, int start)
+	{
+		int i = 0;
+		while (start - i >= 0)
+		{
+			if (CheckOnePoint(tl, start - i))
+				i++;
+			else
+				break;
+		}
+		return (i > 0) && (i <= duration_);
 	}
 
 	EMAArrayRule::EMAArrayRule(): IndicatorRule(RULE_TYPE_INDICATOR_EMAARRAY)
