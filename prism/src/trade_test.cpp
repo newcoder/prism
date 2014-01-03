@@ -35,7 +35,7 @@ TEST_F(TradeTest, testTransactions)
 	int count = loader.LoadAssets(elems, 2011, 2013);
 
 	auto asset = loader.Get("SH600198");
-	AssetIndexer *asset_indexer = new AssetIndexer(asset);
+	auto asset_indexer = std::make_shared<AssetIndexer>(asset);
 
 	TransactionManager trans_manager;
 	Transaction trans;
@@ -46,20 +46,22 @@ TEST_F(TradeTest, testTransactions)
 	trans.time_ = -1;
 	trans.type_ = TRANSACTION_TYPE_BUY;
 
-	int num_trans = 123;
-	for (int i = 0; i < 123; i++)
+	int num_trans = 23;
+	for (int i = 0; i < num_trans; i++)
 		trans_manager.Add(trans);
+	std::cout << trans_manager.Size() << std::endl;
+	EXPECT_EQ(trans_manager.Size(), num_trans);
 	EXPECT_EQ(TransactionManager::id, num_trans);
 
-	asset = loader.Get("SZ002015");
-	asset_indexer = new AssetIndexer(asset);
-	trans.asset_indexer_ = asset_indexer;
+	auto asset2 = loader.Get("SZ002015");
+	auto asset_indexer2 = std::make_shared<AssetIndexer>(asset2);
+	trans.asset_indexer_ = asset_indexer2;
 	for (int i = 0; i < 152; i++)
 		trans_manager.Add(trans);
 
-	TransactionList trans_list;
-	trans_manager.GetTransactions("SH600198", &trans_list);
-	EXPECT_EQ(trans_list.size(), num_trans);
+	auto trans_list = std::make_shared<TransactionList>();
+	trans_manager.GetTransactions("SH600198", trans_list);
+	EXPECT_EQ(trans_list->size(), num_trans);
 
 }
 TEST_F(TradeTest, testPortfolios)
@@ -72,10 +74,10 @@ TEST_F(TradeTest, testPortfolios)
 	int count = loader.LoadAssets(elems, 2011, 2013);
 
 	auto asset1 = loader.Get(symbol1);
-	AssetIndexer *asset_indexer1 = new AssetIndexer(asset1);
+	auto asset_indexer1 = std::make_shared<AssetIndexer>(asset1);
 
 	auto asset2 = loader.Get(symbol2);
-	AssetIndexer *asset_indexer2 = new AssetIndexer(asset2);
+	auto asset_indexer2 = std::make_shared<AssetIndexer>(asset2);
 
 	PortfolioManager portfolio_manager;
 	portfolio_manager.Buy(asset_indexer1, 14000);
@@ -84,7 +86,7 @@ TEST_F(TradeTest, testPortfolios)
 	portfolio_manager.Buy(asset_indexer2, 25000);
 	portfolio_manager.Sell(asset_indexer1, 10000);
 
-	Portfolio* item = portfolio_manager.Get(symbol1);
+	auto item = portfolio_manager.Get(symbol1);
 	EXPECT_DOUBLE_EQ(item->amount(), 20000);
 
 	time_t day = StringToDate("2012-12-21", "%d-%d-%d");

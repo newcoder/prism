@@ -42,7 +42,7 @@ namespace prism {
 		virtual RULE_TYPE type() = 0;
 	};
 
-	typedef std::vector<IRule*> RuleList;
+	typedef std::vector<std::shared_ptr<IRule>> RuleList;
 
 	class Rule: public IRule
 	{
@@ -222,8 +222,8 @@ namespace prism {
 	public:
 		RuleFactory();
 		~RuleFactory();
-		static IRule* CreateRuleType(RULE_TYPE type);
-		static IRule* CreateRule(JsonValue* json);
+		static std::shared_ptr<IRule> CreateRuleType(RULE_TYPE type);
+		static std::shared_ptr<IRule> CreateRule(JsonValue* json);
 	};
 
 }

@@ -75,7 +75,7 @@ namespace prism {
 		time_t end_time() const { return end_time_; }
 		std::string stocks() const { return stocks_; }
 		bool sell_short() const { return sell_short_; }
-		IRule* screen_rule() const { return screen_rule_; }
+		std::shared_ptr<IRule> screen_rule() const { return screen_rule_; }
 		// setter
 		void set_name(const std::string& name) { name_ = name; }
 		void set_description(const std::string& description) { description_ = description; }
@@ -90,7 +90,7 @@ namespace prism {
 		void set_end_time(time_t end_time) { end_time_ = end_time; }
 		void set_stocks(const std::string& stocks) { stocks_ = stocks; }
 		void set_sell_short(bool sell_short) { sell_short_ = sell_short; }
-		void set_screen_rule(IRule* screen_rule) { screen_rule_ = screen_rule; }
+		void set_screen_rule(std::shared_ptr<IRule> screen_rule) { screen_rule_ = screen_rule; }
 	private:
 		std::string name_;
 		std::string description_;
@@ -105,7 +105,7 @@ namespace prism {
 		time_t end_time_;
 		std::string stocks_;
 		bool sell_short_;
-		IRule *screen_rule_;
+		std::shared_ptr<IRule> screen_rule_;
 	};
 
 	// the environment for strategy to run

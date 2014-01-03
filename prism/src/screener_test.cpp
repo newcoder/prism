@@ -46,13 +46,12 @@ TEST_F(ScreenerTest, testScreen)
 	for (auto& ai : asset_indexer_list)
 		ai.ToEnd();
 	// screen by CR rule
-	CRRule* cr_rule = new CRRule();
-	cr_rule->set_period(20);
-	Screener* screener = new Screener(cr_rule);
-	std::vector<int> result;
-	screener->Screen(asset_indexer_list, &result);
-	std::cout << "symbols screened by CR: " << result.size() << std::endl;
-	for (auto i : result)
+	auto cr_rule = std::make_shared<CRRule>(20);
+	auto screener = std::make_shared<Screener>(cr_rule);
+	auto result = std::make_shared<std::vector<int>>();
+	screener->Screen(asset_indexer_list, result);
+	std::cout << "symbols screened by CR: " << result->size() << std::endl;
+	for (auto i : *result)
 	{
 		std::cout << TimeToString(asset_indexer_list[i].GetIndexTime(), "time: %Y-%m-%d, ") << asset_indexer_list[i].asset()->symbol() << std::endl;
 	}
@@ -65,17 +64,13 @@ TEST_F(ScreenerTest, testScreen)
 		ai.ForwardTo(day);
 	}
 	// screen by MACD
-	MACDRule* macd_rule = new MACDRule();
-	macd_rule->set_short_period(12);
-	macd_rule->set_long_period(26);
-	macd_rule->set_signal_period(9);
+	auto macd_rule = std::make_shared<MACDRule>(12, 26, 9);
 	macd_rule->set_data_type(DATA_TYPE_WEEKLY);
 	macd_rule->set_data_num(1);
-	delete screener;
-	screener = new Screener(macd_rule);
-	screener->Screen(asset_indexer_list, &result);
-	std::cout << "symbols screened by MACD: " << result.size() << std::endl;
-	for (auto i : result)
+	screener = std::make_shared<Screener>(macd_rule);
+	screener->Screen(asset_indexer_list, result);
+	std::cout << "symbols screened by MACD: " << result->size() << std::endl;
+	for (auto i : *result)
 	{
 		std::cout << TimeToString(asset_indexer_list[i].GetIndexTime(), "time: %Y-%m-%d, ") << asset_indexer_list[i].asset()->symbol() << std::endl;
 	}

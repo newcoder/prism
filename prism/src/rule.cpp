@@ -98,8 +98,7 @@ namespace prism {
 
 	void RuleGroup::Clear()
 	{
-		for (size_t i = 0; i < rules_.size(); ++i)
-			delete rules_[i];
+		rules_.clear();
 	}
 
 
@@ -127,7 +126,7 @@ namespace prism {
 		for (rapidjson::SizeType i = 0; i < jsonRules.Size(); i++)	// rapidjson uses SizeType instead of size_t.
 		{
 			assert(jsonRules[i].IsObject());
-			IRule* rule = RuleFactory::CreateRule(&jsonRules[i]);
+			auto rule = RuleFactory::CreateRule(&jsonRules[i]);
 			assert(rule != nullptr);
 			rules_.push_back(rule);
 		}
@@ -495,40 +494,40 @@ namespace prism {
 
 	}
 
-	IRule* RuleFactory::CreateRuleType(RULE_TYPE type)
+	std::shared_ptr<IRule> RuleFactory::CreateRuleType(RULE_TYPE type)
 	{
 		switch (type)
 		{
 		case RULE_TYPE_AND:
-			return new AndGroup();
+			return std::make_shared<AndGroup>();
 		case RULE_TYPE_OR:
-			return new OrGroup();
+			return std::make_shared<OrGroup>();
 		case RULE_TYPE_TRUE:
-			return new TrueRule();
+			return std::make_shared<TrueRule>();
 		case RULE_TYPE_FALSE:
-			return new FalseRule();
+			return std::make_shared<FalseRule>();
 		case RULE_TYPE_INDICATOR_EMA:
-			return new EMARule();
+			return std::make_shared<EMARule>();
 		case RULE_TYPE_INDICATOR_EMA_COMPARE:
-			return new EMACompareRule();
+			return std::make_shared<EMACompareRule>();
 		case RULE_TYPE_INDICATOR_MACD:
-			return new MACDRule();
+			return std::make_shared<MACDRule>();
 		case RULE_TYPE_INDICATOR_EMAARRAY:
-			return new EMAArrayRule();
+			return std::make_shared<EMAArrayRule>();
 		case RULE_TYPE_INDICATOR_CR:
-			return new CRRule();
+			return std::make_shared<CRRule>();
 		default:
 			break;
 		}
 		return nullptr;
 	}
 
-	IRule* RuleFactory::CreateRule(JsonValue* json)
+	std::shared_ptr<IRule> RuleFactory::CreateRule(JsonValue* json)
 	{
 		assert(json->HasMember("type"));
 		std::string type = json->operator[]("type").GetString();
 		RULE_TYPE ruleType = Rule::StrToType(type);
-		IRule* rule = CreateRuleType(ruleType);
+		auto rule = CreateRuleType(ruleType);
 		assert(rule != nullptr);
 		bool ret = rule->Parse(json);
 		assert(ret);

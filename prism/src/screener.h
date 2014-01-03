@@ -18,12 +18,12 @@ namespace prism {
 	class Screener
 	{
 	public:
-		Screener(IRule* rule) : rule_(rule) {}
+		Screener(std::shared_ptr<IRule> rule) : rule_(rule) {}
 		~Screener() {}
 	public:
-		void Screen(AssetIndexerList& asset_index_list, std::vector<int>* result, time_t pos = -1);
+		void Screen(AssetIndexerList& asset_index_list, std::shared_ptr<std::vector<int>> result, time_t pos = -1);
 	private:
-		IRule *rule_;
+		std::shared_ptr<IRule> rule_;
 	};
 
 

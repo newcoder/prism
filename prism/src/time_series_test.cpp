@@ -179,7 +179,7 @@ TEST_F(TestTimeSeries, testLinearFit)
 TEST_F(TestTimeSeries, testFindLocalExtremas)
 {
 	std::shared_ptr<HLOCList> hloc_list = std::make_shared<prism::HLOCList>();
-	bool ret = store.GetAll("SH600287", hloc_list);
+	bool ret = store.GetAll("SH600288", hloc_list);
 	EXPECT_TRUE(ret);
 
 	auto tl = std::make_shared<DoubleTimeList>();
@@ -203,7 +203,7 @@ TEST_F(TestTimeSeries, testFindLocalExtremas)
 TEST_F(TestTimeSeries, testFindTurningPoints)
 {
 	std::shared_ptr<HLOCList> hloc_list = std::make_shared<prism::HLOCList>();
-	bool ret = store.GetAll("SH600177", hloc_list);
+	bool ret = store.GetAll("SH600178", hloc_list);
 	EXPECT_TRUE(ret);
 
 	auto tl = std::make_shared<DoubleTimeList>();;

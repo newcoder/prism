@@ -22,14 +22,10 @@ namespace prism {
 	Strategy::Strategy(const std::string& name): name_(name)
 	{
 		screen_rule_ = nullptr;
-		//std::cout << "Strategy::Strategy()" << std::endl;
 	}
 
 	Strategy::~Strategy()
 	{
-		delete screen_rule_;
-		//std::cout << "Strategy::~Strategy()" << std::endl;
-
 	}
 	
 	/*
@@ -152,7 +148,7 @@ namespace prism {
 		buy_candidates_.clear();
 		while (it != init_candidates_.end())
 		{
-			IRule* rule = strategy_->screen_rule();
+			auto rule = strategy_->screen_rule();
 			AssetIndexer *asset_indexer = &(it->second);
 			time_t time = asset_indexer->GetIndexTime();
 			if (time > 0)

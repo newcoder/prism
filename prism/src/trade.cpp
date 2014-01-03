@@ -15,16 +15,20 @@ namespace prism {
 	void TransactionManager::Add(Transaction& trans) 
 	{
 		trans.transaction_id_ = TransactionManager::id++;
-		transacitons_.push_back(trans); 
+		transactions_.push_back(trans);
 	}
 	
-	void TransactionManager::GetTransactions(const std::string& symbol, TransactionList* symbol_transactions)
+	void TransactionManager::GetTransactions(const std::string& symbol, std::shared_ptr<TransactionList> symbol_transactions)
 	{
 		symbol_transactions->clear();
-		for (auto t : transacitons_)
+		for (auto t : transactions_)
 		{
-			if (t.asset_indexer_->asset()->symbol() == symbol)
-				symbol_transactions->push_back(t);
+			auto sp = t.asset_indexer_.lock();
+			if (sp)
+			{
+				if (sp->asset()->symbol() == symbol)
+					symbol_transactions->push_back(t);
+			}
 		}
 	}
 
@@ -46,7 +50,7 @@ namespace prism {
 		return true;
 	}
 
-	void PortfolioManager::Buy(AssetIndexer* asset_indexer, double amount)
+	void PortfolioManager::Buy(std::shared_ptr<AssetIndexer> asset_indexer, double amount)
 	{
 		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
 		if (cit != portfolios_.end())
@@ -55,12 +59,12 @@ namespace prism {
 		}
 		else
 		{
-			auto portfolio = new Portfolio(asset_indexer, amount);
+			auto portfolio = std::make_shared<Portfolio>(asset_indexer, amount);
 			portfolios_.insert(std::make_pair(asset_indexer->asset()->symbol(), portfolio));
 		}
 	}
 
-	void PortfolioManager::Sell(AssetIndexer* asset_indexer, double amount)
+	void PortfolioManager::Sell(std::shared_ptr<AssetIndexer> asset_indexer, double amount)
 	{
 		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
 		if (cit != portfolios_.end())
@@ -71,8 +75,6 @@ namespace prism {
 
 	void PortfolioManager::Clear()
 	{
-		for (auto it : portfolios_)
-			delete it.second;
 		portfolios_.clear();
 	}
 
@@ -91,7 +93,7 @@ namespace prism {
 		return true;
 	}
 
-	Portfolio* PortfolioManager::Get(const std::string& symbol)
+	std::shared_ptr<Portfolio> PortfolioManager::Get(const std::string& symbol)
 	{
 		auto cit = portfolios_.find(symbol);
 		return cit == portfolios_.end() ? nullptr : cit->second;

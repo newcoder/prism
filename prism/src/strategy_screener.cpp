@@ -177,9 +177,9 @@ namespace prism {
 	void MACDStrategyScreener::SetStrategyParam(Strategy* strategy)
 	{
 		assert(strategy->screen_rule());
-		IRule* rule = strategy->screen_rule();
+		auto rule = strategy->screen_rule();
 		assert(rule->type() == RULE_TYPE_INDICATOR_MACD);
-		MACDRule* macd_rule = (MACDRule*)rule;
+		MACDRule* macd_rule = (MACDRule*)rule.get();
 		macd_rule->set_short_period(short_period_);
 		macd_rule->set_long_period(long_period_);
 		macd_rule->set_signal_period(signal_period_);
