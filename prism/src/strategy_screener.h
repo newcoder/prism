@@ -9,6 +9,7 @@
 #define STRATEGY_SCREENER_H
 
 #include "strategy.h"
+#include "strategy_runner.h"
 
 namespace prism {
 	

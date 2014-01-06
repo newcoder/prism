@@ -98,6 +98,7 @@
     <ClInclude Include="..\..\..\src\stdafx.h" />
     <ClInclude Include="..\..\..\src\store.h" />
     <ClInclude Include="..\..\..\src\strategy.h" />
+    <ClInclude Include="..\..\..\src\strategy_runner.h" />
     <ClInclude Include="..\..\..\src\strategy_screener.h" />
     <ClInclude Include="..\..\..\src\targetver.h" />
     <ClInclude Include="..\..\..\src\time_series.h" />
@@ -131,6 +132,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\..\src\strategy.cpp" />
+    <ClCompile Include="..\..\..\src\strategy_runner.cpp" />
     <ClCompile Include="..\..\..\src\strategy_screener.cpp" />
     <ClCompile Include="..\..\..\src\strategy_test.cpp" />
     <ClCompile Include="..\..\..\src\time_series.cpp" />
