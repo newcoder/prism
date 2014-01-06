@@ -59,9 +59,9 @@ TEST_F(TradeTest, testTransactions)
 	for (int i = 0; i < 152; i++)
 		trans_manager.Add(trans);
 
-	auto trans_list = std::make_shared<TransactionList>();
-	trans_manager.GetTransactions("SH600198", trans_list);
-	EXPECT_EQ(trans_list->size(), num_trans);
+	TransactionList trans_list;
+	trans_manager.GetTransactions("SH600198", &trans_list);
+	EXPECT_EQ(trans_list.size(), num_trans);
 
 }
 TEST_F(TradeTest, testPortfolios)

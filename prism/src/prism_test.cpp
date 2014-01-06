@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 	//::testing::GTEST_FLAG(filter) = "ImportTest.testImportDir";
 	//::testing::GTEST_FLAG(filter) = "ScreenerTest.*";
 	//::testing::GTEST_FLAG(filter) = "AssetTest.*";
-	//::testing::GTEST_FLAG(filter) = "TradeTest.*:ScreenerTest.*:AssetTest.*";
+	::testing::GTEST_FLAG(filter) = "TradeTest.*:ScreenerTest.*:AssetTest.*";
 	//::testing::GTEST_FLAG(filter) = "TradeTest.*";
 
 	testing::InitGoogleTest(&argc, argv);

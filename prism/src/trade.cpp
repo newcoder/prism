@@ -18,7 +18,7 @@ namespace prism {
 		transactions_.push_back(trans);
 	}
 	
-	void TransactionManager::GetTransactions(const std::string& symbol, std::shared_ptr<TransactionList> symbol_transactions)
+	void TransactionManager::GetTransactions(const std::string& symbol, TransactionList* symbol_transactions)
 	{
 		symbol_transactions->clear();
 		for (auto t : transactions_)
@@ -36,40 +36,56 @@ namespace prism {
 
 	bool Portfolio::GetValue(double& value, time_t pos)
 	{
-		if (pos > 0)
+		auto sp = asset_indexer_.lock();
+		if (sp)
 		{
-			asset_indexer_->ToBegin();
-			asset_indexer_->ForwardTo(pos);
-		}
-		if (!asset_indexer_->valid())
-			return false;
-		HLOC hloc;
-		bool ret = asset_indexer_->GetIndexData(hloc);
-		if (!ret) return false;
-		value = hloc.close * amount_;
-		return true;
-	}
-
-	void PortfolioManager::Buy(std::shared_ptr<AssetIndexer> asset_indexer, double amount)
-	{
-		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
-		if (cit != portfolios_.end())
-		{
-			cit->second->Buy(amount);
+			if (pos > 0)
+			{
+				sp->ToBegin();
+				sp->ForwardTo(pos);
+			}
+			if (!sp->valid())
+				return false;
+			HLOC hloc;
+			bool ret = sp->GetIndexData(hloc);
+			if (!ret) return false;
+			value = hloc.close * amount_;
+			return true;
 		}
 		else
 		{
-			auto portfolio = std::make_shared<Portfolio>(asset_indexer, amount);
-			portfolios_.insert(std::make_pair(asset_indexer->asset()->symbol(), portfolio));
+			return false;
 		}
 	}
 
-	void PortfolioManager::Sell(std::shared_ptr<AssetIndexer> asset_indexer, double amount)
+	void PortfolioManager::Buy(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount)
 	{
-		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
-		if (cit != portfolios_.end())
+		auto sp = asset_indexer.lock();
+		if (sp)
 		{
-			cit->second->Sell(amount);
+			auto cit = portfolios_.find(sp->asset()->symbol());
+			if (cit != portfolios_.end())
+			{
+				cit->second->Buy(amount);
+			}
+			else
+			{
+				auto portfolio = std::make_unique<Portfolio>(asset_indexer, amount);
+				portfolios_.insert(std::make_pair(sp->asset()->symbol(), std::move(portfolio)));
+			}
+		}
+	}
+
+	void PortfolioManager::Sell(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount)
+	{
+		auto sp = asset_indexer.lock();
+		if (sp)
+		{
+			auto cit = portfolios_.find(sp->asset()->symbol());
+			if (cit != portfolios_.end())
+			{
+				cit->second->Sell(amount);
+			}
 		}
 	}
 
@@ -81,7 +97,7 @@ namespace prism {
 	bool PortfolioManager::GetValue(double& value, time_t pos)
 	{
 		value = 0.0;
-		for (auto it : portfolios_)
+		for (auto& it : portfolios_)
 		{
 			double portfolio_value;
 			bool ret = it.second->GetValue(portfolio_value, pos);
@@ -93,10 +109,10 @@ namespace prism {
 		return true;
 	}
 
-	std::shared_ptr<Portfolio> PortfolioManager::Get(const std::string& symbol)
+	Portfolio* PortfolioManager::Get(const std::string& symbol)
 	{
 		auto cit = portfolios_.find(symbol);
-		return cit == portfolios_.end() ? nullptr : cit->second;
+		return cit == portfolios_.end()? nullptr : cit->second.get();
 	}
 
 }

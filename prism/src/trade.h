@@ -50,7 +50,7 @@ namespace prism {
 		void Add(Transaction& trans);
 		size_t Size() { return transactions_.size(); }
 		// get transactions for a single symbol
-		void GetTransactions(const std::string& symbol, std::shared_ptr<TransactionList> symbol_transactions);
+		void GetTransactions(const std::string& symbol, TransactionList* symbol_transactions);
 	public:
 		static unsigned int id;
 	private:	
@@ -60,19 +60,18 @@ namespace prism {
 	class Portfolio
 	{
 	public:
-		Portfolio() : asset_indexer_(nullptr), amount_(0.0) {}
-		Portfolio(std::shared_ptr<AssetIndexer> asset_indexer, double amount): asset_indexer_(asset_indexer), amount_(amount) {}
+		Portfolio(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount): asset_indexer_(asset_indexer), amount_(amount) {}
 	public:
 		void Buy(double amount) { amount_ += amount; }
 		void Sell(double amount) { amount_ -= amount; }
 		bool GetValue(double& value, time_t pos);		
-		std::string symbol() { return asset_indexer_->asset()->symbol(); }
-		std::shared_ptr<AssetIndexer> asset_indexer() const { return asset_indexer_; }
+		std::string symbol();
+		std::weak_ptr<AssetIndexer> asset_indexer() const { return asset_indexer_; }
 		double amount() const { return amount_; }
-		void set_asset(std::shared_ptr<AssetIndexer> asset_indexer) { asset_indexer_ = asset_indexer; }
+		void set_asset(std::weak_ptr<AssetIndexer> asset_indexer) { asset_indexer_ = asset_indexer; }
 		void set_amount(double amount) { amount_ = amount; }
 	private:
-		std::shared_ptr<AssetIndexer> asset_indexer_;
+		std::weak_ptr<AssetIndexer> asset_indexer_;
 		double amount_;
 	};
 
@@ -82,14 +81,14 @@ namespace prism {
 		PortfolioManager() {}
 		~PortfolioManager() {}
 	public:
-		void Buy(std::shared_ptr<AssetIndexer> asset_indexer, double amount);
-		void Sell(std::shared_ptr<AssetIndexer> asset_indexer, double amount);
+		void Buy(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount);
+		void Sell(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount);
 		// move to the pos if pos > 0, then evaluate the value
 		bool GetValue(double& value, time_t pos = -1);
 		void Clear();
-		std::shared_ptr<Portfolio> Get(const std::string& symbol);
+		Portfolio* Get(const std::string& symbol);
 	private:
-		std::map<std::string, std::shared_ptr<Portfolio>> portfolios_;
+		std::map<std::string, std::unique_ptr<Portfolio>> portfolios_;
 	};
 
 }
