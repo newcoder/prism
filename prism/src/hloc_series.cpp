@@ -130,7 +130,7 @@ namespace prism
 		return p;
 	}
 
-	void HLOCSeries::ShrinkByNum(size_t num, std::shared_ptr<HLOCList> result)
+	void HLOCSeries::ShrinkByNum(size_t num, HLOCList* result)
 	{
 		HLOCList group;
 		HLOCList::iterator it = begin_;
@@ -152,7 +152,7 @@ namespace prism
 	}
 
 	template <typename T>
-	void HLOCSeries::ShrinkByTime(std::shared_ptr<HLOCList> result, T& functor)
+	void HLOCSeries::ShrinkByTime(HLOCList* result, T& functor)
 	{
 		HLOCList group;
 		HLOCList::iterator it = begin_;
@@ -180,7 +180,7 @@ namespace prism
 			result->push_back(ShrinkToOne(group));
 	}
 
-	void HLOCSeries::ShrinkByWeek(std::shared_ptr<HLOCList> result)
+	void HLOCSeries::ShrinkByWeek(HLOCList* result)
 	{
 		struct InWeek {
 			bool operator() (time_t d1, time_t d2) { return InSameWeek(d1, d2); }
@@ -189,7 +189,7 @@ namespace prism
 		ShrinkByTime(result, sameWeek);
 	}
 
-	void HLOCSeries::ShrinkByMonth(std::shared_ptr<HLOCList> result)
+	void HLOCSeries::ShrinkByMonth(HLOCList* result)
 	{
 		struct InMonth {
 			bool operator() (time_t d1, time_t d2) { return InSameMonth(d1, d2); }
@@ -197,7 +197,7 @@ namespace prism
 		ShrinkByTime(result, sameMonth);
 	}
 
-	void HLOCSeries::CalculateIndicator(std::shared_ptr<ILocalIndicator> indicator) const
+	void HLOCSeries::CalculateIndicator(ILocalIndicator* indicator) const
 	{
 		indicator->Generate(begin_, end_);
 	}

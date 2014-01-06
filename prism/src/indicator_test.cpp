@@ -14,21 +14,19 @@ class TestIndicator : public testing::Test
 public:
 	KCStore store;
 	int count;
-	std::shared_ptr<HLOCList> hloc_list;
-	std::shared_ptr<DoubleTimeList> tl;
+	HLOCList hloc_list;
+	DoubleTimeList tl;
 
 	virtual void SetUp()
 	{
 		bool ret = store.Open(kDataPath + "TestData8.kch");
-		hloc_list = std::make_shared<HLOCList>();
-		tl = std::make_shared<DoubleTimeList>();
-		ret = store.GetAll("SH600658", hloc_list);
+		ret = store.GetAll("SH600658", &hloc_list);
 		EXPECT_TRUE(ret);
-		EXPECT_TRUE(hloc_list->size() > 0);
+		EXPECT_TRUE(hloc_list.size() > 0);
 
-		TLUtils::Populate(hloc_list, PRICE_TYPE_C, tl);
-		EXPECT_TRUE(tl->size() > 0);
-		EXPECT_EQ(tl->size(), hloc_list->size());
+		TLUtils::Populate(&hloc_list, PRICE_TYPE_C, &tl);
+		EXPECT_TRUE(tl.size() > 0);
+		EXPECT_EQ(tl.size(), hloc_list.size());
 	}
 
 	virtual void TearDown()
@@ -40,9 +38,9 @@ public:
 
 TEST_F(TestIndicator, testSMA)
 {
-	auto sma = std::make_shared<SMA>(20);
-	TimeSeries ts(tl->begin(), tl->end());
-	ts.CalculateIndicator(sma);
+	auto sma = std::make_unique<SMA>(20);
+	TimeSeries ts(tl.begin(), tl.end());
+	ts.CalculateIndicator(sma.get());
 	std::cout << "count after SMA: " << sma->result()->size() << std::endl;
 
 	TLUtils::Dump(kDataPath + "SMA.csv", sma->result());
@@ -50,11 +48,11 @@ TEST_F(TestIndicator, testSMA)
 
 TEST_F(TestIndicator, testEMA)
 {
-	auto ema12 = std::make_shared<EMA>(12);
-	auto ema26 = std::make_shared<EMA>(26);
-	TimeSeries ts(tl->begin(), tl->end());
-	ts.CalculateIndicator(ema12);
-	ts.CalculateIndicator(ema26);
+	auto ema12 = std::make_unique<EMA>(12);
+	auto ema26 = std::make_unique<EMA>(26);
+	TimeSeries ts(tl.begin(), tl.end());
+	ts.CalculateIndicator(ema12.get());
+	ts.CalculateIndicator(ema26.get());
 
 	std::cout << "count after EMA12: " << ema12->result()->size() << std::endl;
 	std::cout << "count after EMA26: " << ema26->result()->size() << std::endl;
@@ -67,9 +65,9 @@ TEST_F(TestIndicator, testEMA)
 
 TEST_F(TestIndicator, testMACD)
 {
-	auto macd = std::make_shared<MACD>(12, 26, 9);
-	TimeSeries ts(tl->begin(), tl->end());
-	ts.CalculateIndicator(macd);
+	auto macd = std::make_unique<MACD>(12, 26, 9);
+	TimeSeries ts(tl.begin(), tl.end());
+	ts.CalculateIndicator(macd.get());
 	std::cout << "count after MACD: " << macd->macd()->size() << std::endl;
 
 	std::cout << "count after MACD, signal: " << macd->signal()->size() << std::endl;
@@ -79,7 +77,7 @@ TEST_F(TestIndicator, testMACD)
 
 	auto co = macd->cross_overs();
 	std::cout << "count of crossovers: " << co->size() << std::endl;
-	auto crossOverProfit = std::make_shared<DoubleTimeList>();
+	auto crossOverProfit = std::make_unique<DoubleTimeList>();
 	for (size_t i = 0; i < co->size(); i++)
 	{
 		crossOverProfit->push_back(DoubleTimePoint(co->at(i).profit, co->at(i).time));
@@ -114,25 +112,25 @@ TEST_F(TestIndicator, testMACD)
 	std::cout << "total area of wins:" << win_area << std::endl;
 	std::cout << "total area of loss:" << loss_area << std::endl;
 
-	TLUtils::Dump(kDataPath + "MACD-Crossover-Histogram.csv", macd->histogram(), crossOverProfit);
-	TLUtils::Dump(kDataPath + "MACD-Profit.csv", crossOverProfit);
+	TLUtils::Dump(kDataPath + "MACD-Crossover-Histogram.csv", macd->histogram(), crossOverProfit.get());
+	TLUtils::Dump(kDataPath + "MACD-Profit.csv", crossOverProfit.get());
 }
 
 TEST_F(TestIndicator, testRSI)
 {
-	auto rsi = std::make_shared<RSI>(12);
-	TimeSeries ts(tl->begin(), tl->end());
+	auto rsi = std::make_unique<RSI>(12);
+	TimeSeries ts(tl.begin(), tl.end());
 
-	ts.CalculateIndicator(rsi);
+	ts.CalculateIndicator(rsi.get());
 	std::cout << "count after rsi: " << rsi->result()->size() << std::endl;
 	TLUtils::Dump(kDataPath + "RSI.csv", rsi->result());
 }
 
 TEST_F(TestIndicator, testKDJ)
 {
-	auto kdj = std::make_shared<KDJ>(9, 2, 2);
-	HLOCSeries hs(hloc_list->begin(), hloc_list->end());
-	hs.CalculateIndicator(kdj);
+	auto kdj = std::make_unique<KDJ>(9, 2, 2);
+	HLOCSeries hs(hloc_list.begin(), hloc_list.end());
+	hs.CalculateIndicator(kdj.get());
 
 	std::cout << "K% count: " << kdj->k()->size() << std::endl;
 	std::cout << "D% count: " << kdj->d()->size() << std::endl;
@@ -144,9 +142,9 @@ TEST_F(TestIndicator, testKDJ)
 
 TEST_F(TestIndicator, testCR)
 {
-	auto cr = std::make_shared<CR>(20);
-	HLOCSeries hs(hloc_list->begin(), hloc_list->end());
-	hs.CalculateIndicator(cr);
+	auto cr = std::make_unique<CR>(20);
+	HLOCSeries hs(hloc_list.begin(), hloc_list.end());
+	hs.CalculateIndicator(cr.get());
 
 	TLUtils::Dump(kDataPath + "CR.csv", cr->result());
 

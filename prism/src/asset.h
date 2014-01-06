@@ -24,26 +24,26 @@ namespace prism {
 	class AssetScale
 	{
 	public:
-		AssetScale(std::shared_ptr<Asset> asset);
+		AssetScale(const std::shared_ptr<Asset>& asset);
 		~AssetScale();
 		void Create(DATA_TYPE data_type, int data_num);
 		void ClearIndicators();
-		std::shared_ptr<HLOCList> raw_data() const { return raw_data_; }
+		HLOCList* raw_data() const { return raw_data_.get(); }
 		std::string to_string() const {
 			return std::to_string((int)data_type_) + '_' + std::to_string(data_num_);
 		}
 		DATA_TYPE data_type() const { return data_type_; }
 		int data_num() const { return data_num_; }
-		std::shared_ptr<ILocalIndicator> indicators(const std::string& indicator_str);
+		ILocalIndicator* indicators(const std::string& indicator_str);
 	public:
-		std::shared_ptr<ILocalIndicator> GenerateIndicator(const std::string& indicator_str);
+		ILocalIndicator* GenerateIndicator(const std::string& indicator_str);
 		static std::string ToString(DATA_TYPE data_type, int data_num);
 	private:
 		std::shared_ptr<Asset> asset_;
 		DATA_TYPE data_type_;
 		int data_num_;
 		std::shared_ptr<HLOCList> raw_data_;
-		std::map<std::string, std::shared_ptr<ILocalIndicator>> indicators_;
+		std::map<std::string, std::unique_ptr<ILocalIndicator>> indicators_;
 	};
 
 	class Asset : public std::enable_shared_from_this<Asset>
@@ -51,12 +51,12 @@ namespace prism {
 	public:
 		Asset(const std::string& symbol);
 		~Asset();
-		bool Load(std::shared_ptr<IStore> store, size_t begin_year, size_t end_year);
-		bool Update(std::shared_ptr<IStore> store, size_t begin_year, size_t end_year);
+		bool Load(IStore* store, size_t begin_year, size_t end_year);
+		bool Update(IStore* store, size_t begin_year, size_t end_year);
 		std::shared_ptr<AssetScale> scales(DATA_TYPE data_type, int data_num);
 		std::shared_ptr<AssetScale> base_scale() { return scales(DATA_TYPE_DAILY, 1); }
 		void ClearScales();
-		std::shared_ptr<HLOCList> raw_data() const { return raw_data_; }
+		std::shared_ptr<HLOCList> raw_data() { return raw_data_; }
 		std::string symbol() const { return symbol_; }
 		size_t begin_year() const { return begin_year_; }
 		size_t end_year() const { return end_year_; }
@@ -73,7 +73,7 @@ namespace prism {
 	class AssetsProvider
 	{
 	public:
-		AssetsProvider(std::shared_ptr<IStore> store);
+		AssetsProvider(const std::shared_ptr<IStore>& store);
 		~AssetsProvider();
 		void Clear();
 		int LoadAssets(const std::string& symbols_pattern, size_t begin_year, size_t end_year);
@@ -91,8 +91,8 @@ namespace prism {
 	class AssetScaleIndexer
 	{
 	public:
-		AssetScaleIndexer(std::shared_ptr<AssetScale> scale, time_t begin);
-		AssetScaleIndexer(std::shared_ptr<AssetScale> scale);
+		AssetScaleIndexer(const std::shared_ptr<AssetScale>& scale, time_t begin);
+		AssetScaleIndexer(const std::shared_ptr<AssetScale>& scale);
 		void MoveTo(time_t pos) { ToBegin(); ForwardTo(pos); }
 		void ForwardTo(time_t pos);
 		void Forward() { if (!at_end()) index_++; }
@@ -114,8 +114,8 @@ namespace prism {
 	class AssetIndexer
 	{
 	public:
-		AssetIndexer(std::shared_ptr<Asset> asset, time_t begin);
-		AssetIndexer(std::shared_ptr<Asset> asset);
+		AssetIndexer(const std::shared_ptr<Asset>& asset, time_t begin);
+		AssetIndexer(const std::shared_ptr<Asset>& asset);
 	public:
 		void MoveTo(time_t pos) { ToBegin(); ForwardTo(pos); }
 		void ForwardTo(time_t pos);
@@ -131,11 +131,11 @@ namespace prism {
 		bool at_end() const { return base_scale_indexer_->at_end(); }
 		int index() const { return base_scale_indexer_->index(); }
 		std::shared_ptr<AssetScaleIndexer> scale_indexers(DATA_TYPE data_type, int data_num);
-		std::shared_ptr<AssetScaleIndexer> scale_indexers(std::shared_ptr<AssetScale> scale);
+		std::shared_ptr<AssetScaleIndexer> scale_indexers(const std::shared_ptr<AssetScale>& scale);
 	private:
 		std::shared_ptr<Asset> asset_;
 		std::shared_ptr<AssetScaleIndexer> base_scale_indexer_;
-		std::map<std::shared_ptr<AssetScale>, std::shared_ptr<AssetScaleIndexer>> scale_indexers_;
+		std::map<AssetScale*, std::shared_ptr<AssetScaleIndexer>> scale_indexers_;
 	};
 
 	typedef std::vector<AssetIndexer> AssetIndexerList;

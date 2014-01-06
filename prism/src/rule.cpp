@@ -210,7 +210,7 @@ namespace prism {
 		std::string indicator_str = std::string("EMA") + "_" + std::to_string(period_);
 		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
 		auto indicator = scale->indicators(indicator_str);
-		auto ema = std::static_pointer_cast<EMA>(indicator);
+		auto ema = (EMA*)(indicator);
 		assert(ema != nullptr);
 		auto tl = ema->result();
 		size_t pos = asset_indexer.scale_indexers(scale)->index();
@@ -253,9 +253,9 @@ namespace prism {
 	{
 		std::string indicator_str = std::string("EMA") + "_" + std::to_string(period_one_);
 		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
-		auto ema_one = std::static_pointer_cast<EMA>(scale->indicators(indicator_str));
+		auto ema_one = (EMA*)(scale->indicators(indicator_str));
 		indicator_str = std::string("EMA") + "_" + std::to_string(period_two_);
-		auto ema_two = std::static_pointer_cast<EMA>(scale->indicators(indicator_str));
+		auto ema_two = (EMA*)(scale->indicators(indicator_str));
 		assert(ema_one != nullptr);
 		assert(ema_two != nullptr);
 
@@ -274,16 +274,22 @@ namespace prism {
 
 	MACDRule::MACDRule() : IndicatorRule(RULE_TYPE_INDICATOR_MACD)
 	{
-		linear_predict_ = true;
-		look_back_ = kMacdLookBack;
-		threshold_ = kMacdThreshold;
+		Init();
 	}
 
 	MACDRule::MACDRule(int short_period, int long_period, int signal_period) : 
 		short_period_(short_period), long_period_(long_period), signal_period_(signal_period),
 		IndicatorRule(RULE_TYPE_INDICATOR_MACD)
 	{
-		MACDRule();
+		Init();
+	}
+
+	void MACDRule::Init()
+	{
+		linear_predict_ = true;
+		look_back_ = kMacdLookBack;
+		threshold_ = kMacdThreshold;
+		duration_ = -1;
 	}
 
 	void MACDRule::Serialize(JsonSerializer* serializer)
@@ -321,7 +327,7 @@ namespace prism {
 			std::to_string(long_period_) + "_" + 
 			std::to_string(signal_period_);
 		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
-		auto macd = std::static_pointer_cast<MACD>(scale->indicators(indicator_str));
+		auto macd = (MACD*)(scale->indicators(indicator_str));
 		assert(macd != nullptr);
 		auto tl = macd->histogram();
 		//align the index for HLOC and for indicator...		
@@ -337,7 +343,7 @@ namespace prism {
 		}
 	}
 
-	bool MACDRule::CheckOnePoint(std::shared_ptr<DoubleTimeList> tl, int index)
+	bool MACDRule::CheckOnePoint(DoubleTimeList* tl, int index)
 	{
 		//std::cout << TimeToString(tl->at(index).position, "time: %Y-%m-%d") << "," << index << ","<< indicator_str << ", value:" << tl->at(index).value << std::endl;
 		double predict_value = tl->at(index).value;
@@ -346,7 +352,7 @@ namespace prism {
 			// for now, predict next macd histogram value by linear interpolating
 			// TODO: to find a better way to predict next macd value based on historical data... worthwhile researching
 			DoubleTimeList fit_points;
-			auto result = std::make_shared<DoubleTimeList>();
+			DoubleTimeList result;
 			for (int i = 0; i < look_back_; ++i)
 			{
 				if (index - i >= 0)
@@ -361,15 +367,17 @@ namespace prism {
 			if (fit_points.size() > 1)
 			{
 				TimeSeries ts(fit_points.begin(), fit_points.end());
-				LRCoef coef = ts.LinearRegression(result);
+				LRCoef coef = ts.LinearRegression(&result);
 				predict_value = coef.A * (index + 1) + coef.B;
 			}
 		}
 		return predict_value > threshold_;
 	}
 
-	bool MACDRule::CheckDuration(std::shared_ptr<DoubleTimeList> tl, int start)
+	bool MACDRule::CheckDuration(DoubleTimeList* tl, int start)
 	{
+		if (duration_ < 0) // ignore duration, only check current point
+			return CheckOnePoint(tl, start);
 		int i = 0;
 		while (start - i >= 0)
 		{
@@ -425,10 +433,10 @@ namespace prism {
 		
 		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
 
-		auto ema1 = std::static_pointer_cast<EMA>(scale->indicators(indicator_str1));
-		auto ema2 = std::static_pointer_cast<EMA>(scale->indicators(indicator_str2));
-		auto ema3 = std::static_pointer_cast<EMA>(scale->indicators(indicator_str3));
-		auto ema4 = std::static_pointer_cast<EMA>(scale->indicators(indicator_str4));
+		auto ema1 = (EMA*)(scale->indicators(indicator_str1));
+		auto ema2 = (EMA*)(scale->indicators(indicator_str2));
+		auto ema3 = (EMA*)(scale->indicators(indicator_str3));
+		auto ema4 = (EMA*)(scale->indicators(indicator_str4));
 
 		assert(ema1 != nullptr);
 		assert(ema2 != nullptr);
@@ -493,7 +501,7 @@ namespace prism {
 	{
 		std::string indicator_str = std::string("CR") + "_" + std::to_string(period_);
 		auto scale = asset_indexer.asset()->scales(data_type(), data_num());
-		auto cr = std::static_pointer_cast<CR>(scale->indicators(indicator_str));
+		auto cr = (CR*)(scale->indicators(indicator_str));
 		assert(cr != nullptr);
 		auto tl = cr->result();
 

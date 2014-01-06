@@ -98,9 +98,9 @@ namespace prism
 	class PatternFactory
 	{
 	public:
-		static std::shared_ptr<Pattern> GetPattern(PATTERN_TYPE type);
+		static Pattern* GetPattern(PATTERN_TYPE type);
 	private:
-		static std::shared_ptr<Pattern> CreatePattern(PATTERN_TYPE type, const int *arr, int size);
+		static Pattern* CreatePattern(PATTERN_TYPE type, const int *arr, int size);
 	private:
 		static std::map<PATTERN_TYPE, std::shared_ptr<Pattern>> sPatterns;
 	};

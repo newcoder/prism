@@ -27,9 +27,9 @@ namespace prism {
 	class IStore {
 	public:
 		virtual ~IStore(){};
-		virtual bool Put(const std::string& symbol, std::shared_ptr<HLOCList> points) = 0;
-		virtual bool Get(const std::string& symbol, size_t begin_year, size_t end_year, std::shared_ptr<HLOCList> result) = 0;
-		virtual bool GetAll(const std::string& symbol, std::shared_ptr<HLOCList> result) = 0;
+		virtual bool Put(const std::string& symbol, HLOCList* points) = 0;
+		virtual bool Get(const std::string& symbol, size_t begin_year, size_t end_year, HLOCList* result) = 0;
+		virtual bool GetAll(const std::string& symbol, HLOCList* result) = 0;
 		virtual bool GetLast(const std::string& symbol, HLOC& point) = 0;
 		virtual bool GetFirst(const std::string& symbol, HLOC& point) = 0;
 		virtual bool GetBlockList(std::string& block_list) = 0;
@@ -64,9 +64,9 @@ namespace prism {
 		// put points to data store:
 		// 1. the points should be in same year.
 		// 2. the point's time should be greater than the LAST POINT 
-		bool Put(const std::string& symbol, std::shared_ptr<HLOCList> points);
-		bool Get(const std::string& symbol, size_t begin_year, size_t end_year, std::shared_ptr<HLOCList> result);
-		bool GetAll(const std::string& symbol, std::shared_ptr<HLOCList> result);
+		bool Put(const std::string& symbol, HLOCList* points);
+		bool Get(const std::string& symbol, size_t begin_year, size_t end_year, HLOCList* result);
+		bool GetAll(const std::string& symbol, HLOCList* result);
 		bool GetLast(const std::string& symbol, HLOC& point);
 		bool GetFirst(const std::string& symbol, HLOC& point);
 		// blocks
@@ -79,7 +79,7 @@ namespace prism {
 		std::string GenerateFirstKey(const std::string& symbol);
 		bool UpdateLast(const std::string& symbol, const HLOC& point);
 		bool UpdateFirst(const std::string& symbol, const HLOC& point);
-		bool Append(const std::string& symbol, std::shared_ptr<HLOCList> points);
+		bool Append(const std::string& symbol, HLOCList* points);
 	private:
 		kyotocabinet::PolyDB db_;
 	};

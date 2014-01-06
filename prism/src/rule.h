@@ -166,8 +166,9 @@ namespace prism {
 		virtual bool Parse(JsonValue* json);
 		virtual bool Verify(AssetIndexer& asset_indexer);
 	private:
-		bool CheckOnePoint(std::shared_ptr<DoubleTimeList> tl, int index);
-		bool CheckDuration(std::shared_ptr<DoubleTimeList> tl, int start);
+		bool CheckOnePoint(DoubleTimeList* tl, int index);
+		bool CheckDuration(DoubleTimeList* tl, int start);
+		void Init();
 	public:
 		int short_period() { return short_period_; }
 		int long_period() { return long_period_; }

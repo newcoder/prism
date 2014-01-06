@@ -34,13 +34,13 @@ namespace prism {
 		virtual ~SMA();
 		virtual void Generate(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end);
 		virtual void Clear();
-		std::shared_ptr<DoubleTimeList> result() const { return result_; }
+		DoubleTimeList* result() const { return result_.get(); }
 		int period() const { return period_; }
 	protected:
 		virtual bool Move(DoubleTimeList::const_iterator current, DoubleTimeList::const_iterator end);
 	protected:
 		int period_;
-		std::shared_ptr<DoubleTimeList> result_;
+		std::unique_ptr<DoubleTimeList> result_;
 	};
 
 	// exponential moving average
@@ -66,20 +66,20 @@ namespace prism {
 		virtual void Clear();
 		void GenerateCrossOvers(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end);
 
-		std::shared_ptr<DoubleTimeList> macd();
-		std::shared_ptr<DoubleTimeList> signal();
-		std::shared_ptr<DoubleTimeList> histogram();
-		std::shared_ptr<CrossOverList> cross_overs();
+		DoubleTimeList* macd();
+		DoubleTimeList* signal();
+		DoubleTimeList* histogram();
+		CrossOverList* cross_overs();
 	private:
 		int long_period_;
 		int short_period_;
 		int signal_period_;
-		std::shared_ptr<EMA> long_ema_;
-		std::shared_ptr<EMA> short_ema_;
-		std::shared_ptr<EMA> signal_ema_;
-		std::shared_ptr<DoubleTimeList> macd_;
-		std::shared_ptr<DoubleTimeList> histogram_;
-		std::shared_ptr<CrossOverList> cross_overs_;
+		std::unique_ptr<EMA> long_ema_;
+		std::unique_ptr<EMA> short_ema_;
+		std::unique_ptr<EMA> signal_ema_;
+		std::unique_ptr<DoubleTimeList> macd_;
+		std::unique_ptr<DoubleTimeList> histogram_;
+		std::unique_ptr<CrossOverList> cross_overs_;
 	};
 
 	// relative strength index
@@ -90,10 +90,10 @@ namespace prism {
 		virtual ~RSI();
 		virtual void Generate(DoubleTimeList::const_iterator begin, DoubleTimeList::const_iterator end);
 		virtual void Clear(); 
-		std::shared_ptr<DoubleTimeList> result() { return result_; }
+		DoubleTimeList* result() { return result_.get(); }
 	private:
 		int period_;
-		std::shared_ptr<DoubleTimeList> result_;
+		std::unique_ptr<DoubleTimeList> result_;
 	};
 
 	// RSV, Raw Stochastic Value
@@ -104,10 +104,10 @@ namespace prism {
 		virtual ~RSV();
 		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
 		virtual void Clear(); 
-		std::shared_ptr<DoubleTimeList> result() { return result_; }
+		DoubleTimeList* result() { return result_.get(); }
 	private:
 		int period_;
-		std::shared_ptr<DoubleTimeList> result_;
+		std::unique_ptr<DoubleTimeList> result_;
 	};
 
 	// KDJ indicator
@@ -118,17 +118,17 @@ namespace prism {
 		virtual ~KDJ();
 		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
 		virtual void Clear(); 
-		std::shared_ptr<DoubleTimeList> k();
-		std::shared_ptr<DoubleTimeList> d();
-		std::shared_ptr<DoubleTimeList> j();
+		DoubleTimeList* k();
+		DoubleTimeList* d();
+		DoubleTimeList* j();
 	private:
 		int period_;
 		int smooth1_;
 		int smooth2_;
-		std::shared_ptr<RSV> rsv_;
-		std::shared_ptr<EMA> k_ema_;
-		std::shared_ptr<EMA> d_ema_;
-		std::shared_ptr<DoubleTimeList> j_;
+		std::unique_ptr<RSV> rsv_;
+		std::unique_ptr<EMA> k_ema_;
+		std::unique_ptr<EMA> d_ema_;
+		std::unique_ptr<DoubleTimeList> j_;
 	};
 
 	// Trend Line, by local min/max
@@ -139,12 +139,12 @@ namespace prism {
 		virtual ~TL();
 		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
 		virtual void Clear();
-		std::shared_ptr<DoubleTimeList> short_trend() { return short_trend_; }
-		std::shared_ptr<DoubleTimeList> medium_trend() { return medium_trend_; }
+		DoubleTimeList* short_trend() { return short_trend_.get(); }
+		DoubleTimeList* medium_trend() { return medium_trend_.get(); }
 	private:
 		double threshold_;
-		std::shared_ptr<DoubleTimeList> short_trend_;
-		std::shared_ptr<DoubleTimeList> medium_trend_;
+		std::unique_ptr<DoubleTimeList> short_trend_;
+		std::unique_ptr<DoubleTimeList> medium_trend_;
 	};
 
 	// Count Ratio
@@ -156,10 +156,10 @@ namespace prism {
 		virtual ~CR();
 		virtual void Generate(HLOCList::const_iterator begin, HLOCList::const_iterator end);
 		virtual void Clear();
-		std::shared_ptr<DoubleTimeList> result() { return result_; }
+		DoubleTimeList* result() { return result_.get(); }
 	private:
 		int period_;
-		std::shared_ptr<DoubleTimeList> result_;
+		std::unique_ptr<DoubleTimeList> result_;
 	};
 
 

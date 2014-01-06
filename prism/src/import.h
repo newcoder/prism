@@ -35,7 +35,7 @@ namespace prism {
 	template <typename C, typename F>
 	class CSVImporter {
 	public:
-		CSVImporter(std::shared_ptr<IStore> store);
+		CSVImporter(const std::shared_ptr<IStore>& store);
 		~CSVImporter();
 	public:
 		// import the csv file to data store
@@ -61,7 +61,7 @@ namespace prism {
 	class BlockImporter
 	{
 	public:
-		BlockImporter(std::shared_ptr<IStore> store);
+		BlockImporter(const std::shared_ptr<IStore>& store);
 		~BlockImporter();
 	public:
 		// import all blocks data in the folder

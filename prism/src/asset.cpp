@@ -19,7 +19,7 @@
 
 namespace prism {
 
-	AssetScale::AssetScale(std::shared_ptr<Asset> asset) : asset_(asset)
+	AssetScale::AssetScale(const std::shared_ptr<Asset>& asset) : asset_(asset)
 	{
 		raw_data_ = nullptr;
 		data_type_ = DATA_TYPE::DATA_TYPE_DAILY;
@@ -59,13 +59,13 @@ namespace prism {
 		{
 			HLOCSeries hs(base_data->begin(), base_data->end());
 			raw_data_ = std::make_shared<HLOCList>();
-			hs.ShrinkByWeek(raw_data_);
+			hs.ShrinkByWeek(raw_data_.get());
 		}
 		if (data_type == DATA_TYPE_MONTHLY)
 		{
 			HLOCSeries hs(base_data->begin(), base_data->end());
 			raw_data_ = std::make_shared<HLOCList>();
-			hs.ShrinkByMonth(raw_data_);
+			hs.ShrinkByMonth(raw_data_.get());
 		}
 		if (data_num > 1)
 		{
@@ -73,62 +73,62 @@ namespace prism {
 				raw_data_ = base_data;
 			HLOCSeries hs(raw_data_->begin(), raw_data_->end());
 			auto shrinked_data = std::make_shared<HLOCList>();
-			hs.ShrinkByNum(data_num, shrinked_data);
+			hs.ShrinkByNum(data_num, shrinked_data.get());
 			raw_data_ = shrinked_data;
 		}
 	}
 
-	std::shared_ptr<ILocalIndicator> AssetScale::indicators(const std::string& indicator_str)
+	ILocalIndicator* AssetScale::indicators(const std::string& indicator_str)
 	{
 		auto it = indicators_.find(indicator_str);
-		return it == indicators_.end() ? GenerateIndicator(indicator_str): it->second;
+		return it == indicators_.end() ? GenerateIndicator(indicator_str): it->second.get();
 	}
 
-	std::shared_ptr<ILocalIndicator> AssetScale::GenerateIndicator(const std::string& indicator_str)
+	ILocalIndicator* AssetScale::GenerateIndicator(const std::string& indicator_str)
 	{
 		std::vector<std::string> elems;
 		kyotocabinet::strsplit(indicator_str, '_', &elems);
+		ILocalIndicator* indicator = nullptr;
 		// MACD indicators
 		if (elems[0] == "MACD")
 		{
 			int short_period = atoi(elems[1].c_str());
 			int long_period = atoi(elems[2].c_str());
 			int signal_period = atoi(elems[3].c_str());
-			auto tl = std::make_shared<DoubleTimeList>();
-			TLUtils::Populate(raw_data_, PRICE_TYPE_C, tl);
-			std::shared_ptr<ILocalIndicator> macd = std::make_shared<MACD>(short_period, long_period, signal_period);
+			auto tl = std::make_unique<DoubleTimeList>();
+			TLUtils::Populate(raw_data_.get(), PRICE_TYPE_C, tl.get());
+			std::unique_ptr<ILocalIndicator> macd = std::make_unique<MACD>(short_period, long_period, signal_period);
 			TimeSeries ts(tl->begin(), tl->end());
-			ts.CalculateIndicator(macd);
-			indicators_.insert(std::make_pair(indicator_str, macd));
-			return macd;
+			ts.CalculateIndicator(macd.get());
+			indicator = macd.get();
+			indicators_.insert(std::make_pair(indicator_str, std::move(macd)));
 		}
 
 		// EMA indicators
 		if (elems[0] == "EMA")
 		{
 			int period = atoi(elems[1].c_str());
-			auto tl = std::make_shared<DoubleTimeList>();
-			TLUtils::Populate(raw_data_, PRICE_TYPE_C, tl);
-			std::shared_ptr<ILocalIndicator> ema = std::make_shared<EMA>(period);
+			auto tl = std::make_unique<DoubleTimeList>();
+			TLUtils::Populate(raw_data_.get(), PRICE_TYPE_C, tl.get());
+			std::unique_ptr<ILocalIndicator> ema = std::make_unique<EMA>(period);
 			TimeSeries ts(tl->begin(), tl->end());
-			ts.CalculateIndicator(ema);
-			indicators_.insert(std::make_pair(indicator_str, ema));
-			return ema;
+			ts.CalculateIndicator(ema.get());
+			indicator = ema.get();
+			indicators_.insert(std::make_pair(indicator_str, std::move(ema)));
 		}
 
 		// CR indicators
 		if (elems[0] == "CR")
 		{
 			int period = atoi(elems[1].c_str());
-			auto tl = std::make_shared<DoubleTimeList>();
-			std::shared_ptr<ILocalIndicator> cr = std::make_shared<CR>(period);
+			std::unique_ptr<ILocalIndicator> cr = std::make_unique<CR>(period);
 			HLOCSeries hs(raw_data_->begin(), raw_data_->end());
-			hs.CalculateIndicator(cr);
-			indicators_.insert(std::make_pair(indicator_str, cr));
-			return cr;
+			hs.CalculateIndicator(cr.get());
+			indicator = cr.get();
+			indicators_.insert(std::make_pair(indicator_str, std::move(cr)));
 		}
 
-		return nullptr;
+		return indicator;
 	}
 
 	Asset::Asset(const std::string& symbol) : symbol_(symbol)
@@ -145,10 +145,10 @@ namespace prism {
 		scales_.clear();
 	}
 
-	bool Asset::Load(std::shared_ptr<IStore> store, size_t begin_year, size_t end_year)
+	bool Asset::Load(IStore* store, size_t begin_year, size_t end_year)
 	{
 		raw_data_ = std::make_shared<HLOCList>();
-		if (!store->Get(symbol_, begin_year, end_year, raw_data_) || raw_data_->empty())
+		if (!store->Get(symbol_, begin_year, end_year, raw_data_.get()) || raw_data_->empty())
 			return false;
 		begin_year_ = begin_year;
 		end_year_ = end_year;
@@ -157,7 +157,7 @@ namespace prism {
 		return true;
 	}
 
-	bool Asset::Update(std::shared_ptr<IStore> store, size_t begin_year, size_t end_year)
+	bool Asset::Update(IStore* store, size_t begin_year, size_t end_year)
 	{
 		if (begin_year >= begin_year_ && end_year <= end_year_)
 		{
@@ -182,7 +182,7 @@ namespace prism {
 		return it == scales_.end() ? CreateScale(data_type, data_num) : it->second;
 	}
 
-	AssetsProvider::AssetsProvider(std::shared_ptr<IStore> store) : store_(store)
+	AssetsProvider::AssetsProvider(const std::shared_ptr<IStore>& store) : store_(store)
 	{
 	}
 	
@@ -208,7 +208,7 @@ namespace prism {
 			{
 				// not loaded
 				asset = std::make_shared<Asset>(*cit);
-				if (asset->Load(store_, begin_year, end_year))
+				if (asset->Load(store_.get(), begin_year, end_year))
 				{
 					assets_.insert(std::make_pair(symbol, asset));
 					count++;
@@ -216,7 +216,7 @@ namespace prism {
 			}
 			else
 			{
-				asset->Update(store_, begin_year, end_year);
+				asset->Update(store_.get(), begin_year, end_year);
 			}
 			cit++;
 		}
@@ -310,13 +310,13 @@ namespace prism {
 	}
 
 
-	AssetScaleIndexer::AssetScaleIndexer(std::shared_ptr<AssetScale> scale, time_t begin) : scale_(scale)
+	AssetScaleIndexer::AssetScaleIndexer(const std::shared_ptr<AssetScale>& scale, time_t begin) : scale_(scale)
 	{
 		index_ = -1;
 		ForwardTo(begin);
 	}
 
-	AssetScaleIndexer::AssetScaleIndexer(std::shared_ptr<AssetScale> scale) : scale_(scale)
+	AssetScaleIndexer::AssetScaleIndexer(const std::shared_ptr<AssetScale>& scale) : scale_(scale)
 	{
 		index_ = -1;
 	}
@@ -324,7 +324,7 @@ namespace prism {
 	void AssetScaleIndexer::ForwardTo(time_t pos)
 	{
 		if (pos < 0) return;
-		std::shared_ptr<HLOCList> hloc_list = scale_->raw_data();
+		auto hloc_list = scale_->raw_data();
 		size_t i = index_ > 0 ? index_ : 0;
 		while (i < hloc_list->size())
 		{
@@ -350,12 +350,12 @@ namespace prism {
 		return true;
 	}
 
-	AssetIndexer::AssetIndexer(std::shared_ptr<Asset> asset, time_t begin) : AssetIndexer(asset)
+	AssetIndexer::AssetIndexer(const std::shared_ptr<Asset>& asset, time_t begin) : AssetIndexer(asset)
 	{
 		ForwardTo(begin);
 	}
 
-	AssetIndexer::AssetIndexer(std::shared_ptr<Asset> asset) : asset_(asset), base_scale_indexer_(nullptr)
+	AssetIndexer::AssetIndexer(const std::shared_ptr<Asset>& asset) : asset_(asset), base_scale_indexer_(nullptr)
 	{
 		base_scale_indexer_ = scale_indexers(asset_->base_scale());
 		assert(base_scale_indexer_);
@@ -397,15 +397,15 @@ namespace prism {
 		return scale ? scale_indexers(scale) : nullptr;
 	}
 
-	std::shared_ptr<AssetScaleIndexer> AssetIndexer::scale_indexers(std::shared_ptr<AssetScale> scale)
+	std::shared_ptr<AssetScaleIndexer> AssetIndexer::scale_indexers(const std::shared_ptr<AssetScale>& scale)
 	{
-		auto cit = scale_indexers_.find(scale);
+		auto cit = scale_indexers_.find(scale.get());
 		if (cit != scale_indexers_.end())
 			return cit->second;
 		// align the initial index with the base scale
 		time_t init_time = base_scale_indexer_ ? GetIndexTime() : -1;
 		auto scale_indexer = std::make_shared<AssetScaleIndexer>(scale, init_time);
-		scale_indexers_.insert(std::make_pair(scale, scale_indexer));
+		scale_indexers_.insert(std::make_pair(scale.get(), scale_indexer));
 		return scale_indexer;
 	}
 

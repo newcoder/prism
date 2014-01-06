@@ -72,13 +72,13 @@ namespace prism {
 		return db_.set(key.c_str(), key.size(), (const char*)&point, sizeof(HLOC));
 	}
 
-	bool KCStore::Append(const std::string& symbol, std::shared_ptr<HLOCList> points)
+	bool KCStore::Append(const std::string& symbol, HLOCList* points)
 	{
 		std::string key = GenerateKey(symbol, points->at(0).time);
 		return db_.append(key.c_str(), key.size(), (const char*)&points->at(0), sizeof(HLOC)*points->size());
 	}
 
-	bool KCStore::Put(const std::string& symbol, std::shared_ptr<HLOCList> points)
+	bool KCStore::Put(const std::string& symbol, HLOCList* points)
 	{
 		HLOC last;
 		if (points->empty()) return true;
@@ -107,7 +107,7 @@ namespace prism {
 		return false;
 	}
 
-	bool KCStore::Get(const std::string& symbol, size_t begin_year, size_t end_year, std::shared_ptr<HLOCList> result)
+	bool KCStore::Get(const std::string& symbol, size_t begin_year, size_t end_year, HLOCList* result)
 	{	
 		int32_t vsize;
 		HLOC vbuf[300];
@@ -131,7 +131,7 @@ namespace prism {
 		return true;
 	}
 
-	bool KCStore::GetAll(const std::string& symbol, std::shared_ptr<HLOCList> result)
+	bool KCStore::GetAll(const std::string& symbol, HLOCList* result)
 	{
 		HLOC first;
 		HLOC last;

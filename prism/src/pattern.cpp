@@ -178,12 +178,12 @@ namespace prism
 	#define CREATE_PATTERN(type) \
 		CreatePattern(PATTERN_##type, type, sizeof(type) / sizeof(int));
 
-	std::shared_ptr<Pattern> PatternFactory::GetPattern(PATTERN_TYPE type)
+	Pattern* PatternFactory::GetPattern(PATTERN_TYPE type)
 	{
 		auto cit = sPatterns.find(type);
 		if (cit != sPatterns.end())
 		{
-			return (*cit).second;
+			return (*cit).second.get();
 		}
 		else
 		{
@@ -202,9 +202,10 @@ namespace prism
 		return nullptr;
 	}
 
-	std::shared_ptr<Pattern> PatternFactory::CreatePattern(PATTERN_TYPE type, const int *arr, int size)
+	Pattern* PatternFactory::CreatePattern(PATTERN_TYPE type, const int *arr, int size)
 	{
-		auto pattern = std::make_shared<Pattern>();
+		auto pattern = std::make_unique<Pattern>();
+		auto ptr = pattern.get();
 		const int *p = arr;
 		bool group_start = false;
 		std::set<int> points_set;
@@ -237,7 +238,7 @@ namespace prism
 			pattern->AddGroup(PointsGroup(pattern.get(), points_set, adjacent));
 		}
 
-		sPatterns.insert(std::make_pair(type, pattern));
-		return pattern;
+		sPatterns.insert(std::make_pair(type, std::move(pattern)));
+		return ptr;
 	}
 }

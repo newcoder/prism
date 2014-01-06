@@ -33,9 +33,9 @@ public:
 TEST_F(ImportTest, testVerifyNumber)
 {
 	count = importer_->Import(kDataPath + "SH600623.csv");	
-	auto hloc_list = std::make_shared<HLOCList>();
-	store_->GetAll("SH600623", hloc_list);
-	EXPECT_EQ(count, hloc_list->size());
+	HLOCList hloc_list;
+	store_->GetAll("SH600623", &hloc_list);
+	EXPECT_EQ(count, hloc_list.size());
 }
 
 TEST_F(ImportTest, testImport)
@@ -82,8 +82,8 @@ TEST_F(ImportTest, testImportBlock)
 
 TEST_F(ImportTest, testGetAll)
 {
-	auto hloc_list = std::make_shared<HLOCList>();
-	bool ret = store_->GetAll("SH600623", hloc_list);
+	HLOCList hloc_list;
+	bool ret = store_->GetAll("SH600623", &hloc_list);
 	EXPECT_TRUE(ret);
 }
 

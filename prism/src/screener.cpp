@@ -9,7 +9,7 @@
 
 namespace prism {
 	
-	void Screener::Screen(AssetIndexerList& asset_index_list, std::shared_ptr<std::vector<int>> result, time_t pos)
+	void Screener::Screen(AssetIndexerList& asset_index_list, std::vector<int>* result, time_t pos)
 	{
 		result->clear();
 		for (unsigned i = 0; i < asset_index_list.size(); i++)
