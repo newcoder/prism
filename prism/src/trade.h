@@ -49,6 +49,7 @@ namespace prism {
 	public:
 		void Add(Transaction& trans);
 		size_t Size() { return transactions_.size(); }
+		void Clear() { transactions_.clear(); }
 		// get transactions for a single symbol
 		void GetTransactions(const std::string& symbol, TransactionList* symbol_transactions);
 	public:

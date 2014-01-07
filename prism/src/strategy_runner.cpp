@@ -19,81 +19,75 @@
 
 namespace prism {
 	
-	StrategyObserver::StrategyObserver(StrategyRunner* runner): runner_(runner)
+	RunnerObserver::RunnerObserver()
 	{
 	}
 
-	StrategyObserver::~StrategyObserver()
+	RunnerObserver::~RunnerObserver()
 	{
 	}
 
-	void StrategyObserver::OnTransaction(const Transaction& trans)
+	void RunnerObserver::OnTransaction(const Transaction& trans)
 	{
-		transactions_.push_back(trans);
-		//std::cout << trans.type_ << ", " 
-		//	<< trans.asset_->symbol() << ", " 
-		//	<< TimeToString(trans.time_, "%Y-%m-%d, ") 
-		//	<< trans.price_ << ", " 
-		//	<< trans.shares_<< std::endl;	
+		auto sp = trans.asset_indexer_.lock();
+		if (sp)
+		{
+			std::cout << trans.type_ << ", "
+				<< sp->asset()->symbol() << ", "
+				<< TimeToString(trans.time_, "%Y-%m-%d, ")
+				<< trans.price_ << ", "
+				<< trans.shares_ << std::endl;
+		}
 	}
 
-	void StrategyObserver::OnStart()
+	void RunnerObserver::OnStart(Strategy* strategy)
 	{
-		transactions_.clear();
-		performance_series_.clear();
+		std::cout << TimeToString(strategy->begin_time(), "begin time: %Y-%m-%d") << std::endl;
+		std::cout << TimeToString(strategy->end_time(), "end time: %Y-%m-%d") << std::endl;
+		std::cout << "stocks: " << strategy->stocks() << std::endl;
+		Clear();
 	}
 
-	void StrategyObserver::OnCycleBegin(time_t cursor)
+	void RunnerObserver::OnCycleBegin(time_t cursor)
 	{
-		//std::cout << TimeToString(cursor, "cursor: %Y-%m-%d") << std::endl;
+		std::cout << TimeToString(cursor, "cursor: %Y-%m-%d") << std::endl;
 	}
 	
-	void StrategyObserver::OnCycleEnd(time_t cursor)
+	void RunnerObserver::OnCycleEnd(time_t cursor)
 	{		
-		DoubleTimePoint p;
-		p.position = cursor;
-		//p.value = runner_->GetBalance();
-		performance_series_.push_back(p);
+
 	}
 
-	void StrategyObserver::OnFinished()
+	void RunnerObserver::OnFinished()
 	{
-		//std::cout << "transactions: "<< transactions_.size() << std::endl;
-		//std::cout << "wins: "<< GetTransactionsNum(true) << std::endl;
-		//double balance = runner_->GetBalance();
-		//double init = runner_->strategy()->init_cash();
-		//profit_ = (balance - init) * 100 / init;
-		//std::cout << "profit: " << profit_ << "%" << std::endl;
+
 	}
 
-	int StrategyObserver::GetTransactionsNum(bool win)
+
+	bool StrategyRunner::Init(bool reload)
 	{
-		int num = 0;
-		std::map<std::string, Transaction> symbol_trans;
-		std::vector<Transaction>::const_iterator cit = transactions_.begin();
-		while(cit != transactions_.end())
+		cash_ = strategy_->init_cash();
+		cursor_ = strategy_->begin_time();
+		Clear();
+		int count = 0;
+		if (reload)
 		{
-			Transaction trans = *cit;
-			int amount = (int)trans.shares_;
-			//std::string key = trans.asset_->symbol() + std::to_string(static_cast<long long>(amount));		
-			if (trans.type_ == TRANSACTION_TYPE_BUY)
-			{
-			//	symbol_trans.insert(std::make_pair(key, trans));
-			}
-			else
-			{
-				//std::map<std::string, Transaction>::iterator it = symbol_trans.find(key);
-				//assert(it != symbol_trans.end());
-				//if (it != symbol_trans.end())
-				//{
-				//	if ((it->second.price_ < trans.price_ && win) || (it->second.price_ > trans.price_ && !win))
-				//		num++;
-				//	symbol_trans.erase(it);
-				//}
-			}
-			cit++;
+			count = assets_provider_->LoadAssets(strategy_->stocks(),
+				GetYear(strategy_->begin_time()),
+				GetYear(strategy_->end_time()));
 		}
-		return num;
+		return count > 0;
 	}
 
+	void StrategyRunner::Run()
+	{
+
+	}
+
+	void StrategyRunner::Clear()
+	{
+		transaction_manager_->Clear();
+		portfolio_manager_->Clear();
+		runner_observer_->Clear();
+	}
 }

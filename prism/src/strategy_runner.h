@@ -21,38 +21,51 @@
 
 namespace prism {
 		
-	// the environment for strategy to run
+	class RunnerObserver
+	{
+	public:
+		RunnerObserver();
+		~RunnerObserver();
+	public:
+		void OnTransaction(const Transaction& trans);
+		void OnStart(Strategy* strategy);
+		void OnCycleBegin(time_t cursor);
+		void OnCycleEnd(time_t cursor);
+		void OnFinished();
+		void Clear() { performance_.clear(); }
+	public:
+		DoubleTimeList& performance() { return performance_; }
+	private:
+		DoubleTimeList performance_;
+	};
+
+	// the strategy runner
 	class StrategyRunner
 	{
 	public:
 		StrategyRunner(const std::shared_ptr<Strategy>& strategy,
 			const std::shared_ptr<AssetsProvider>& assets_provider,
 			const std::shared_ptr<PortfolioManager>& portfolio_manager,
-			const std::shared_ptr<TransactionManager>& transaction_manager){}
+			const std::shared_ptr<TransactionManager>& transaction_manager,
+			const std::shared_ptr<RunnerObserver>& runner_observer): 
+			strategy_(strategy), assets_provider_(assets_provider), 
+			portfolio_manager_(portfolio_manager), transaction_manager_(transaction_manager),
+			runner_observer_(runner_observer)
+		{}
 		~StrategyRunner(){}
-	};
-
-	class StrategyObserver
-	{
 	public:
-		StrategyObserver(StrategyRunner* runner);
-		~StrategyObserver();
-	public:
-		void OnTransaction(const Transaction& trans);
-		void OnStart();
-		void OnCycleBegin(time_t cursor);
-		void OnCycleEnd(time_t cursor);
-		void OnFinished();
-		int GetTransactionsNum(bool win = true);
-	public:
-		DoubleTimeList& performance_series() { return performance_series_; }
-		std::vector<Transaction>& transactions() { return transactions_; }
-		double profit() { return profit_; }
+		// if reload = true, the assets_provider will re-load assets according to the strategy->stocks
+		bool Init(bool reload = false);
+		void Run();
+		void Clear();
 	private:
-		DoubleTimeList performance_series_;
-		std::vector<Transaction> transactions_;		
-		StrategyRunner* runner_;
-		double profit_;
+		time_t cursor_;
+		double cash_;
+		std::shared_ptr<Strategy> strategy_;
+		std::shared_ptr<AssetsProvider> assets_provider_;
+		std::shared_ptr<PortfolioManager> portfolio_manager_;
+		std::shared_ptr<TransactionManager> transaction_manager_;
+		std::shared_ptr<RunnerObserver> runner_observer_;
 	};
 
 }

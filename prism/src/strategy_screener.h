@@ -43,7 +43,7 @@ namespace prism {
 	private:
 		std::shared_ptr<IStore> store_;
 		StrategyRunner* runner_;
-		StrategyObserver* observer_;
+		RunnerObserver* observer_;
 		std::string strategy_file_;
 		std::vector<StrategyPerformance> performance_;
 	};
