@@ -76,7 +76,27 @@ namespace prism {
 				GetYear(strategy_->begin_time()),
 				GetYear(strategy_->end_time()));
 		}
-		return count > 0;
+		if (count > 0)
+		{
+			InitIndexer();
+			return true;
+		}
+		return false;
+	}
+
+	void StrategyRunner::InitIndexer()
+	{
+		auto assets = assets_provider_->assets();
+		for (auto& a : assets)
+		{
+			asset_indexer_list_.push_back(AssetIndexer(a.second));
+		}
+	}
+
+	void StrategyRunner::MoveToCursor()
+	{
+		for (auto& ai : asset_indexer_list_)
+			ai.MoveTo(cursor_);
 	}
 
 	void StrategyRunner::Run()
@@ -86,6 +106,7 @@ namespace prism {
 
 	void StrategyRunner::Clear()
 	{
+		asset_indexer_list_.clear();
 		transaction_manager_->Clear();
 		portfolio_manager_->Clear();
 		runner_observer_->Clear();

@@ -55,9 +55,13 @@ namespace prism {
 		~StrategyRunner(){}
 	public:
 		// if reload = true, the assets_provider will re-load assets according to the strategy->stocks
+		// return false if there are no assets to test against
 		bool Init(bool reload = false);
 		void Run();
 		void Clear();
+	private:
+		void InitIndexer();
+		void MoveToCursor();
 	private:
 		time_t cursor_;
 		double cash_;
@@ -66,6 +70,7 @@ namespace prism {
 		std::shared_ptr<PortfolioManager> portfolio_manager_;
 		std::shared_ptr<TransactionManager> transaction_manager_;
 		std::shared_ptr<RunnerObserver> runner_observer_;
+		AssetIndexerList asset_indexer_list_;
 	};
 
 }
