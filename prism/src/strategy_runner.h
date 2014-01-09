@@ -15,6 +15,7 @@
 #include "asset.h"
 #include "trade.h"
 #include "strategy.h"
+#include "screener.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -62,15 +63,22 @@ namespace prism {
 	private:
 		void InitIndexer();
 		void MoveToCursor();
-	private:
-		time_t cursor_;
-		double cash_;
+		void ForwardToCursor();
+		void Screen();
+		void Trade();
+	private:	
 		std::shared_ptr<Strategy> strategy_;
 		std::shared_ptr<AssetsProvider> assets_provider_;
 		std::shared_ptr<PortfolioManager> portfolio_manager_;
 		std::shared_ptr<TransactionManager> transaction_manager_;
 		std::shared_ptr<RunnerObserver> runner_observer_;
 		AssetIndexerList asset_indexer_list_;
+		time_t cursor_;
+		double cash_;
+		std::unique_ptr<Screener> attach_screener_;
+		std::unique_ptr<Screener> detach_screener_;
+		std::vector<int> to_attach_;
+		std::vector<int> to_detach_;
 	};
 
 }

@@ -79,6 +79,8 @@ namespace prism {
 		if (count > 0)
 		{
 			InitIndexer();
+			attach_screener_ = std::make_unique<Screener>(strategy_->attach_rule());
+			detach_screener_ = std::make_unique<Screener>(strategy_->detach_rule());
 			return true;
 		}
 		return false;
@@ -99,9 +101,34 @@ namespace prism {
 			ai.MoveTo(cursor_);
 	}
 
-	void StrategyRunner::Run()
+	void StrategyRunner::ForwardToCursor()
+	{
+		for (auto& ai : asset_indexer_list_)
+			ai.ForwardTo(cursor_);
+	}
+
+	void StrategyRunner::Screen()
+	{
+		attach_screener_->Screen(asset_indexer_list_, &to_attach_, cursor_);
+		detach_screener_->Screen(asset_indexer_list_, &to_detach_, cursor_);
+	}
+
+	void StrategyRunner::Trade()
 	{
 
+	}
+
+	void StrategyRunner::Run()
+	{
+		runner_observer_->OnStart(strategy_.get());
+		MoveToCursor();
+		while (cursor_ < strategy_->end_time())
+		{
+			runner_observer_->OnCycleBegin(cursor_);
+			
+			runner_observer_->OnCycleEnd(cursor_);
+		}
+		runner_observer_->OnFinished();
 	}
 
 	void StrategyRunner::Clear()

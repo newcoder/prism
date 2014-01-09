@@ -50,8 +50,8 @@ namespace prism {
 		time_t begin_time() const { return begin_time_; }
 		time_t end_time() const { return end_time_; }
 		std::string stocks() const { return stocks_; }
-		IRule* attach_rule() const { return attach_rule_.get(); }
-		IRule* detach_rule() const { return detach_rule_.get(); }
+		std::shared_ptr<IRule> attach_rule() const { return attach_rule_; }
+		std::shared_ptr<IRule> detach_rule() const { return detach_rule_; }
 		// setter
 		void set_name(const std::string& name) { name_ = name; }
 		void set_description(const std::string& description) { description_ = description; }
