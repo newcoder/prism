@@ -23,7 +23,7 @@ namespace prism {
 		symbol_transactions->clear();
 		for (auto t : transactions_)
 		{
-			auto sp = t.asset_indexer_.lock();
+			auto sp = t.asset_indexer_;
 			if (sp)
 			{
 				if (sp->asset()->symbol() == symbol)
@@ -36,7 +36,7 @@ namespace prism {
 
 	bool Portfolio::GetValue(double& value, time_t pos)
 	{
-		auto sp = asset_indexer_.lock();
+		auto sp = asset_indexer_;
 		if (sp)
 		{
 			if (pos > 0)
@@ -58,35 +58,53 @@ namespace prism {
 		}
 	}
 
-	void PortfolioManager::Buy(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount)
+	double PortfolioManager::Buy(AssetIndexer* asset_indexer, double amount)
 	{
-		auto sp = asset_indexer.lock();
-		if (sp)
+		double value = 0.0F;
+		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
+		if (cit != portfolios_.end())
 		{
-			auto cit = portfolios_.find(sp->asset()->symbol());
-			if (cit != portfolios_.end())
-			{
-				cit->second->Buy(amount);
-			}
-			else
-			{
-				auto portfolio = std::make_unique<Portfolio>(asset_indexer, amount);
-				portfolios_.insert(std::make_pair(sp->asset()->symbol(), std::move(portfolio)));
-			}
+			double prev;
+			cit->second->GetValue(prev);
+			cit->second->Buy(amount);
+			cit->second->GetValue(value);
+			value = value - prev;
 		}
+		else
+		{
+			auto portfolio = std::make_unique<Portfolio>(asset_indexer, amount);
+			portfolios_.insert(std::make_pair(asset_indexer->asset()->symbol(), std::move(portfolio)));
+			portfolio->GetValue(value);
+		}
+
+		return value * (1 + kCommissionRate);
 	}
 
-	void PortfolioManager::Sell(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount)
+	double PortfolioManager::Sell(AssetIndexer* asset_indexer, double amount)
 	{
-		auto sp = asset_indexer.lock();
-		if (sp)
+		double value = 0.0F;
+		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
+		if (cit != portfolios_.end())
 		{
-			auto cit = portfolios_.find(sp->asset()->symbol());
-			if (cit != portfolios_.end())
-			{
-				cit->second->Sell(amount);
-			}
+			double prev;
+			cit->second->GetValue(prev);
+			cit->second->Sell(amount);
+			cit->second->GetValue(value);
+			value = prev - value;
 		}
+		return value * (1 - kCommissionRate);
+	}
+
+	double PortfolioManager::SellAll(AssetIndexer* asset_indexer)
+	{
+		double value = 0.0F;
+		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
+		if (cit != portfolios_.end())
+		{
+			cit->second->GetValue(value);
+			portfolios_.erase(cit);
+		}
+		return value * (1 - kCommissionRate);
 	}
 
 	void PortfolioManager::Clear()

@@ -29,7 +29,7 @@ namespace prism {
 
 	void RunnerObserver::OnTransaction(const Transaction& trans)
 	{
-		auto sp = trans.asset_indexer_.lock();
+		auto sp = trans.asset_indexer_;
 		if (sp)
 		{
 			std::cout << trans.type_ << ", "
@@ -101,13 +101,13 @@ namespace prism {
 			ai.MoveTo(cursor_);
 	}
 
-	void StrategyRunner::ForwardToCursor()
+	inline void StrategyRunner::ForwardToCursor()
 	{
 		for (auto& ai : asset_indexer_list_)
 			ai.ForwardTo(cursor_);
 	}
 
-	void StrategyRunner::Screen()
+	inline void StrategyRunner::Screen()
 	{
 		attach_screener_->Screen(asset_indexer_list_, &to_attach_, cursor_);
 		detach_screener_->Screen(asset_indexer_list_, &to_detach_, cursor_);
@@ -115,6 +115,21 @@ namespace prism {
 
 	void StrategyRunner::Trade()
 	{
+		// sell stock if it is in the detach list..
+		for (auto& i : to_detach_)
+		{
+			std::string symbol = asset_indexer_list_[i].asset()->symbol();
+			if (portfolio_manager_->Size() > 0)
+			{
+				Portfolio* portfolio = portfolio_manager_->Get(symbol);
+				if (portfolio)
+				{
+					double value = portfolio_manager_->SellAll(portfolio->asset_indexer());
+					cash_ = cash_ + value;
+				}
+			}
+		}
+		// buy stock if there is cash and the attach list is not empty..
 
 	}
 
@@ -125,7 +140,10 @@ namespace prism {
 		while (cursor_ < strategy_->end_time())
 		{
 			runner_observer_->OnCycleBegin(cursor_);
-			
+			Screen();
+			cursor_ = cursor_ + strategy_->step() * 24 * 3600;
+			ForwardToCursor();
+			Trade();
 			runner_observer_->OnCycleEnd(cursor_);
 		}
 		runner_observer_->OnFinished();

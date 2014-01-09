@@ -39,7 +39,7 @@ TEST_F(TradeTest, testTransactions)
 
 	TransactionManager trans_manager;
 	Transaction trans;
-	trans.asset_indexer_ = asset_indexer;
+	trans.asset_indexer_ = asset_indexer.get();
 	trans.commission_ = 0.001;
 	trans.price_ = 12.01;
 	trans.shares_ = 10000;
@@ -55,7 +55,7 @@ TEST_F(TradeTest, testTransactions)
 
 	auto asset2 = loader.Get("SZ002015");
 	auto asset_indexer2 = std::make_shared<AssetIndexer>(asset2);
-	trans.asset_indexer_ = asset_indexer2;
+	trans.asset_indexer_ = asset_indexer2.get();
 	for (int i = 0; i < 152; i++)
 		trans_manager.Add(trans);
 
@@ -80,11 +80,11 @@ TEST_F(TradeTest, testPortfolios)
 	auto asset_indexer2 = std::make_shared<AssetIndexer>(asset2);
 
 	PortfolioManager portfolio_manager;
-	portfolio_manager.Buy(asset_indexer1, 14000);
-	portfolio_manager.Buy(asset_indexer2, 21000);
-	portfolio_manager.Buy(asset_indexer1, 16000);
-	portfolio_manager.Buy(asset_indexer2, 25000);
-	portfolio_manager.Sell(asset_indexer1, 10000);
+	portfolio_manager.Buy(asset_indexer1.get(), 14000);
+	portfolio_manager.Buy(asset_indexer2.get(), 21000);
+	portfolio_manager.Buy(asset_indexer1.get(), 16000);
+	portfolio_manager.Buy(asset_indexer2.get(), 25000);
+	portfolio_manager.Sell(asset_indexer1.get(), 10000);
 
 	auto item = portfolio_manager.Get(symbol1);
 	EXPECT_DOUBLE_EQ(item->amount(), 20000);

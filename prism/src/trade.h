@@ -32,7 +32,7 @@ namespace prism {
 	public:
 		int transaction_id_;
 		TRANSACTION_TYPE type_;
-		std::weak_ptr<AssetIndexer> asset_indexer_;
+		AssetIndexer* asset_indexer_;
 		double price_;
 		double shares_;
 		double commission_;
@@ -61,18 +61,18 @@ namespace prism {
 	class Portfolio
 	{
 	public:
-		Portfolio(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount): asset_indexer_(asset_indexer), amount_(amount) {}
+		Portfolio(AssetIndexer* asset_indexer, double amount): asset_indexer_(asset_indexer), amount_(amount) {}
 	public:
 		void Buy(double amount) { amount_ += amount; }
 		void Sell(double amount) { amount_ -= amount; }
-		bool GetValue(double& value, time_t pos);		
+		bool GetValue(double& value, time_t pos = -1);		
 		std::string symbol();
-		std::weak_ptr<AssetIndexer> asset_indexer() const { return asset_indexer_; }
+		AssetIndexer* asset_indexer() const { return asset_indexer_; }
 		double amount() const { return amount_; }
-		void set_asset(std::weak_ptr<AssetIndexer> asset_indexer) { asset_indexer_ = asset_indexer; }
+		void set_asset(AssetIndexer* asset_indexer) { asset_indexer_ = asset_indexer; }
 		void set_amount(double amount) { amount_ = amount; }
 	private:
-		std::weak_ptr<AssetIndexer> asset_indexer_;
+		AssetIndexer* asset_indexer_;
 		double amount_;
 	};
 
@@ -82,11 +82,13 @@ namespace prism {
 		PortfolioManager() {}
 		~PortfolioManager() {}
 	public:
-		void Buy(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount);
-		void Sell(const std::weak_ptr<AssetIndexer>& asset_indexer, double amount);
+		double Buy(AssetIndexer* asset_indexer, double amount);
+		double Sell(AssetIndexer* asset_indexer, double amount);
+		double SellAll(AssetIndexer* asset_indexer);
 		// move to the pos if pos > 0, then evaluate the value
 		bool GetValue(double& value, time_t pos = -1);
 		void Clear();
+		size_t Size() { return portfolios_.size(); }
 		Portfolio* Get(const std::string& symbol);
 	private:
 		std::map<std::string, std::unique_ptr<Portfolio>> portfolios_;
