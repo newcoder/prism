@@ -31,6 +31,7 @@ namespace prism {
 	{
 	public:
 		int transaction_id_;
+		int associate_transaction_id;
 		TRANSACTION_TYPE type_;
 		AssetIndexer* asset_indexer_;
 		double price_;
@@ -50,6 +51,7 @@ namespace prism {
 		void Add(Transaction& trans);
 		size_t Size() { return transactions_.size(); }
 		void Clear() { transactions_.clear(); }
+		Transaction* Get(int id);
 		// get transactions for a single symbol
 		void GetTransactions(const std::string& symbol, TransactionList* symbol_transactions);
 	public:
@@ -61,20 +63,18 @@ namespace prism {
 	class Portfolio
 	{
 	public:
-		Portfolio(AssetIndexer* asset_indexer, double amount): asset_indexer_(asset_indexer), amount_(amount) {}
+		Portfolio(const Transaction& trans): trans_(trans) {}
 	public:
-		void Buy(double amount) { amount_ += amount; }
-		void Sell(double amount) { amount_ -= amount; }
 		bool GetValue(double& value, time_t pos = -1);		
-		std::string symbol();
-		AssetIndexer* asset_indexer() const { return asset_indexer_; }
-		double amount() const { return amount_; }
-		void set_asset(AssetIndexer* asset_indexer) { asset_indexer_ = asset_indexer; }
-		void set_amount(double amount) { amount_ = amount; }
+		std::string symbol() { return trans_.asset_indexer_->asset()->symbol(); }
+		int transaction_id() { return trans_.transaction_id_; }
+		AssetIndexer* asset_indexer() const { return trans_.asset_indexer_; }
+		double shares() const { return trans_.shares_; }
 	private:
-		AssetIndexer* asset_indexer_;
-		double amount_;
+		Transaction trans_; // the transaction of buy..or sell short...
 	};
+
+	typedef std::vector<Portfolio> PortfolioList;
 
 	class PortfolioManager
 	{
@@ -82,16 +82,32 @@ namespace prism {
 		PortfolioManager() {}
 		~PortfolioManager() {}
 	public:
-		double Buy(AssetIndexer* asset_indexer, double amount);
-		double Sell(AssetIndexer* asset_indexer, double amount);
-		double SellAll(AssetIndexer* asset_indexer);
+		void Remove(int transaction_id);
+		void Add(const Portfolio& portfolio) { portfolios_.push_back(portfolio); }
 		// move to the pos if pos > 0, then evaluate the value
 		bool GetValue(double& value, time_t pos = -1);
-		void Clear();
+		void Clear() { return portfolios_.clear(); }
 		size_t Size() { return portfolios_.size(); }
-		Portfolio* Get(const std::string& symbol);
+		void GetPortfolios(const std::string& symbol, PortfolioList* portfolios);
 	private:
-		std::map<std::string, std::unique_ptr<Portfolio>> portfolios_;
+		std::vector<Portfolio> portfolios_;
+	};
+
+	class CashBox
+	{
+	public:
+		CashBox(double total, int num_slots) : total_(total), num_slots_(num_slots) { Init(); }
+		~CashBox(){}
+	public:
+		void Init();
+		// get cash from a slot
+		bool Get(double &amount);
+		// put cash to an empty slot
+		void Put(double amount);
+	private:
+		double total_;
+		int num_slots_;
+		std::vector<double> slots_;
 	};
 
 }

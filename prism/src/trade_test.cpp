@@ -80,14 +80,7 @@ TEST_F(TradeTest, testPortfolios)
 	auto asset_indexer2 = std::make_shared<AssetIndexer>(asset2);
 
 	PortfolioManager portfolio_manager;
-	portfolio_manager.Buy(asset_indexer1.get(), 14000);
-	portfolio_manager.Buy(asset_indexer2.get(), 21000);
-	portfolio_manager.Buy(asset_indexer1.get(), 16000);
-	portfolio_manager.Buy(asset_indexer2.get(), 25000);
-	portfolio_manager.Sell(asset_indexer1.get(), 10000);
 
-	auto item = portfolio_manager.Get(symbol1);
-	EXPECT_DOUBLE_EQ(item->amount(), 20000);
 
 	time_t day = StringToDate("2012-12-21", "%d-%d-%d");
 	double value = 0.0f;

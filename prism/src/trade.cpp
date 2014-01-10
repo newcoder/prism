@@ -17,18 +17,26 @@ namespace prism {
 		trans.transaction_id_ = TransactionManager::id++;
 		transactions_.push_back(trans);
 	}
+
+	Transaction* TransactionManager::Get(int id)
+	{
+		for (auto& t : transactions_)
+		{
+			if (t.transaction_id_ == id)
+			{
+				return &t;
+			}
+		}
+		return nullptr;
+	}
 	
 	void TransactionManager::GetTransactions(const std::string& symbol, TransactionList* symbol_transactions)
 	{
 		symbol_transactions->clear();
 		for (auto t : transactions_)
 		{
-			auto sp = t.asset_indexer_;
-			if (sp)
-			{
-				if (sp->asset()->symbol() == symbol)
-					symbol_transactions->push_back(t);
-			}
+			if (t.asset_indexer_->asset()->symbol() == symbol)
+				symbol_transactions->push_back(t);
 		}
 	}
 
@@ -36,7 +44,7 @@ namespace prism {
 
 	bool Portfolio::GetValue(double& value, time_t pos)
 	{
-		auto sp = asset_indexer_;
+		auto sp = trans_.asset_indexer_;
 		if (sp)
 		{
 			if (pos > 0)
@@ -49,7 +57,7 @@ namespace prism {
 			HLOC hloc;
 			bool ret = sp->GetIndexData(hloc);
 			if (!ret) return false;
-			value = hloc.close * amount_;
+			value = hloc.close * trans_.shares_;
 			return true;
 		}
 		else
@@ -58,67 +66,13 @@ namespace prism {
 		}
 	}
 
-	double PortfolioManager::Buy(AssetIndexer* asset_indexer, double amount)
-	{
-		double value = 0.0F;
-		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
-		if (cit != portfolios_.end())
-		{
-			double prev;
-			cit->second->GetValue(prev);
-			cit->second->Buy(amount);
-			cit->second->GetValue(value);
-			value = value - prev;
-		}
-		else
-		{
-			auto portfolio = std::make_unique<Portfolio>(asset_indexer, amount);
-			portfolios_.insert(std::make_pair(asset_indexer->asset()->symbol(), std::move(portfolio)));
-			portfolio->GetValue(value);
-		}
-
-		return value * (1 + kCommissionRate);
-	}
-
-	double PortfolioManager::Sell(AssetIndexer* asset_indexer, double amount)
-	{
-		double value = 0.0F;
-		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
-		if (cit != portfolios_.end())
-		{
-			double prev;
-			cit->second->GetValue(prev);
-			cit->second->Sell(amount);
-			cit->second->GetValue(value);
-			value = prev - value;
-		}
-		return value * (1 - kCommissionRate);
-	}
-
-	double PortfolioManager::SellAll(AssetIndexer* asset_indexer)
-	{
-		double value = 0.0F;
-		auto cit = portfolios_.find(asset_indexer->asset()->symbol());
-		if (cit != portfolios_.end())
-		{
-			cit->second->GetValue(value);
-			portfolios_.erase(cit);
-		}
-		return value * (1 - kCommissionRate);
-	}
-
-	void PortfolioManager::Clear()
-	{
-		portfolios_.clear();
-	}
-
 	bool PortfolioManager::GetValue(double& value, time_t pos)
 	{
 		value = 0.0;
 		for (auto& it : portfolios_)
 		{
 			double portfolio_value;
-			bool ret = it.second->GetValue(portfolio_value, pos);
+			bool ret = it.GetValue(portfolio_value, pos);
 			if (ret)
 				value += portfolio_value;
 			else
@@ -127,10 +81,62 @@ namespace prism {
 		return true;
 	}
 
-	Portfolio* PortfolioManager::Get(const std::string& symbol)
+	void PortfolioManager::Remove(int transaction_id)
 	{
-		auto cit = portfolios_.find(symbol);
-		return cit == portfolios_.end()? nullptr : cit->second.get();
+		auto it = portfolios_.begin();
+		while (it != portfolios_.end())
+		{
+			if ((*it).transaction_id() == transaction_id)
+			{
+				portfolios_.erase(it);
+				break;
+			}
+		}
+	}
+
+	void PortfolioManager::GetPortfolios(const std::string& symbol, PortfolioList* portfolios)
+	{
+		portfolios->clear();
+		for (auto& it : portfolios_)
+		{
+			if (it.symbol() == symbol)
+			{
+				portfolios->push_back(it);
+			}
+		}
+	}
+
+	void CashBox::Init()
+	{
+		double amount_for_each = total_ / num_slots_;
+		for (int i = 0; i < num_slots_; i++)
+			slots_.push_back(amount_for_each);
+	}
+
+	bool CashBox::Get(double &amount)
+	{
+		for (int i = 0; i < num_slots_; i++)
+		{
+			if (slots_[i] > 0)
+			{
+				amount = slots_[i];
+				slots_[i] = -1;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void CashBox::Put(double amount)
+	{
+		for (int i = 0; i < num_slots_; i++)
+		{
+			if (slots_[i] < 0)
+			{
+				slots_[i] = amount;
+				break;
+			}
+		}
 	}
 
 }

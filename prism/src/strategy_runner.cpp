@@ -121,16 +121,52 @@ namespace prism {
 			std::string symbol = asset_indexer_list_[i].asset()->symbol();
 			if (portfolio_manager_->Size() > 0)
 			{
-				Portfolio* portfolio = portfolio_manager_->Get(symbol);
-				if (portfolio)
+
+			}
+		}
+		// buy stock if there is enough cash and the attach list is not empty..
+		if (cash_ > 100 && to_attach_.size() > 0)
+		{
+			unsigned int num_to_buy = strategy_->num_portfolios() - portfolio_manager_->Size();
+			num_to_buy = num_to_buy < to_attach_.size() ? num_to_buy : to_attach_.size();
+			if (num_to_buy > 0)
+			{
+				// could buy some stocks..
+				srand((unsigned int)time(NULL));
+				double money = cash_ / num_to_buy;
+				for (unsigned int i = 0; i < num_to_buy; ++i)
 				{
-					double value = portfolio_manager_->SellAll(portfolio->asset_indexer());
-					cash_ = cash_ + value;
+					// random select to buy in the to attach list
+					int k = rand() % to_attach_.size();
+					AssetIndexer *asset_indexer = &asset_indexer_list_[to_attach_[k]];
+					if (asset_indexer->GetIndexTime() == cursor_)
+					{
+						size_t index = asset_indexer->index();
+						HLOC hloc;
+						bool ret = asset_indexer->GetIndexData(hloc);
+						if (!ret)
+							break;
+						double price = hloc.open;
+						int amount_hands = (int)(money / (kHand * (1 + kCommissionRate)*price));
+						if (amount_hands > 0)
+						{
+							double shares = 100 * amount_hands;
+							money = shares * price;
+							Transaction trans;
+							trans.asset_indexer_ = asset_indexer;
+							trans.price_ = price;
+							trans.shares_ = shares;
+							trans.time_ = asset_indexer->GetIndexTime();
+							trans.type_ = TRANSACTION_TYPE_BUY;
+							trans.commission_ = kCommissionRate * money;
+							cash_ = cash_ - money - trans.commission_;
+							if (runner_observer_)
+								runner_observer_->OnTransaction(trans);
+						}
+					}
 				}
 			}
 		}
-		// buy stock if there is cash and the attach list is not empty..
-
 	}
 
 	void StrategyRunner::Run()
