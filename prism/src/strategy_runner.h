@@ -66,7 +66,9 @@ namespace prism {
 		void ForwardToCursor();
 		void Screen();
 		void Trade();
-	private:	
+		void Detach(const std::string& symbol);
+		bool Attach(double money);
+	private:
 		std::shared_ptr<Strategy> strategy_;
 		std::shared_ptr<AssetsProvider> assets_provider_;
 		std::shared_ptr<PortfolioManager> portfolio_manager_;
@@ -79,6 +81,7 @@ namespace prism {
 		std::unique_ptr<Screener> detach_screener_;
 		std::vector<int> to_attach_;
 		std::vector<int> to_detach_;
+		std::unique_ptr<CashBox> cash_box_;
 	};
 
 }
