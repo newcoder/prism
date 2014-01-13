@@ -106,8 +106,10 @@ namespace prism {
 		}
 	}
 
-	void CashBox::Init()
+	void CashBox::Init(double total, int num_slots)
 	{
+		total_ = total;
+		num_slots_ = num_slots;
 		double amount_for_each = total_ / num_slots_;
 		for (int i = 0; i < num_slots_; i++)
 			slots_.push_back(amount_for_each);

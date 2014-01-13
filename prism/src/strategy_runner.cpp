@@ -79,10 +79,10 @@ namespace prism {
 		if (count > 0)
 		{
 			InitIndexer();
-			attach_screener_ = std::make_unique<Screener>(strategy_->attach_rule());
-			detach_screener_ = std::make_unique<Screener>(strategy_->detach_rule());
+			attach_screener_->set_rule(strategy_->attach_rule());
+			detach_screener_->set_rule(strategy_->detach_rule());
 			// put all init cash to the box
-			cash_box_ = std::make_unique<CashBox>(cash_, strategy_->num_portfolios());
+			cash_box_->Init(cash_, strategy_->num_portfolios());
 			cash_ = 0.0F;
 			return true;
 		}

@@ -96,10 +96,11 @@ namespace prism {
 	class CashBox
 	{
 	public:
-		CashBox(double total, int num_slots) : total_(total), num_slots_(num_slots) { Init(); }
+		CashBox(double total, int num_slots) : total_(total), num_slots_(num_slots) { Init(total, num_slots); }
+		CashBox() {}
 		~CashBox(){}
 	public:
-		void Init();
+		void Init(double total, int num_slots);
 		// get cash from a slot
 		bool Get(double &amount);
 		// put cash to an empty slot

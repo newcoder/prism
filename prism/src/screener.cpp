@@ -12,6 +12,8 @@ namespace prism {
 	void Screener::Screen(AssetIndexerList& asset_index_list, std::vector<int>* result, time_t pos)
 	{
 		result->clear();
+		if (!rule_)
+			return;		
 		for (unsigned i = 0; i < asset_index_list.size(); i++)
 		{
 			if (pos < 0 || asset_index_list[i].GetIndexTime() == pos)

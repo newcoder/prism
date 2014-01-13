@@ -52,7 +52,11 @@ namespace prism {
 			strategy_(strategy), assets_provider_(assets_provider), 
 			portfolio_manager_(portfolio_manager), transaction_manager_(transaction_manager),
 			runner_observer_(runner_observer)
-		{}
+		{
+			attach_screener_ = std::make_unique<Screener>();
+			detach_screener_ = std::make_unique<Screener>();
+			cash_box_ = std::make_unique<CashBox>();
+		}
 		~StrategyRunner(){}
 	public:
 		// if reload = true, the assets_provider will re-load assets according to the strategy->stocks
