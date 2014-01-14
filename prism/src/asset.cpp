@@ -350,6 +350,17 @@ namespace prism {
 		return true;
 	}
 
+	bool AssetScaleIndexer::within_limit() const
+	{
+		if (!valid())
+			return false;
+		if (index_ < 1)
+			return true;
+		auto data = scale_->raw_data()->at(index_);
+		auto data_previous = scale_->raw_data()->at(index_ - 1);
+		return std::fabs(data.open - data_previous.close) < kPriceLimit;
+	}
+
 	AssetIndexer::AssetIndexer(const std::shared_ptr<Asset>& asset, time_t begin) : AssetIndexer(asset)
 	{
 		ForwardTo(begin);

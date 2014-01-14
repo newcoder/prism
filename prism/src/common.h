@@ -21,6 +21,7 @@ namespace prism {
 	const std::string kStockPatterns = "patterns";
 	const std::string kStockBlocks = "blocks";
 	const double kCommissionRate = 0.001;
+	const double kPriceLimit = 9.90;
 	const int kHand = 100;
 	const double kDefaultAdjacentDelta = 0.02;
 	const double kDefaultFixedDelta = 0.02;

@@ -126,7 +126,8 @@ namespace prism {
 		{
 			HLOC hloc;
 			bool ret = p.asset_indexer()->GetIndexData(hloc);
-			if (!ret)
+			assert(ret);
+			if (!p.asset_indexer()->within_limit())
 				break;
 			double price = hloc.open;
 			Transaction trans;
@@ -157,11 +158,14 @@ namespace prism {
 		int k = rand() % to_attach_.size();
 		AssetIndexer *asset_indexer = &asset_indexer_list_[to_attach_[k]];
 		assert(asset_indexer->GetIndexTime() == cursor_);
-		size_t index = asset_indexer->index();
 		HLOC hloc;
 		bool ret = asset_indexer->GetIndexData(hloc);
-		if (!ret)
+		assert(ret);
+		if (!asset_indexer->within_limit())
+		{
+			to_attach_.erase(to_attach_.begin() + k);
 			return false;
+		}
 		double price = hloc.open;
 		int amount_hands = (int)(money / (kHand * (1 + kCommissionRate)*price));
 		if (amount_hands > 0)
