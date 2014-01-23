@@ -181,7 +181,7 @@ namespace prism {
 		data_type_ = (DATA_TYPE)json->operator[]("data_type").GetInt();
 		data_num_ = json->operator[]("data_num").GetInt();
 		duration_ = json->operator[]("duration").GetInt();
-		return true;
+		return Rule::Parse(json);
 	}
 
 	EMARule::EMARule() : IndicatorRule(RULE_TYPE_INDICATOR_EMA)
@@ -202,7 +202,7 @@ namespace prism {
 	bool EMARule::Parse(JsonValue* json)
 	{		
 		period_ = json->operator[]("period").GetInt();
-		return true;
+		return IndicatorRule::Parse(json);
 	}
 
 	bool EMARule::Verify(AssetIndexer& asset_indexer)
@@ -246,7 +246,7 @@ namespace prism {
 	{		
 		period_one_ = json->operator[]("period_one").GetInt();
 		period_two_ = json->operator[]("period_two").GetInt();
-		return true;
+		return IndicatorRule::Parse(json);
 	}
 
 	bool EMACompareRule::Verify(AssetIndexer& asset_indexer)
@@ -318,7 +318,7 @@ namespace prism {
 		look_back_ = json->operator[]("look_back").GetInt();
 		threshold_ = json->operator[]("threshold").GetDouble();
 
-		return true;
+		return IndicatorRule::Parse(json);
 	}
 
 	bool MACDRule::Verify(AssetIndexer& asset_indexer)
@@ -421,7 +421,8 @@ namespace prism {
 		second_period_ = json->operator[]("second_period").GetInt();
 		third_period_ = json->operator[]("third_period").GetInt();
 		fourth_period_ = json->operator[]("fourth_period").GetInt();
-		return first_period_ < second_period_ && second_period_ < third_period_ && third_period_ < fourth_period_;
+
+		return IndicatorRule::Parse(json) && first_period_ < second_period_ && second_period_ < third_period_ && third_period_ < fourth_period_;
 	}
 	
 	bool EMAArrayRule::Verify(AssetIndexer& asset_indexer)
@@ -494,7 +495,7 @@ namespace prism {
 	bool CRRule::Parse(JsonValue* json)
 	{
 		period_ = json->operator[]("period").GetInt();
-		return true;
+		return IndicatorRule::Parse(json);
 	}
 
 	bool CRRule::Verify(AssetIndexer& asset_indexer)

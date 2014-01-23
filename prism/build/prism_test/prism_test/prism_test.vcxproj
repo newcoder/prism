@@ -133,6 +133,7 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\strategy.cpp" />
     <ClCompile Include="..\..\..\src\strategy_runner.cpp" />
+    <ClCompile Include="..\..\..\src\strategy_runner_test.cpp" />
     <ClCompile Include="..\..\..\src\strategy_screener.cpp" />
     <ClCompile Include="..\..\..\src\strategy_test.cpp" />
     <ClCompile Include="..\..\..\src\time_series.cpp" />
