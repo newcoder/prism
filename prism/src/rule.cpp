@@ -512,7 +512,7 @@ namespace prism {
 			return false;
 		else
 		{
-		//	std::cout << asset_indexer.asset()->symbol() << TimeToString(tl->at(index).position, ", time: %Y-%m-%d, ") << tl->at(index).value << "," << 1.0 / (double)period_<< std::endl;
+			std::cout << asset_indexer.asset()->symbol() << TimeToString(tl->at(index).position, ", time: %Y-%m-%d, ") << tl->at(index).value << "," << 1.0 / (double)period_<< std::endl;
 			return tl->at(index).value <=  1.0 / (double)period_;
 		}
 	}

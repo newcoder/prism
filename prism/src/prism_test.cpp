@@ -14,9 +14,11 @@ int main(int argc, char* argv[])
 	//::testing::GTEST_FLAG(filter) = "TestTimeSeries.testFindTurningPoints";
 	//::testing::GTEST_FLAG(filter) = "ImportTest.testImportDir";
 	//::testing::GTEST_FLAG(filter) = "ScreenerTest.*";
-	//::testing::GTEST_FLAG(filter) = "AssetTest.*";
+
 	::testing::GTEST_FLAG(filter) = "TradeTest.*:ScreenerTest.*:AssetTest.*";
 	::testing::GTEST_FLAG(filter) = "StrategyTest.testParse";
+	::testing::GTEST_FLAG(filter) = "StrategyRunnerTest.testSimple";
+	//::testing::GTEST_FLAG(filter) = "AssetTest.testAssetIndexer";
 
 	testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

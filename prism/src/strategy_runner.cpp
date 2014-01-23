@@ -69,7 +69,7 @@ namespace prism {
 		cash_ = strategy_->init_cash();
 		cursor_ = strategy_->begin_time();
 		Clear();
-		int count = 0;
+		int count = assets_provider_->assets().size();
 		if (reload)
 		{
 			count = assets_provider_->LoadAssets(strategy_->stocks(),
@@ -124,6 +124,9 @@ namespace prism {
 			return;
 		for (auto& p : portfolios)
 		{
+			auto index_time = p.asset_indexer()->GetIndexTime();
+			if (index_time != cursor_) // not trading on cursor_
+				return;
 			HLOC hloc;
 			bool ret = p.asset_indexer()->GetIndexData(hloc);
 			assert(ret);
@@ -157,7 +160,13 @@ namespace prism {
 		srand((unsigned int)time(NULL));
 		int k = rand() % to_attach_.size();
 		AssetIndexer *asset_indexer = &asset_indexer_list_[to_attach_[k]];
-		assert(asset_indexer->GetIndexTime() == cursor_);
+		auto index_time = asset_indexer->GetIndexTime();
+		if (index_time != cursor_)
+		{
+			// not trading on cursor_
+			to_attach_.erase(to_attach_.begin() + k);
+			return false;
+		}
 		HLOC hloc;
 		bool ret = asset_indexer->GetIndexData(hloc);
 		assert(ret);
@@ -213,7 +222,7 @@ namespace prism {
 		if (to_attach_.size() > 0)
 		{
 			double money = -1;
-			while (cash_box_->Get(money))
+			while (to_attach_.size() > 0 && cash_box_->Get(money))
 			{
 				if (!Attach(money))
 					cash_box_->Put(money);

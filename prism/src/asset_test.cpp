@@ -121,7 +121,7 @@ TEST_F(AssetTest, testAssetIndexer)
 	time_t day = StringToDate("2012-12-21", "%d-%d-%d");
 	for (int i = 0; i < 33; i++)
 	{
-		day = day + 24 * 3600;		
+		day = day + 24 * 3600;
 		asset_indexer->ForwardTo(day);
 		time_t date = asset_indexer->GetIndexTime();
 		std::string date_str = TimeToString(date, "%Y-%m-%d");
