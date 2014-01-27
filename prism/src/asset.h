@@ -101,7 +101,8 @@ namespace prism {
 		void ToEnd() { index_ = scale_->raw_data()->size() - 1; }
 		time_t GetIndexTime() const;
 		bool GetIndexData(HLOC& data) const;
-		bool within_limit() const;
+		bool below_upper_limit() const;
+		bool above_lower_limit() const;
 		bool valid() const { return index_ >= 0; }
 		bool at_begin() const { return index_ == 0; }
 		bool at_end() const { return index_ == scale_->raw_data()->size() - 1; }
@@ -127,7 +128,8 @@ namespace prism {
 		std::shared_ptr<Asset> asset() const { return asset_; }
 		time_t GetIndexTime() const { return base_scale_indexer_->GetIndexTime(); }
 		bool GetIndexData(HLOC& data) const { return base_scale_indexer_->GetIndexData(data); }
-		bool within_limit() const { return base_scale_indexer_->within_limit(); }
+		bool below_upper_limit() const { return base_scale_indexer_->below_upper_limit(); }
+		bool above_lower_limit() const { return base_scale_indexer_->above_lower_limit(); }
 		bool valid() const { return base_scale_indexer_->valid(); }
 		bool at_begin() const { return base_scale_indexer_->at_begin(); }
 		bool at_end() const { return base_scale_indexer_->at_end(); }

@@ -54,6 +54,7 @@ namespace prism {
 		Transaction* Get(int id);
 		// get transactions for a single symbol
 		void GetTransactions(const std::string& symbol, TransactionList* symbol_transactions);
+		void Report(const std::string& file);
 	public:
 		static unsigned int id;
 	private:	

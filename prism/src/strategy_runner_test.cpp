@@ -52,13 +52,17 @@ TEST_F(StrategyRunnerTest, testSimple)
 	ret = strategy_->Parse(&doc);
 	EXPECT_TRUE(ret);
 
-	std::string symbol = "SH600196";
+	std::string symbol = "SH600845";
+	std::string another_symbol = "SZ002015";
 	std::vector<std::string> elems;
 	elems.push_back(symbol);
+	elems.push_back(another_symbol);
 	int count = assets_provider_->LoadAssets(elems, 2011, 2013);
-	assert(count == 1);
+	assert(count == 2);
 
 	runner_->Init();
 	runner_->Run();
+	// dump the transactions..
+	transaction_manager_->Report(kDataPath + "testSimple_trans.csv");
 	runner_->Clear();
 }

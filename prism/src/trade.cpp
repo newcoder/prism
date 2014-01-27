@@ -9,6 +9,7 @@
 #include <ctime>
 #include <assert.h>
 #include <set>
+#include <fstream>
 
 namespace prism {
 	
@@ -33,11 +34,29 @@ namespace prism {
 	void TransactionManager::GetTransactions(const std::string& symbol, TransactionList* symbol_transactions)
 	{
 		symbol_transactions->clear();
-		for (auto t : transactions_)
+		for (auto& t : transactions_)
 		{
 			if (t.asset_indexer_->asset()->symbol() == symbol)
 				symbol_transactions->push_back(t);
 		}
+	}
+
+	void TransactionManager::Report(const std::string& file)
+	{
+		std::ofstream of;
+		of.open(file, std::ios::out);
+		for (auto& t : transactions_)
+		{
+			of << TimeToString(t.time_, "%Y-%m-%d %H:%M:%S") << "," 
+				<< t.type_ << ","
+				<< t.asset_indexer_->asset()->symbol() << ","
+				<< t.price_ << ","
+				<< t.shares_ << ","
+				<< t.price_ * t.shares_ << ","
+				<< t.transaction_id_ << ","
+				<< t.associate_transaction_id << "," << std::endl;
+		}
+		of.close();
 	}
 
 	unsigned int TransactionManager::id = 0;

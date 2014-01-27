@@ -130,7 +130,7 @@ namespace prism {
 			HLOC hloc;
 			bool ret = p.asset_indexer()->GetIndexData(hloc);
 			assert(ret);
-			if (!p.asset_indexer()->within_limit())
+			if (!p.asset_indexer()->above_lower_limit())
 				break;
 			double price = hloc.open;
 			Transaction trans;
@@ -170,7 +170,7 @@ namespace prism {
 		HLOC hloc;
 		bool ret = asset_indexer->GetIndexData(hloc);
 		assert(ret);
-		if (!asset_indexer->within_limit())
+		if (!asset_indexer->below_upper_limit())
 		{
 			to_attach_.erase(to_attach_.begin() + k);
 			return false;
