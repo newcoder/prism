@@ -1,7 +1,7 @@
 seajs.config({
   alias: {
     'jquery': 'jquery/1.7.1/jquery',
-    'socket.io': 'socket.io/0.9.10/socket.io.min'
+    'socket.io': 'socket.io/1.3.5/socket.io'
   },
   charset: 'utf-8',
   timeout: 20000,
